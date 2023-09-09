@@ -34,7 +34,7 @@ function App() {
             </li>
             <li className="nav-item">
               <Link to="/Vendors" className="nav-link">
-                <span>Vendors List</span>
+                <span>Vendor List</span>
               </Link>
             </li>
             <li className="nav-item">
