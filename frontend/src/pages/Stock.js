@@ -10,7 +10,7 @@ const Stocks = () => {
   const [locations, setLocations] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [selectedLocantion, setSelectedLocation] = useState([]);
-  const [stock, settock] = useState([]);
+  const [stock, setStock] = useState([]);
 
 
 
@@ -27,24 +27,39 @@ const Stocks = () => {
           ]);
       
           setMaterials(materialResponse);
-          setPurchases(purchaseResponse.filter(purchase => purchase.location === parseInt(selectedLocantion)));
+          setPurchases(purchaseResponse);
           setLocations(locationResponse);
           setOutflows(outflowsResponse);
-          
+          setStock(purchaseResponse.filter(purchase => purchase.location === parseInt(selectedLocantion)));
+       
         } catch (error) {
           console.log('Error fetching data:', error);
         }
       };
     fetchData();
 
-      
-
   }, [selectedLocantion]);
 
   console.log("purchases", purchases);
 
+  const calculateTotalQuantity = React.useCallback((materialId) => {
+    const selectedMaterial = materials.find((mat) => mat.matid === materialId && mat.extras === 0);
+  
+    if (selectedMaterial) {
+      return purchases.reduce((total, purchase) => {
+        if (purchase.materialid === materialId) {
+          return total + (parseFloat(purchase.quantity) * parseFloat(purchase.price));
+        }
+        return total;
+      }, 0);
+    }
+  
+    return 0; // Return a default value if no matching material is found
+  }, [materials, purchases]);
   
   
+  const uniqueMaterialIds = [...new Set(stock.map(item => item.materialid))];
+
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -68,13 +83,11 @@ const Stocks = () => {
       { Header: 'Quantity', accessor: 'quantity' },
       {
         Header: 'Average Cost',
-        accessor: 'cost',
-        Cell: ({ value }) => {
-          return value ? `${value} €` : '';
-        },
+        accessor: (row) => calculateTotalQuantity(row.materialid),
       },
+
     ],
-    [ materials]
+    [ materials, calculateTotalQuantity]
   );
  
   const {
@@ -94,7 +107,7 @@ const Stocks = () => {
   } = useTable(
     {
       columns,
-      data: purchases,
+      data: uniqueMaterialIds,
       locations,
       materials,
       initialState: {
