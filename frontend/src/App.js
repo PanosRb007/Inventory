@@ -6,6 +6,8 @@ import Outflow from './pages/Outflow';
 import MaterialList from './pages/MaterialList';
 import Projects from './pages/Projects';
 import ProjectOutflows from './pages/ProjectOutflows';
+import Stocks from './pages/Stock';
+
 import './App.css'; // Import custom CSS for App component
 
 function App() {
@@ -42,6 +44,11 @@ function App() {
                 <span>Project List</span>
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/Stocks" className="nav-link">
+                <span>Stock</span>
+              </Link>
+            </li>
           </ul>
         </nav>
         <main className="content">
@@ -55,6 +62,7 @@ function App() {
             <Route path="/MaterialList" element={<MaterialList />} />
             <Route path="/Projects" element={<Projects />} />
             <Route path="/ProjectOutflows" element={<ProjectOutflows />} />
+            <Route path="/Stocks" element={<Stocks />} />
 
             {/* Add other routes for different pages */}
           </Routes>
