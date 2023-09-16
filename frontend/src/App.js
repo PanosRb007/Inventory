@@ -1,12 +1,12 @@
 import 'bootstrap/dist/css/bootstrap-grid.min.css';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import Purchases from './pages/Purchases';
-import Vendors from './pages/Vendors';
-import Outflow from './pages/Outflow';
-import MaterialList from './pages/MaterialList';
-import Projects from './pages/Projects';
-import ProjectOutflows from './pages/ProjectOutflows';
-import Stock from './pages/Stock';
+import Purchases from './pages/Purchases.js';
+import Vendors from './pages/Vendors.js';
+import Outflow from './pages/Outflow.js';
+import MaterialList from './pages/MaterialList.js';
+import Projects from './pages/Projects.js';
+import ProjectOutflows from './pages/ProjectOutflows.js';
+import Stock from './pages/stock.js';
 
 import './App.css'; // Import custom CSS for App component
 
@@ -45,7 +45,7 @@ function App() {
               </Link>
             </li>
             <li className="nav-item">
-              <Link to="/Stocks" className="nav-link">
+              <Link to="/Stock" className="nav-link">
                 <span>Stock</span>
               </Link>
             </li>
