@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import EditPurchase from './EditPurchase';
+import EditPurchase from './EditPurchase.js';
 import './PurchaseFunc.css';
-import AddPurchase from './AddPurchase';
+import AddPurchase from './AddPurchase.js';
 
 const PurchaseFunc = () => {
   const [purchases, setPurchases] = useState([]);

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import './MaterialList.css';
-import EditMaterial from './EditMaterial';
-import AddMaterial from './AddMaterial';
+import EditMaterial from './EditMaterial.js';
+import AddMaterial from './AddMaterial.js';
 
 
 const MaterialList = React.memo(() => {
