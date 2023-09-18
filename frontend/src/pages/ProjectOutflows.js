@@ -25,9 +25,9 @@ const ProjectFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [outflowsResponse, projectsResponse, employeesResponse] = await Promise.all([
-        fetch('http://localhost:8081/outflowsAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/projectsAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/employeesAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/employeesAPI').then((response) => response.json()),
       ]);
       const filtered = outflowsResponse;
       console.log('filtered', filtered);

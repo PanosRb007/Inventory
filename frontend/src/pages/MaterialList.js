@@ -16,7 +16,7 @@ const MaterialList = React.memo(() => {
   const fetchData = async () => {
     try {
       const [materialResponse] = await Promise.all([
-        fetch('http://localhost:8081/materiallist').then((response) => response.json()),
+        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
       ]);
   
       setMaterials(materialResponse);
@@ -37,7 +37,7 @@ const MaterialList = React.memo(() => {
       return;
     }
 
-    fetch('http://localhost:8081/materiallist', {
+    fetch('https://api.robbie.gr/materiallist', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ const MaterialList = React.memo(() => {
     const confirmDeletion = window.confirm('Are you sure you want to delete this material?');
 
     if (confirmDeletion) {
-      fetch(`http://localhost:8081/MaterialList/${deletedMaterial.matid}`, {
+      fetch(`https://api.robbie.gr/MaterialList/${deletedMaterial.matid}`, {
         method: 'DELETE',
       })
         .then((response) => response.json())
@@ -96,7 +96,7 @@ const MaterialList = React.memo(() => {
       return;
     }
   
-    fetch(`http://localhost:8081/MaterialList/${updatedMaterial.matid}`, {
+    fetch(`https://api.robbie.gr/MaterialList/${updatedMaterial.matid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

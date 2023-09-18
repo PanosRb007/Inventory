@@ -20,10 +20,10 @@ const Stocks = () => {
     const fetchData = async () => {
         try {
           const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
-            fetch('http://localhost:8081/materiallist').then((response) => response.json()),
-            fetch('http://localhost:8081/PurchasesAPI').then((response) => response.json()),
-            fetch('http://localhost:8081/LocationsAPI').then((response) => response.json()),
-            fetch('http://localhost:8081/outflowsAPI').then((response) => response.json()),
+            fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
+            fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
+            fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
+            fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
           ]);
       
           setMaterials(materialResponse);

@@ -11,7 +11,7 @@ const ProjectFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [projectResponse] = await Promise.all([
-        fetch('http://localhost:8081/projectsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
       ]);
       setProjects(projectResponse);
       setIsLoading(false);
@@ -27,7 +27,7 @@ const ProjectFunc = () => {
 
   const handleAddProject = useCallback((newProject) => {
     // Send an HTTP request to add the new project
-    fetch('http://localhost:8081/projectsAPI', {
+    fetch('https://api.robbie.gr/projectsAPI', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ const ProjectFunc = () => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`http://localhost:8081/projects/${deletedproject.prid}`, {
+      fetch(`https://api.robbie.gr/projects/${deletedproject.prid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -78,7 +78,7 @@ const ProjectFunc = () => {
   }, [editingProject]);
 
   const handleUpdate = useCallback((updatedproject) => {
-    fetch(`http://localhost:8081/projects/${updatedproject.prid}`, {
+    fetch(`https://api.robbie.gr/projects/${updatedproject.prid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

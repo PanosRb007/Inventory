@@ -17,11 +17,11 @@ const PurchaseFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [purchaseResponse, locationResponse, materialResponse, vendorResponse, materialchangesResponse] = await Promise.all([
-        fetch('http://localhost:8081/PurchasesAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/LocationsAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/materiallist').then((response) => response.json()),
-        fetch('http://localhost:8081/vendors').then((response) => response.json()),
-        fetch('http://localhost:8081/materialchangesAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
+        fetch('https://api.robbie.gr/vendors').then((response) => response.json()),
+        fetch('https://api.robbie.gr/materialchangesAPI').then((response) => response.json()),
       ]);
 
    
@@ -46,7 +46,7 @@ const PurchaseFunc = () => {
   const handleAdd = useCallback((newPurchase) => {
     
     // Make a POST request to add the new purchase
-    fetch('http://localhost:8081/PurchasesAPI', {
+    fetch('https://api.robbie.gr/PurchasesAPI', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const PurchaseFunc = () => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`http://localhost:8081/PurchasesAPI/${deletedPurchase.id}`, {
+      fetch(`https://api.robbie.gr/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -95,7 +95,7 @@ const PurchaseFunc = () => {
   }, [editingPurchase]);
 
   const handleUpdate = useCallback((updatedPurchase) => {
-    fetch(`http://localhost:8081/PurchasesAPI/${updatedPurchase.id}`, {
+    fetch(`https://api.robbie.gr/PurchasesAPI/${updatedPurchase.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ const PurchaseFunc = () => {
           const vendor = vendors.find((v) => v.vendorid === value.vendor);
           return vendor ? (
             <span title={`Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}\n`}>
-              <a href={`http://localhost:8081/vendors/${vendor.vendorid}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://api.robbie.gr/vendors/${vendor.vendorid}`} target="_blank" rel="noopener noreferrer">
                 {vendor.name}
               </a>
             </span>

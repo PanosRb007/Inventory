@@ -32,7 +32,7 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
       };
 
       // Make a POST request to materialchangesAPI
-      fetch('http://localhost:8081/materialchangesAPI', {
+      fetch('https://api.robbie.gr/materialchangesAPI', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import AddVendor from './AddVendor';
-import EditVendor from './EditVendor';
+import AddVendor from './AddVendor.js';
+import EditVendor from './EditVendor.js';
 
 
 const VendorsFunc = () => {
@@ -12,7 +12,7 @@ const VendorsFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [vendorResponse] = await Promise.all([
-        fetch('http://localhost:8081/vendors').then((response) => response.json()),
+        fetch('https://api.robbie.gr/vendors').then((response) => response.json()),
       ]);
       setVendors(vendorResponse);
       setIsLoading(false);
@@ -28,7 +28,7 @@ const VendorsFunc = () => {
 
   const handleAddVendor = useCallback((newVendor) => {
     // Send an HTTP request to add the new vendor
-    fetch('http://localhost:8081/vendors', {
+    fetch('https://api.robbie.gr/vendors', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ const VendorsFunc = () => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`http://localhost:8081/vendors/${deletedVendor.vendorid}`, {
+      fetch(`https://api.robbie.gr/vendors/${deletedVendor.vendorid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -79,7 +79,7 @@ const VendorsFunc = () => {
   }, [editingVendor]);
 
   const handleUpdate = useCallback((updatedVendor) => {
-    fetch(`http://localhost:8081/vendors/${updatedVendor.vendorid}`, {
+    fetch(`https://api.robbie.gr/vendors/${updatedVendor.vendorid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

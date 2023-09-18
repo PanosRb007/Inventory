@@ -26,12 +26,12 @@ const OutflowFunc = () => {
   const fetchData = async () => {
     try {
       const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse] = await Promise.all([
-        fetch('http://localhost:8081/materiallist').then((response) => response.json()),
-        fetch('http://localhost:8081/PurchasesAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/LocationsAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/projectsAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/employeesAPI').then((response) => response.json()),
-        fetch('http://localhost:8081/outflowsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
+        fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/employeesAPI').then((response) => response.json()),
+        fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
       ]);
   
       setMaterials(materialResponse);
@@ -50,7 +50,7 @@ const OutflowFunc = () => {
 
   const handleAdd = useCallback((newOutflow) => {
     // Make a POST request to add the new purchase
-    fetch('http://localhost:8081/outflowsAPI', {
+    fetch('https://api.robbie.gr/outflowsAPI', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ const OutflowFunc = () => {
       .then((response) => {
         if (response.ok) {
           // Fetch the updated outflows from the API
-          return fetch('http://localhost:8081/outflowsAPI'); // Adjust the API endpoint if needed
+          return fetch('https://api.robbie.gr/outflowsAPI'); // Adjust the API endpoint if needed
         } else {
           throw new Error('Error adding outflow');
         }
@@ -81,7 +81,7 @@ const OutflowFunc = () => {
     const isConfirmed = window.confirm('Are you sure you want to delete this outflow?');
   
     if (isConfirmed) {
-      fetch(`http://localhost:8081/outflowsAPI/${deletedOutflow.outflowid}`, {
+      fetch(`https://api.robbie.gr/outflowsAPI/${deletedOutflow.outflowid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -108,7 +108,7 @@ const OutflowFunc = () => {
   
 
   const handleUpdate = useCallback((updatedOutflow) => {
-    fetch(`http://localhost:8081/outflowsAPI/${updatedOutflow.outflowid}`, {
+    fetch(`https://api.robbie.gr/outflowsAPI/${updatedOutflow.outflowid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ const OutflowFunc = () => {
       .then((response) => {
         if (response.ok) {
           // Fetch the updated outflows from the API
-          return fetch('http://localhost:8081/outflowsAPI'); // Adjust the API endpoint if needed
+          return fetch('https://api.robbie.gr/outflowsAPI'); // Adjust the API endpoint if needed
         } else {
           throw new Error('Error adding outflow');
         }

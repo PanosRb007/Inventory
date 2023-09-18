@@ -38,8 +38,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         if (newPurchase.materialid) {
           try {
             const [responseChanges, responseList] = await Promise.all([
-              fetch(`http://localhost:8081/materialchangesAPI/${newPurchase.materialid}`),
-              fetch(`http://localhost:8081/materiallist/${newPurchase.materialid}`),
+              fetch(`https://api.robbie.gr/materialchangesAPI/${newPurchase.materialid}`),
+              fetch(`https://api.robbie.gr/materiallist/${newPurchase.materialid}`),
             ]);
   
             const [dataChanges, dataList] = await Promise.all([
@@ -108,7 +108,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     
 
     try {
-      const responseChanges = await fetch(`http://localhost:8081/materialchangesAPI/${newPurchase.materialid}`);
+      const responseChanges = await fetch(`https://api.robbie.gr/materialchangesAPI/${newPurchase.materialid}`);
       const dataChanges = await responseChanges.json();
 
       const hasChanges =
@@ -117,7 +117,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
           dataChanges.vendor !== newPurchase.vendor);
 
       if (dataChanges && hasChanges) {
-        const response = await fetch('http://localhost:8081/materialchangesAPI/', {
+        const response = await fetch('https://api.robbie.gr/materialchangesAPI/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       return;
     }
   
-    fetch('http://localhost:8081/materiallist', {
+    fetch('https://api.robbie.gr/materiallist', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   const handleAddVendor = useCallback(async (newVendor) => {
     try {
       // Send an HTTP request to add the new vendor
-      const addResponse = await fetch('http://localhost:8081/vendors', {
+      const addResponse = await fetch('https://api.robbie.gr/vendors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       }
   
       // Fetch the updated list of vendors from '/vendorsAPI'
-      const response = await fetch('http://localhost:8081/vendors');
+      const response = await fetch('https://api.robbie.gr/vendors');
   
       if (!response.ok) {
         throw new Error('Failed to fetch vendors');
