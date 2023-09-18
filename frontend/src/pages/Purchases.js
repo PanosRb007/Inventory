@@ -17,19 +17,11 @@ const PurchaseFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [purchaseResponse, locationResponse, materialResponse, vendorResponse, materialchangesResponse] = await Promise.all([
-<<<<<<< HEAD
         fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
         fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
         fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
         fetch('https://api.robbie.gr/vendors').then((response) => response.json()),
         fetch('https://api.robbie.gr/materialchangesAPI').then((response) => response.json()),
-=======
-        fetch('http://linux19.papaki.gr:8443/PurchasesAPI').then((response) => response.json()),
-        fetch('http://linux19.papaki.gr:8443/LocationsAPI').then((response) => response.json()),
-        fetch('http://linux19.papaki.gr:8443/materiallist').then((response) => response.json()),
-        fetch('http://linux19.papaki.gr:8443/vendors').then((response) => response.json()),
-        fetch('http://linux19.papaki.gr:8443/materialchangesAPI').then((response) => response.json()),
->>>>>>> 5d0e9666a2f1423c6fd342ac69447de04471a3f0
       ]);
 
    
