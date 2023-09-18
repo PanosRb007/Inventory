@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import AddProject from './AddProject'; // Make sure to adjust the import path
-import EditProject from './EditProject'; // Make sure to adjust the import path
+import AddProject from './AddProject.js'; // Make sure to adjust the import path
+import EditProject from './EditProject.js'; // Make sure to adjust the import path
 
 const ProjectFunc = () => {
   const [editingProject, setEditingProject] = useState(null);

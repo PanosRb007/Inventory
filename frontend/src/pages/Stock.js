@@ -60,6 +60,8 @@ const Stocks = () => {
   
   const uniqueMaterialIds = [...new Set(stock.map(item => item.materialid))];
 
+  console.log('uniqueMaterialIds', uniqueMaterialIds);
+
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -107,7 +109,7 @@ const Stocks = () => {
   } = useTable(
     {
       columns,
-      data: uniqueMaterialIds,
+      data: stock,
       locations,
       materials,
       initialState: {

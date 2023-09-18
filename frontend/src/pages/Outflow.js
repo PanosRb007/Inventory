@@ -1,8 +1,8 @@
 import React, {useState, useCallback, useEffect } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import EditOutflow from './EditOutflow';
+import EditOutflow from './EditOutflow.js';
 import './PurchaseFunc.css';
-import AddOutflow from './AddOutflow';
+import AddOutflow from './AddOutflow.js';
 
 const OutflowFunc = () => {
 

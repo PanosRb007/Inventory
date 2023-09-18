@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Select from 'react-select';
 import './AddPurchase.css';
-import AddMaterial from './AddMaterial';
-import AddVendor from './AddVendor';
+import AddMaterial from './AddMaterial.js';
+import AddVendor from './AddVendor.js';
 
 const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, setVendors }) => {
   const [showAddMaterialForm, setShowAddMaterialForm] = useState(false);

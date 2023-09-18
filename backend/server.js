@@ -18,7 +18,11 @@ const port = 8443;
 
 // Create a MySQL connection pool
 const pool = mysql.createPool({
+<<<<<<< HEAD
   host: '88.99.137.154',
+=======
+  host: 'linux19.papaki.gr',
+>>>>>>> 5d0e9666a2f1423c6fd342ac69447de04471a3f0
   user: 'robbieinventory',
   password: '123rbb321',
   database: 'inventory',
