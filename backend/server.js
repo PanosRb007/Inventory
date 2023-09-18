@@ -14,13 +14,13 @@ const outflowsAPI = require('./outflowsAPI');
 
 
 const app = express();
-const port = 8081;
+const port = 8443;
 
 // Create a MySQL connection pool
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '1111',
+  host: '88.99.137.154',
+  user: 'robbieinventory',
+  password: '123rbb321',
   database: 'inventory',
   waitForConnections: true,
   connectionLimit: 10,
