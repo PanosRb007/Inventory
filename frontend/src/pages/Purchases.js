@@ -11,31 +11,63 @@ const PurchaseFunc = () => {
   const [materials, setMaterials] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [materialchanges, setMaterialchanges] = useState([]);
+  const [error, setError] = useState(null);
+
   
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
   const fetchData = useCallback(async () => {
+    const fetchAPI = async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error fetching ${url}`);
+      }
+      return response.json();
+    };
+  
     try {
-      const [purchaseResponse, locationResponse, materialResponse, vendorResponse, materialchangesResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
-        fetch('https://api.robbie.gr/vendors').then((response) => response.json()),
-        fetch('https://api.robbie.gr/materialchangesAPI').then((response) => response.json()),
-      ]);
-
-   
-      setPurchases(purchaseResponse);
-      setLocations(locationResponse);
-      setMaterials(materialResponse);
-      setVendors(vendorResponse);
-      setMaterialchanges(materialchangesResponse)
-      setIsLoading(false);
+      const purchaseData = await fetchAPI('https://api.robbie.gr/PurchasesAPI');
+      setPurchases(purchaseData);
     } catch (error) {
-      console.log('Error fetching data:', error);
-      setIsLoading(false);
+      console.log('Error fetching purchases:', error);
+      setError(error.message);
     }
+  
+    try {
+      const locationData = await fetchAPI('https://api.robbie.gr/LocationsAPI');
+      setLocations(locationData);
+    } catch (error) {
+      console.log('Error fetching locations:', error);
+      setError(error.message);
+    }
+  
+    try {
+      const materialData = await fetchAPI('https://api.robbie.gr/materiallist');
+      setMaterials(materialData);
+    } catch (error) {
+      console.log('Error fetching materials:', error);
+      setError(error.message);
+    }
+  
+    try {
+      const vendorData = await fetchAPI('https://api.robbie.gr/vendors');
+      setVendors(vendorData);
+    } catch (error) {
+      console.log('Error fetching vendors:', error);
+      setError(error.message);
+    }
+  
+    try {
+      const materialchangesData = await fetchAPI('https://api.robbie.gr/materialchangesAPI');
+      setMaterialchanges(materialchangesData);
+    } catch (error) {
+      console.log('Error fetching material changes:', error);
+      setError(error.message);
+    }
+  
+    setIsLoading(false);
   }, []);
+  
 
   useEffect(() => {
     fetchData();
@@ -245,6 +277,11 @@ const PurchaseFunc = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+  
 
   return (
     <div>
