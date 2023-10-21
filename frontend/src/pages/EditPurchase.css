@@ -1,37 +1,36 @@
 .edit-purchase-form {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  .edit-purchase-form label {
-    margin: 5px;
-  }
-  
-  .edit-purchase-form input[type="text"],
-  .edit-purchase-form input[type="number"],
-  .edit-purchase-form input[type="date"] {
-    width: 200px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    margin: 5px;
-  }
-  
-  .edit-purchase-form button {
-    padding: 8px 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 5px;
-  }
-  
-  .edit-purchase-form button:hover {
-    background-color: #45a049;
-  }
-  
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.edit-purchase-form label {
+  margin: 5px;
+}
+
+.edit-purchase-form input[type="text"],
+.edit-purchase-form input[type="number"],
+.edit-purchase-form input[type="date"] {
+  width: 200px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin: 5px;
+}
+
+.edit-purchase-form button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 5px;
+}
+
+.edit-purchase-form button:hover {
+  background-color: #45a049;
+}

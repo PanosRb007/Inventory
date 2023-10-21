@@ -1,105 +1,104 @@
 .purchase-func-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .purchase-func-heading {
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-  
-  .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .form-group {
-    margin: 0 10px;
-  }
-  
-  label {
-    font-weight: bold;
-    align-content: center;
-  }
-  
-  input[type="text"],
-  input[type="number"],
-  input[type="date"] {
-    width: 200px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-  .purchase-table-container {
-    margin-top: 20px;
-  }
-  
-  .purchase-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .purchase-table th,
-  .purchase-table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-  }
-  
-  .purchase-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-  }
-  
-  .purchase-table tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  
-  .purchase-table tbody tr:hover {
-    background-color: #ddd;
-  }
-  
-  .pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .pagination button {
-    padding: 8px 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 0 5px;
-  }
-  
-  .pagination button:hover {
-    background-color: #45a049;
-  }
-  
-  .pagination select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-  
-  .search {
-    width: calc(100% - 125px); /* Subtract the sidebar width from the available viewport width */
-    max-height: 50px; /* Set the maximum height for the search container */
-    margin: 0 auto;
-    display: flex;
-    padding: 8px;
-    justify-content: center;
-  }
-  
+.purchase-func-heading {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  margin: 0 10px;
+}
+
+label {
+  font-weight: bold;
+  align-content: center;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"] {
+  width: 200px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.purchase-table-container {
+  margin-top: 20px;
+}
+
+.purchase-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.purchase-table th,
+.purchase-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.purchase-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.purchase-table tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.purchase-table tbody tr:hover {
+  background-color: #ddd;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0 5px;
+}
+
+.pagination button:hover {
+  background-color: #45a049;
+}
+
+.pagination select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search {
+  width: calc(100% - 125px); /* Subtract the sidebar width from the available viewport width */
+  max-height: 50px; /* Set the maximum height for the search container */
+  margin: 0 auto;
+  display: flex;
+  padding: 8px;
+  justify-content: center;
+}

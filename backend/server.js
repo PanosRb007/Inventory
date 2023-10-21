@@ -1,7 +1,9 @@
+const dotenv = require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const materialChangesRouter = require('./materialchangesAPI');
 const getAPI = require('./getAPI');
 const AddVendorAPI = require('./AddVendorAPI');
@@ -12,28 +14,38 @@ const projectsAPI = require('./projectsAPI');
 const stocksAPI = require('./stocksAPI');
 const outflowsAPI = require('./outflowsAPI');
 
-
 const app = express();
-const port = 8443;
+const port = process.env.PORT;
 
 // Create a MySQL connection pool
 const pool = mysql.createPool({
-<<<<<<< HEAD
-  host: '88.99.137.154',
-=======
-  host: 'linux19.papaki.gr',
->>>>>>> 5d0e9666a2f1423c6fd342ac69447de04471a3f0
-  user: 'robbieinventory',
-  password: '123rbb321',
-  database: 'inventory',
+  host: process.env.DB_HOST  ,
+  user: process.env.DB_USER  ,
+  password: process.env.DB_PASSWORD ,
+  database: process.env.DB_NAME ,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
 
-app.use(cors());
-app.use(bodyParser.json());
+const corsOptions = {
+  origin: 'http://localhost:3000', // 'https://inventory.robbie.gr'
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(helmet());
+app.use(morgan('combined'));
 app.locals.pool = pool;
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`${req.method} ${req.originalUrl} took ${duration}ms`);
+  });
+  next();
+});
 
 // Use the materialChangesRouter for /material-changes route
 app.use('/materialchangesAPI', materialChangesRouter(pool));
@@ -49,7 +61,11 @@ app.use(getAPI('/materiallist', 'materiallist'));
 app.use(getAPI('/materialchangesAPI', 'material_changes'));
 app.use(getAPI('/LocationsAPI', 'locations'));
 
-
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 // Start the server
 app.listen(port, () => {
