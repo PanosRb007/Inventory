@@ -6,7 +6,7 @@ import Outflow from './pages/Outflow.js';
 import MaterialList from './pages/MaterialList.js';
 import Projects from './pages/Projects.js';
 import ProjectOutflows from './pages/ProjectOutflows.js';
-import Stock from './pages/stock.js';
+import Stock from './pages/Stock.js';
 
 import './App.css'; // Import custom CSS for App component
 
