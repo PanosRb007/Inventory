@@ -1,5 +1,5 @@
-import 'bootstrap/dist/css/bootstrap-grid.min.css';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -7,10 +7,23 @@ import MaterialList from './pages/MaterialList.js';
 import Projects from './pages/Projects.js';
 import ProjectOutflows from './pages/ProjectOutflows.js';
 import Stock from './pages/Stock.js';
+import Login from './pages/Login.js'; // Import the Login component
+
 
 import './App.css'; // Import custom CSS for App component
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleLogin = (token) => {
+    // Handle token storage securely (e.g., in cookies or local storage)
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
 
 
   return (
@@ -56,7 +69,7 @@ function App() {
             <h1 className="header-title">ROBBIE</h1>
           </header>
           <Routes>
-            <Route path="/Purchases" element={<Purchases />} />
+          <Route path="/Purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
             <Route path="/Outflow" element={<Outflow />} />
             <Route path="/Vendors" element={<Vendors />} />
             <Route path="/MaterialList" element={<MaterialList />} />
@@ -70,6 +83,17 @@ function App() {
       </BrowserRouter>
     </div>
   );
+}
+
+function ProtectedRoute({ children, isAuthenticated }) {
+  const navigate = useNavigate();
+
+  if (!isAuthenticated) {
+    navigate('/login');
+    return null;
+  }
+
+  return children;
 }
 
 export default App;
