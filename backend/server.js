@@ -29,7 +29,7 @@ const pool = mysql.createPool({
 });
 
 const corsOptions = {
-  origin: 'http://localhost:3000', // 'https://inventory.robbie.gr'
+  origin: 'https://inventory.robbie.gr', // your frontend server
   optionsSuccessStatus: 200
 };
 
@@ -39,12 +39,12 @@ app.use(helmet());
 app.use(morgan('combined'));
 app.locals.pool = pool;
 app.use((req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-      const duration = Date.now() - start;
-      console.log(`${req.method} ${req.originalUrl} took ${duration}ms`);
-  });
-  next();
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`${req.method} ${req.originalUrl} took ${duration}ms`);
+    });
+    next();
 });
 
 // Use the materialChangesRouter for /material-changes route
