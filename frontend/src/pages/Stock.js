@@ -3,13 +3,13 @@ import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table
 import './PurchaseFunc.css';
 
 
-const Stocks = () => {
+const Stocks = ({apiBaseUrl}) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [locations, setLocations] = useState([]);
   const [outflows, setOutflows] = useState([]);
-  const [selectedLocantion, setSelectedLocation] = useState([]);
+  const [selectedLocantion, setSelectedLocation] = useState('');
   const [stock, setStock] = useState([]);
 
 
@@ -20,10 +20,10 @@ const Stocks = () => {
     const fetchData = async () => {
         try {
           const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
-            fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
-            fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
-            fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
-            fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
+            fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
+            fetch(`${apiBaseUrl}/PurchasesAPI`).then((response) => response.json()),
+            fetch(`${apiBaseUrl}/LocationsAPI`).then((response) => response.json()),
+            fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
           ]);
       
           setMaterials(materialResponse);
@@ -38,7 +38,7 @@ const Stocks = () => {
       };
     fetchData();
 
-  }, [selectedLocantion]);
+  }, [selectedLocantion, apiBaseUrl]);
 
   console.log("purchases", purchases);
 

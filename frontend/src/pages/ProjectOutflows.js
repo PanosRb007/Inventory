@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 
-const ProjectFunc = () => {
+const ProjectFunc = ({apiBaseUrl}) => {
 
     // State to store the projectId from the query parameter
   const [projectId, setProjectId] = useState(null);
@@ -25,9 +25,9 @@ const ProjectFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [outflowsResponse, projectsResponse, employeesResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/employeesAPI').then((response) => response.json()),
+        fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
+        fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
+        fetch(`${apiBaseUrl}/employeesAPI`).then((response) => response.json()),
       ]);
       const filtered = outflowsResponse;
       console.log('filtered', filtered);
@@ -39,7 +39,7 @@ const ProjectFunc = () => {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, apiBaseUrl]);
 
   useEffect(() => {
     fetchData();

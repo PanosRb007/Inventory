@@ -3,7 +3,7 @@ import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table
 import AddProject from './AddProject.js'; // Make sure to adjust the import path
 import EditProject from './EditProject.js'; // Make sure to adjust the import path
 
-const ProjectFunc = () => {
+const ProjectFunc = ({apiBaseUrl}) => {
   const [editingProject, setEditingProject] = useState(null);
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
@@ -11,7 +11,7 @@ const ProjectFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [projectResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
+        fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
       ]);
       setProjects(projectResponse);
       setIsLoading(false);
@@ -19,7 +19,7 @@ const ProjectFunc = () => {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, []);
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     fetchData();
@@ -27,7 +27,7 @@ const ProjectFunc = () => {
 
   const handleAddProject = useCallback((newProject) => {
     // Send an HTTP request to add the new project
-    fetch('https://api.robbie.gr/projectsAPI', {
+    fetch(`${apiBaseUrl}/projectsAPI`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,14 +48,14 @@ const ProjectFunc = () => {
       .catch((error) => {
         console.log('Error adding project:', error);
       });
-  }, [projects, setProjects, fetchData]);
+  }, [projects, setProjects, fetchData,apiBaseUrl]);
 
 
   const handleDelete = useCallback((deletedproject) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`https://api.robbie.gr/projects/${deletedproject.prid}`, {
+      fetch(`${apiBaseUrl}/projects/${deletedproject.prid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -66,7 +66,7 @@ const ProjectFunc = () => {
           console.log('Error deleting project:', error);
         });
     }
-  }, [projects]);
+  }, [projects, apiBaseUrl]);
 
   const handleEdit = useCallback((project) => {
     if (editingProject && editingProject.prid === project.prid) {
@@ -78,7 +78,7 @@ const ProjectFunc = () => {
   }, [editingProject]);
 
   const handleUpdate = useCallback((updatedproject) => {
-    fetch(`https://api.robbie.gr/projects/${updatedproject.prid}`, {
+    fetch(`${apiBaseUrl}/projects/${updatedproject.prid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ const ProjectFunc = () => {
       .catch((error) => {
         console.error('Error updating the project:', error);
       });
-  }, [fetchData]);
+  }, [fetchData,apiBaseUrl]);
   
   
   
@@ -223,7 +223,7 @@ const ProjectFunc = () => {
           | Go to page:{' '}
           <input
             type="number"
-            defaultvalue={pageIndex + 1}
+            defaultValue={pageIndex + 1}
             onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0;
               gotoPage(page);

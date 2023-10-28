@@ -4,7 +4,7 @@ import EditOutflow from './EditOutflow.js';
 import './PurchaseFunc.css';
 import AddOutflow from './AddOutflow.js';
 
-const OutflowFunc = () => {
+const OutflowFunc = ({apiBaseUrl}) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -20,37 +20,38 @@ const OutflowFunc = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
-        fetch('https://api.robbie.gr/PurchasesAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/LocationsAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/projectsAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/employeesAPI').then((response) => response.json()),
-        fetch('https://api.robbie.gr/outflowsAPI').then((response) => response.json()),
-      ]);
+    const fetchData = async () => {
+      try {
+        const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse] = await Promise.all([
+          fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
+          fetch(`${apiBaseUrl}/PurchasesAPI`).then((response) => response.json()),
+          fetch(`${apiBaseUrl}/LocationsAPI`).then((response) => response.json()),
+          fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
+          fetch(`${apiBaseUrl}/employeesAPI`).then((response) => response.json()),
+          fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
+        ]);
   
-      setMaterials(materialResponse);
-      setPurchases(purchaseResponse);
-      setLocations(locationResponse);
-      setProjects(projectResponse);
-      setEmployees(employeesResponse);
-      setOutflows(outflowsResponse);
-     
-    } catch (error) {
-      console.log('Error fetching data:', error);
-    }
-  };
+        setMaterials(materialResponse);
+        setPurchases(purchaseResponse);
+        setLocations(locationResponse);
+        setProjects(projectResponse);
+        setEmployees(employeesResponse);
+        setOutflows(outflowsResponse);
+      } catch (error) {
+        console.log('Error fetching data:', error);
+      }
+    };
+  
+    fetchData(); // Call the fetchData function inside useEffect
+  
+    // Rest of your code
+  }, [apiBaseUrl]);
 
   console.log('outflowspurch', purchases);
 
   const handleAdd = useCallback((newOutflow) => {
     // Make a POST request to add the new purchase
-    fetch('https://api.robbie.gr/outflowsAPI', {
+    fetch(`${apiBaseUrl}/outflowsAPI`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ const OutflowFunc = () => {
       .then((response) => {
         if (response.ok) {
           // Fetch the updated outflows from the API
-          return fetch('https://api.robbie.gr/outflowsAPI'); // Adjust the API endpoint if needed
+          return fetch(`${apiBaseUrl}/outflowsAPI`); // Adjust the API endpoint if needed
         } else {
           throw new Error('Error adding outflow');
         }
@@ -73,7 +74,7 @@ const OutflowFunc = () => {
       .catch((error) => {
         console.log('Error adding outflow:', error);
       });
-  }, [setOutflows]);
+  }, [setOutflows, apiBaseUrl]);
   
   
 
@@ -81,7 +82,7 @@ const OutflowFunc = () => {
     const isConfirmed = window.confirm('Are you sure you want to delete this outflow?');
   
     if (isConfirmed) {
-      fetch(`https://api.robbie.gr/outflowsAPI/${deletedOutflow.outflowid}`, {
+      fetch(`${apiBaseUrl}/outflowsAPI/${deletedOutflow.outflowid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -92,7 +93,7 @@ const OutflowFunc = () => {
           console.log('Error deleting outflow:', error);
         });
     }
-  }, [outflows, setOutflows]);
+  }, [outflows, setOutflows, apiBaseUrl]);
 
   const handleEdit = useCallback((outflow) => {
     if (editingOutflow && editingOutflow.outflowid === outflow.outflowid) {
@@ -108,7 +109,7 @@ const OutflowFunc = () => {
   
 
   const handleUpdate = useCallback((updatedOutflow) => {
-    fetch(`https://api.robbie.gr/outflowsAPI/${updatedOutflow.outflowid}`, {
+    fetch(`${apiBaseUrl}/outflowsAPI/${updatedOutflow.outflowid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ const OutflowFunc = () => {
       .then((response) => {
         if (response.ok) {
           // Fetch the updated outflows from the API
-          return fetch('https://api.robbie.gr/outflowsAPI'); // Adjust the API endpoint if needed
+          return fetch(`${apiBaseUrl}/outflowsAPI`); // Adjust the API endpoint if needed
         } else {
           throw new Error('Error adding outflow');
         }
@@ -133,7 +134,7 @@ const OutflowFunc = () => {
       .catch((error) => {
         console.error('Error updating the outflow:', error);
       });
-  }, [setEditingOutflow, outflows, setOutflows]);
+  }, [setEditingOutflow, outflows, setOutflows, apiBaseUrl]);
 
   const handleCancel = () => {
     setEditingOutflow(null);

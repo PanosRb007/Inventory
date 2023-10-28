@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, handleCancel}) => {
+const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, handleCancel, apiBaseUrl}) => {
   
   
   const [editedPurchase, setEditedPurchase] = useState({ ...purchase });
@@ -32,7 +32,7 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
       };
 
       // Make a POST request to materialchangesAPI
-      fetch('https://api.robbie.gr/materialchangesAPI', {
+      fetch(`${apiBaseUrl}/materialchangesAPI`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

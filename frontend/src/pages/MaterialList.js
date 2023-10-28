@@ -5,26 +5,28 @@ import EditMaterial from './EditMaterial.js';
 import AddMaterial from './AddMaterial.js';
 
 
-const MaterialList = React.memo(() => {
+const MaterialList = React.memo(({apiBaseUrl}) => {
   
   const [materials, setMaterials] = useState([]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const [materialResponse] = await Promise.all([
+          fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
+        ]);
+    
+        setMaterials(materialResponse);
+        
+      } catch (error) {
+        console.log('Error fetching data:', error);
+      }
+    };
 
-  const fetchData = async () => {
-    try {
-      const [materialResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/materiallist').then((response) => response.json()),
-      ]);
+    fetchData();
+  }, [apiBaseUrl]);
+
   
-      setMaterials(materialResponse);
-      
-    } catch (error) {
-      console.log('Error fetching data:', error);
-    }
-  };
 
   const [editingMaterial, setEditingMaterial] = useState(null);
 
@@ -37,7 +39,7 @@ const MaterialList = React.memo(() => {
       return;
     }
 
-    fetch('https://api.robbie.gr/materiallist', {
+    fetch(`${apiBaseUrl}/materiallist`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,13 +59,13 @@ const MaterialList = React.memo(() => {
       .catch((error) => {
         console.log('Error adding material:', error);
       });
-  }, [materials, setMaterials ]);  
+  }, [materials, setMaterials, apiBaseUrl]);  
 
   const handleDelete = useCallback((deletedMaterial) => {
     const confirmDeletion = window.confirm('Are you sure you want to delete this material?');
 
     if (confirmDeletion) {
-      fetch(`https://api.robbie.gr/MaterialList/${deletedMaterial.matid}`, {
+      fetch(`${apiBaseUrl}/MaterialList/${deletedMaterial.matid}`, {
         method: 'DELETE',
       })
         .then((response) => response.json())
@@ -75,7 +77,7 @@ const MaterialList = React.memo(() => {
           console.log('Error deleting material:', error);
         });
     }
-  }, [materials, setMaterials]);
+  }, [materials, setMaterials, apiBaseUrl]);
 
   const handleEdit = useCallback((material) => {
     if (editingMaterial && editingMaterial.matid === material.matid) {
@@ -96,7 +98,7 @@ const MaterialList = React.memo(() => {
       return;
     }
   
-    fetch(`https://api.robbie.gr/MaterialList/${updatedMaterial.matid}`, {
+    fetch(`${apiBaseUrl}/MaterialList/${updatedMaterial.matid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +116,7 @@ const MaterialList = React.memo(() => {
       .catch((error) => {
         console.log('Error updating material:', error);
       });
-  }, [materials, setMaterials, setEditingMaterial]);
+  }, [materials, setMaterials, setEditingMaterial, apiBaseUrl]);
 
   const columns = React.useMemo(
     () => [

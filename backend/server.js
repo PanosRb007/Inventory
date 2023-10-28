@@ -28,12 +28,12 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-const corsOptions = {
-  origin: 'https://inventory.robbie.gr', // your frontend server
+/*const corsOptions = {
+  origin: 'http://localhost:3000', // your frontend server
   optionsSuccessStatus: 200
-};
+};*/
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(helmet());
 app.use(morgan('combined'));

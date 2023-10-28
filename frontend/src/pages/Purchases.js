@@ -4,7 +4,7 @@ import EditPurchase from './EditPurchase.js';
 import './PurchaseFunc.css';
 import AddPurchase from './AddPurchase.js';
 
-const PurchaseFunc = () => {
+const PurchaseFunc = ({apiBaseUrl}) => {
   const [purchases, setPurchases] = useState([]);
   const [editingPurchase, setEditingPurchase] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -26,7 +26,7 @@ const PurchaseFunc = () => {
     };
   
     try {
-      const purchaseData = await fetchAPI('https://api.robbie.gr/PurchasesAPI');
+      const purchaseData = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
       setPurchases(purchaseData);
     } catch (error) {
       console.log('Error fetching purchases:', error);
@@ -34,7 +34,7 @@ const PurchaseFunc = () => {
     }
   
     try {
-      const locationData = await fetchAPI('https://api.robbie.gr/LocationsAPI');
+      const locationData = await fetchAPI(`${apiBaseUrl}/LocationsAPI`);
       setLocations(locationData);
     } catch (error) {
       console.log('Error fetching locations:', error);
@@ -42,7 +42,7 @@ const PurchaseFunc = () => {
     }
   
     try {
-      const materialData = await fetchAPI('https://api.robbie.gr/materiallist');
+      const materialData = await fetchAPI(`${apiBaseUrl}/materiallist`);
       setMaterials(materialData);
     } catch (error) {
       console.log('Error fetching materials:', error);
@@ -50,7 +50,7 @@ const PurchaseFunc = () => {
     }
   
     try {
-      const vendorData = await fetchAPI('https://api.robbie.gr/vendors');
+      const vendorData = await fetchAPI(`${apiBaseUrl}/vendors`);
       setVendors(vendorData);
     } catch (error) {
       console.log('Error fetching vendors:', error);
@@ -58,7 +58,7 @@ const PurchaseFunc = () => {
     }
   
     try {
-      const materialchangesData = await fetchAPI('https://api.robbie.gr/materialchangesAPI');
+      const materialchangesData = await fetchAPI(`${apiBaseUrl}/materialchangesAPI`);
       setMaterialchanges(materialchangesData);
     } catch (error) {
       console.log('Error fetching material changes:', error);
@@ -66,7 +66,7 @@ const PurchaseFunc = () => {
     }
   
     setIsLoading(false);
-  }, []);
+  }, [apiBaseUrl]);
   
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const PurchaseFunc = () => {
   const handleAdd = useCallback((newPurchase) => {
     
     // Make a POST request to add the new purchase
-    fetch('https://api.robbie.gr/PurchasesAPI', {
+    fetch(`${apiBaseUrl}/PurchasesAPI`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -98,13 +98,13 @@ const PurchaseFunc = () => {
       .catch((error) => {
         console.log('Error adding purchase:', error);
       });
-  }, [fetchData]);
+  }, [fetchData, apiBaseUrl]);
 
   const handleDelete = useCallback((deletedPurchase) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`https://api.robbie.gr/PurchasesAPI/${deletedPurchase.id}`, {
+      fetch(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -115,7 +115,7 @@ const PurchaseFunc = () => {
           console.log('Error deleting purchase:', error);
         });
     }
-  }, [purchases]);
+  }, [purchases, apiBaseUrl]);
 
   const handleEdit = useCallback((purchase) => {
     if (editingPurchase && editingPurchase.id === purchase.id) {
@@ -127,7 +127,7 @@ const PurchaseFunc = () => {
   }, [editingPurchase]);
 
   const handleUpdate = useCallback((updatedPurchase) => {
-    fetch(`https://api.robbie.gr/PurchasesAPI/${updatedPurchase.id}`, {
+    fetch(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ const PurchaseFunc = () => {
       .catch((error) => {
         console.error('Error updating the purchase:', error);
       });
-  }, [fetchData]);
+  }, [fetchData, apiBaseUrl]);
 
   const handleCancel = () => {
     setEditingPurchase(null);
@@ -198,7 +198,7 @@ const PurchaseFunc = () => {
           const vendor = vendors.find((v) => v.vendorid === value.vendor);
           return vendor ? (
             <span title={`Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}\n`}>
-              <a href={`https://api.robbie.gr/vendors/${vendor.vendorid}`} target="_blank" rel="noopener noreferrer">
+              <a href={`${apiBaseUrl}/vendors/${vendor.vendorid}`} target="_blank" rel="noopener noreferrer">
                 {vendor.name}
               </a>
             </span>
@@ -218,7 +218,7 @@ const PurchaseFunc = () => {
         ),
       },
     ],
-    [handleEdit, handleDelete, locations, materials, vendors, materialchanges]
+    [handleEdit, handleDelete, locations, materials, vendors, materialchanges, apiBaseUrl]
   );
 
   function formatDateTime(dateTimeString) {
@@ -285,7 +285,7 @@ const PurchaseFunc = () => {
 
   return (
     <div>
-      <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials}/>
+      <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials} apiBaseUrl={apiBaseUrl}/>
 
       <div className="search">
         <input
@@ -321,7 +321,7 @@ const PurchaseFunc = () => {
                 {editingPurchase && editingPurchase.id === row.original.id && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditPurchase purchase={editingPurchase} handleUpdate={handleUpdate} vendors={vendors} locations={locations} materials={materials} purchases={purchases} setPurchases={setPurchases} handleCancel={handleCancel}/>
+                      <EditPurchase purchase={editingPurchase} handleUpdate={handleUpdate} vendors={vendors} locations={locations} materials={materials} purchases={purchases} setPurchases={setPurchases} handleCancel={handleCancel} apiBaseUrl={apiBaseUrl}/>
                     </td>
                   </tr>
                 )}

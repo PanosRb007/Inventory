@@ -4,7 +4,7 @@ import AddVendor from './AddVendor.js';
 import EditVendor from './EditVendor.js';
 
 
-const VendorsFunc = () => {
+const VendorsFunc = ({apiBaseUrl}) => {
   const [editingVendor, setEditingVendor] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
@@ -12,7 +12,7 @@ const VendorsFunc = () => {
   const fetchData = useCallback(async () => {
     try {
       const [vendorResponse] = await Promise.all([
-        fetch('https://api.robbie.gr/vendors').then((response) => response.json()),
+        fetch(`${apiBaseUrl}/vendors`).then((response) => response.json()),
       ]);
       setVendors(vendorResponse);
       setIsLoading(false);
@@ -20,15 +20,15 @@ const VendorsFunc = () => {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, []);
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, apiBaseUrl]);
 
   const handleAddVendor = useCallback((newVendor) => {
     // Send an HTTP request to add the new vendor
-    fetch('https://api.robbie.gr/vendors', {
+    fetch(`${apiBaseUrl}/vendors`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,14 +49,14 @@ const VendorsFunc = () => {
       .catch((error) => {
         console.log('Error adding vendor:', error);
       });
-  }, [vendors, setVendors, fetchData]);
+  }, [vendors, setVendors, fetchData, apiBaseUrl]);
 
 
   const handleDelete = useCallback((deletedVendor) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`https://api.robbie.gr/vendors/${deletedVendor.vendorid}`, {
+      fetch(`${apiBaseUrl}/vendors/${deletedVendor.vendorid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -67,7 +67,7 @@ const VendorsFunc = () => {
           console.log('Error deleting vendor:', error);
         });
     }
-  }, [vendors]);
+  }, [vendors, apiBaseUrl]);
 
   const handleEdit = useCallback((vendor) => {
     if (editingVendor && editingVendor.vendorid === vendor.vendorid) {
@@ -79,7 +79,7 @@ const VendorsFunc = () => {
   }, [editingVendor]);
 
   const handleUpdate = useCallback((updatedVendor) => {
-    fetch(`https://api.robbie.gr/vendors/${updatedVendor.vendorid}`, {
+    fetch(`${apiBaseUrl}/vendors/${updatedVendor.vendorid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ const VendorsFunc = () => {
       .catch((error) => {
         console.error('Error updating the vendor:', error);
       });
-  }, [fetchData]);
+  }, [fetchData, apiBaseUrl]);
   
   
   
