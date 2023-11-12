@@ -1,5 +1,5 @@
-//import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, /*useNavigate*/ } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -7,7 +7,7 @@ import MaterialList from './pages/MaterialList.js';
 import Projects from './pages/Projects.js';
 import ProjectOutflows from './pages/ProjectOutflows.js';
 import Stock from './pages/Stock.js';
-//import Login from './pages/Login.js'; // Import the Login component
+import Login from './pages/Login.js'; // Import the Login component
 
 
 import './App.css'; // Import custom CSS for App component
@@ -15,17 +15,17 @@ import './App.css'; // Import custom CSS for App component
 const API_BASE_URL = 'http://localhost:8081';
 
 function App() {
-  /*const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleLogin = (token) => {
-    // Handle token storage securely (e.g., in cookies or local storage)
+    localStorage.setItem('authToken', token); 
+    console.log('local', localStorage);
     setIsAuthenticated(true);
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }*/
-
+    return <Login onLogin={handleLogin} apiBaseUrl={API_BASE_URL} />;
+  }
 
   return (
     <div
@@ -70,7 +70,7 @@ function App() {
             <h1 className="header-title">ROBBIE</h1>
           </header>
           <Routes>
-          <Route path="/Purchases" element={/*<ProtectedRoute>*/<Purchases apiBaseUrl={API_BASE_URL}/>/*</ProtectedRoute>*/} />
+          <Route path="/Purchases" element={<Purchases apiBaseUrl={API_BASE_URL}/>} />
             <Route path="/Outflow" element={<Outflow apiBaseUrl={API_BASE_URL} />} />
             <Route path="/Vendors" element={<Vendors apiBaseUrl={API_BASE_URL}/>} />
             <Route path="/MaterialList" element={<MaterialList apiBaseUrl={API_BASE_URL}/>} />
@@ -86,15 +86,15 @@ function App() {
   );
 }
 
-/*function ProtectedRoute({ children, isAuthenticated }) {
+function ProtectedRoute({ children, isAuthenticated }) {
   const navigate = useNavigate();
 
   if (!isAuthenticated) {
-    navigate('/login');
+    navigate('/');
     return null;
   }
 
   return children;
 }
-*/
+
 export default App;

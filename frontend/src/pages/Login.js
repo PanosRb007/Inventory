@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css';
 
-function Login(props) {
+function Login({ onLogin, apiBaseUrl }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -9,16 +9,22 @@ function Login(props) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch(`${apiBaseUrl}/loginAPI`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
       });
+
+      // Log the response from the server
+      console.log('Server Response:', response);
+
       const data = await response.json();
+      console.log('Data from Server:', data);
+
       if (data.success) {
-        props.onLogin(data.token); // Assuming the backend returns a token on successful login
+        onLogin(data.token); // Use the onLogin prop here
       } else {
         setError(data.message || 'Login failed');
       }

@@ -17,8 +17,16 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
   const fetchData = useCallback(async () => {
+    const authToken = localStorage.getItem('authToken');
+    console.log('tokenprefetch',authToken);
     const fetchAPI = async (url) => {
-      const response = await fetch(url);
+      console.log('Fetching data...');
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`, // Include the token in the request headers
+        },
+      });
+      console.log('Response status:', response.status);
       if (!response.ok) {
         throw new Error(`Error fetching ${url}`);
       }

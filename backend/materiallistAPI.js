@@ -3,6 +3,17 @@ const express = require('express');
 const router = express.Router();
 
 module.exports = (pool) => {
+  router.get('/', async (req, res) => {
+    try {
+      const sql = 'SELECT * FROM materiallist'; // Corrected the SQL query string
+      const { pool } = req.app.locals;
+      const [results] = await pool.query(sql);
+      res.status(200).json(results);
+    } catch (error) {
+      console.error('Error retrieving vendors:', error);
+      res.status(500).json({ error: 'Failed to retrieve vendors' });
+    }
+  });
 
   router.get('/:matid', async (req, res) => {
     const { matid } = req.params;
