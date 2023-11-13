@@ -12,7 +12,7 @@ import Login from './pages/Login.js'; // Import the Login component
 
 import './App.css'; // Import custom CSS for App component
 
-const API_BASE_URL = 'http://localhost:8081';
+const API_BASE_URL = 'https://api.robbie.gr';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

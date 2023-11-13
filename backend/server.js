@@ -79,15 +79,15 @@ function authenticateToken() {
 
 // Use the materialChangesRouter for /material-changes route
 app.use('/loginAPI', loginAPI(secretKey, pool));
-app.use('/materialchangesAPI', authenticateToken, materialChangesRouter(pool));
-app.use('/vendors', authenticateToken, AddVendorAPI(pool));
-app.use('/PurchasesAPI', authenticateToken, PurchasesAPI(pool));
-app.use('/materiallist', authenticateToken, MateriallistAPI(pool));
-app.use('/employeesAPI', authenticateToken, employeesAPI(pool));
-app.use('/projectsAPI', authenticateToken, projectsAPI(pool));
-app.use('/stocksAPI', authenticateToken, stocksAPI(pool));
-app.use('/outflowsAPI', authenticateToken, outflowsAPI(pool));
-app.use('/LocationsAPI', authenticateToken, locationsAPI(pool));
+app.use('/materialchangesAPI', authenticateToken(), materialChangesRouter(pool));
+app.use('/vendors', authenticateToken(), AddVendorAPI(pool));
+app.use('/PurchasesAPI', authenticateToken(), PurchasesAPI(pool));
+app.use('/materiallist', authenticateToken(), MateriallistAPI(pool));
+app.use('/employeesAPI', authenticateToken(), employeesAPI(pool));
+app.use('/projectsAPI', authenticateToken(), projectsAPI(pool));
+app.use('/stocksAPI', authenticateToken(), stocksAPI(pool));
+app.use('/outflowsAPI', authenticateToken(), outflowsAPI(pool));
+app.use('/LocationsAPI', authenticateToken(), locationsAPI(pool));
 
 
 
