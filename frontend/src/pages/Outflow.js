@@ -19,16 +19,34 @@ const OutflowFunc = ({apiBaseUrl}) => {
     window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
   };
 
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
+  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse] = await Promise.all([
-          fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
-          fetch(`${apiBaseUrl}/PurchasesAPI`).then((response) => response.json()),
-          fetch(`${apiBaseUrl}/LocationsAPI`).then((response) => response.json()),
-          fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
-          fetch(`${apiBaseUrl}/employeesAPI`).then((response) => response.json()),
-          fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
+          fetchAPI(`${apiBaseUrl}/materiallist`),
+          fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
+          fetchAPI(`${apiBaseUrl}/LocationsAPI`),
+          fetchAPI(`${apiBaseUrl}/projectsAPI`),
+          fetchAPI(`${apiBaseUrl}/employeesAPI`),
+          fetchAPI(`${apiBaseUrl}/outflowsAPI`),
         ]);
   
         setMaterials(materialResponse);
@@ -45,36 +63,24 @@ const OutflowFunc = ({apiBaseUrl}) => {
     fetchData(); // Call the fetchData function inside useEffect
   
     // Rest of your code
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl,fetchAPI]);
 
   console.log('outflowspurch', purchases);
 
   const handleAdd = useCallback((newOutflow) => {
-    // Make a POST request to add the new purchase
-    fetch(`${apiBaseUrl}/outflowsAPI`, {
+    fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(newOutflow),
     })
-      .then((response) => {
-        if (response.ok) {
-          // Fetch the updated outflows from the API
-          return fetch(`${apiBaseUrl}/outflowsAPI`); // Adjust the API endpoint if needed
-        } else {
-          throw new Error('Error adding outflow');
-        }
-      })
-      .then((response) => response.json())
+      .then(() => fetchAPI(`${apiBaseUrl}/outflowsAPI`))
       .then((data) => {
-        setOutflows(data); // Update the outflows state with the fetched data
-        console.log('updated', data);
+        setOutflows(data);
+        console.log('Outflow added successfully', data);
       })
       .catch((error) => {
-        console.log('Error adding outflow:', error);
+        console.error('Error adding outflow:', error.message);
       });
-  }, [setOutflows, apiBaseUrl]);
+  }, [setOutflows, apiBaseUrl, fetchAPI]);
   
   
 
@@ -82,7 +88,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this outflow?');
   
     if (isConfirmed) {
-      fetch(`${apiBaseUrl}/outflowsAPI/${deletedOutflow.outflowid}`, {
+      fetchAPI(`${apiBaseUrl}/outflowsAPI/${deletedOutflow.outflowid}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -93,7 +99,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
           console.log('Error deleting outflow:', error);
         });
     }
-  }, [outflows, setOutflows, apiBaseUrl]);
+  }, [outflows, setOutflows, apiBaseUrl,fetchAPI]);
 
   const handleEdit = useCallback((outflow) => {
     if (editingOutflow && editingOutflow.outflowid === outflow.outflowid) {
@@ -109,32 +115,23 @@ const OutflowFunc = ({apiBaseUrl}) => {
   
 
   const handleUpdate = useCallback((updatedOutflow) => {
-    fetch(`${apiBaseUrl}/outflowsAPI/${updatedOutflow.outflowid}`, {
+    fetchAPI(`${apiBaseUrl}/outflowsAPI/${updatedOutflow.outflowid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(updatedOutflow),
     })
-      .then((response) => {
-        if (response.ok) {
-          // Fetch the updated outflows from the API
-          return fetch(`${apiBaseUrl}/outflowsAPI`); // Adjust the API endpoint if needed
-        } else {
-          throw new Error('Error adding outflow');
-        }
-      })
-      .then(() => {
-        setEditingOutflow(null);
-        const updatedOutflows = outflows.map((outflow) =>
-        outflow.outflowid === updatedOutflow.outflowid ? updatedOutflow : outflow
-        );
+      .then(() => fetchAPI(`${apiBaseUrl}/outflowsAPI`))
+      .then((updatedOutflows) => {
         setOutflows(updatedOutflows);
+        setEditingOutflow(null);
       })
       .catch((error) => {
-        console.error('Error updating the outflow:', error);
+        console.error('Error updating the outflow:', error.message);
       });
-  }, [setEditingOutflow, outflows, setOutflows, apiBaseUrl]);
+  }, [setOutflows, setEditingOutflow, apiBaseUrl, fetchAPI]);
+  
 
   const handleCancel = () => {
     setEditingOutflow(null);
@@ -222,11 +219,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
             </span>
           );
         },
-      },
-      
-      
-
-           
+      },        
       { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
       },
       { Header: 'Actions', accessor: 'actions',

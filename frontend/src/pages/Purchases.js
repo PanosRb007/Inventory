@@ -12,70 +12,44 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   const [vendors, setVendors] = useState([]);
   const [materialchanges, setMaterialchanges] = useState([]);
   const [error, setError] = useState(null);
-
-  
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
-  const fetchData = useCallback(async () => {
+  const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = localStorage.getItem('authToken');
-    console.log('tokenprefetch',authToken);
-    const fetchAPI = async (url) => {
-      console.log('Fetching data...');
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`, // Include the token in the request headers
-        },
-      });
-      console.log('Response status:', response.status);
-      if (!response.ok) {
-        throw new Error(`Error fetching ${url}`);
-      }
-      return response.json();
-    };
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
   
+  const fetchData = useCallback(async () => {
     try {
-      const purchaseData = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
+      const [purchaseData, locationData, materialData, vendorData, materialchangesData] = await Promise.all([
+        fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
+        fetchAPI(`${apiBaseUrl}/LocationsAPI`),
+        fetchAPI(`${apiBaseUrl}/materiallist`),
+        fetchAPI(`${apiBaseUrl}/vendors`),
+        fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
+      ]);
       setPurchases(purchaseData);
-    } catch (error) {
-      console.log('Error fetching purchases:', error);
-      setError(error.message);
-    }
-  
-    try {
-      const locationData = await fetchAPI(`${apiBaseUrl}/LocationsAPI`);
       setLocations(locationData);
-    } catch (error) {
-      console.log('Error fetching locations:', error);
-      setError(error.message);
-    }
-  
-    try {
-      const materialData = await fetchAPI(`${apiBaseUrl}/materiallist`);
       setMaterials(materialData);
-    } catch (error) {
-      console.log('Error fetching materials:', error);
-      setError(error.message);
-    }
-  
-    try {
-      const vendorData = await fetchAPI(`${apiBaseUrl}/vendors`);
       setVendors(vendorData);
-    } catch (error) {
-      console.log('Error fetching vendors:', error);
-      setError(error.message);
-    }
-  
-    try {
-      const materialchangesData = await fetchAPI(`${apiBaseUrl}/materialchangesAPI`);
       setMaterialchanges(materialchangesData);
     } catch (error) {
-      console.log('Error fetching material changes:', error);
       setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  
-    setIsLoading(false);
-  }, [apiBaseUrl]);
-  
+  }, [fetchAPI,apiBaseUrl]);
 
   useEffect(() => {
     fetchData();
@@ -83,57 +57,28 @@ const PurchaseFunc = ({apiBaseUrl}) => {
 
   console.log('purhases, purchases', purchases);
 
-  const handleAdd = useCallback((newPurchase) => {
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
-
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
+  const handleAdd = useCallback(async (newPurchase) => {
+    try {
+      await fetchAPI(`${apiBaseUrl}/PurchasesAPI`, {
+        method: 'POST',
         headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(newPurchase),
       });
-    };
-    // Make a POST request to add the new purchase
-    fetchWithAuth(`${apiBaseUrl}/PurchasesAPI`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newPurchase),
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Error adding purchase');
-        }
-      })
-      .then(() => {
-        fetchData();
-      })  
-      .catch((error) => {
-        console.log('Error adding purchase:', error);
-      });
-  }, [fetchData, apiBaseUrl]);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding purchase:', error.message);
+    }
+  }, [fetchData, apiBaseUrl, fetchAPI]);
+  
 
   const handleDelete = useCallback((deletedPurchase) => {
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
-
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-    };
+    
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetchWithAuth(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
+      fetchAPI(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -144,7 +89,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           console.log('Error deleting purchase:', error);
         });
     }
-  }, [purchases, apiBaseUrl]);
+  }, [purchases, apiBaseUrl,fetchAPI]);
 
   const handleEdit = useCallback((purchase) => {
     if (editingPurchase && editingPurchase.id === purchase.id) {
@@ -155,41 +100,27 @@ const PurchaseFunc = ({apiBaseUrl}) => {
     setEditingPurchase(purchase);
   }, [editingPurchase]);
 
-  const handleUpdate = useCallback((updatedPurchase) => {
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
-
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
+  const handleUpdate = useCallback(async (updatedPurchase) => {
+    try {
+      await fetchAPI(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
+        method: 'PUT',
         headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(updatedPurchase),
       });
-    };
-    fetchWithAuth(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedPurchase),
-    })
-      .then((response) => response.json())
-      .then(() => {
-        fetchData();
-        setEditingPurchase(null);
-      })
-      .catch((error) => {
-        console.error('Error updating the purchase:', error);
-      });
-  }, [fetchData, apiBaseUrl]);
+      fetchData();
+      setEditingPurchase(null);
+    } catch (error) {
+      console.error('Error updating the purchase:', error);
+    }
+  }, [fetchData, apiBaseUrl, fetchAPI]);
+  
 
   const handleCancel = () => {
     setEditingPurchase(null);
   };
 
-  
- 
   const columns = React.useMemo(
     () => [
       { Header: 'ID', accessor: 'id' },

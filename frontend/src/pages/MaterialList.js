@@ -9,28 +9,41 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
   
   const [materials, setMaterials] = useState([]);
 
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [materialResponse] = await Promise.all([
-          fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
-        ]);
-    
+        const materialResponse = await fetchAPI(`${apiBaseUrl}/materiallist`);
         setMaterials(materialResponse);
-        
       } catch (error) {
         console.log('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, fetchAPI]);
 
   
 
   const [editingMaterial, setEditingMaterial] = useState(null);
 
-  const handleAdd = useCallback((newMaterial) => {
+  const handleAdd = useCallback(async (newMaterial) => {
     const materialExists = materials.some(
       (material) => material.matid === newMaterial.matid || material.name === newMaterial.name
     );
@@ -38,46 +51,35 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       alert('Material ID or name already exists.');
       return;
     }
-
-    fetch(`${apiBaseUrl}/materiallist`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newMaterial),
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Error adding material');
-        }
-      })
-      .then((data) => {
-        setMaterials([...materials, newMaterial])
-      })
-      .catch((error) => {
-        console.log('Error adding material:', error);
+  
+    try {
+      const addedMaterial = await fetchAPI(`${apiBaseUrl}/materiallist`, {
+        method: 'POST',
+        body: JSON.stringify(newMaterial),
       });
-  }, [materials, setMaterials, apiBaseUrl]);  
-
-  const handleDelete = useCallback((deletedMaterial) => {
-    const confirmDeletion = window.confirm('Are you sure you want to delete this material?');
-
-    if (confirmDeletion) {
-      fetch(`${apiBaseUrl}/MaterialList/${deletedMaterial.matid}`, {
-        method: 'DELETE',
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const updatedMaterialList = materials.filter((m) => m.matid !== deletedMaterial.matid);
-          setMaterials(updatedMaterialList);
-        })
-        .catch((error) => {
-          console.log('Error deleting material:', error);
-        });
+      setMaterials([...materials, addedMaterial]);
+    } catch (error) {
+      console.log('Error adding material:', error);
     }
-  }, [materials, setMaterials, apiBaseUrl]);
+  }, [materials, setMaterials, apiBaseUrl, fetchAPI]);
+   
+
+  const handleDelete = useCallback(async (deletedMaterial) => {
+    const confirmDeletion = window.confirm('Are you sure you want to delete this material?');
+  
+    if (confirmDeletion) {
+      try {
+        await fetchAPI(`${apiBaseUrl}/MaterialList/${deletedMaterial.matid}`, {
+          method: 'DELETE',
+        });
+        const updatedMaterialList = materials.filter((m) => m.matid !== deletedMaterial.matid);
+        setMaterials(updatedMaterialList);
+      } catch (error) {
+        console.log('Error deleting material:', error);
+      }
+    }
+  }, [materials, setMaterials, apiBaseUrl, fetchAPI]);
+  
 
   const handleEdit = useCallback((material) => {
     if (editingMaterial && editingMaterial.matid === material.matid) {
@@ -87,7 +89,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
     setEditingMaterial(material);
   }, [editingMaterial]);
 
-  const handleUpdate = useCallback((updatedMaterial) => {
+  const handleUpdate = useCallback(async (updatedMaterial) => {
     const materialExists = materials.some(
       (material) =>
         (material.matid === updatedMaterial.matid || material.name === updatedMaterial.name) &&
@@ -98,25 +100,24 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       return;
     }
   
-    fetch(`${apiBaseUrl}/MaterialList/${updatedMaterial.matid}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedMaterial),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const updatedMaterialList = materials.map((m) =>
-          m.matid === updatedMaterial.matid ? updatedMaterial : m
-        );
-        setMaterials(updatedMaterialList);
-        setEditingMaterial(null);
-      })
-      .catch((error) => {
-        console.log('Error updating material:', error);
+    try {
+      await fetchAPI(`${apiBaseUrl}/MaterialList/${updatedMaterial.matid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedMaterial),
       });
-  }, [materials, setMaterials, setEditingMaterial, apiBaseUrl]);
+      const updatedMaterialList = materials.map((m) =>
+        m.matid === updatedMaterial.matid ? updatedMaterial : m
+      );
+      setMaterials(updatedMaterialList);
+      setEditingMaterial(null);
+    } catch (error) {
+      console.log('Error updating material:', error);
+    }
+  }, [materials, setMaterials, setEditingMaterial, apiBaseUrl, fetchAPI]);
+  
 
   const columns = React.useMemo(
     () => [

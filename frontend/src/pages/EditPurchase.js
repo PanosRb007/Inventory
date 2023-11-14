@@ -6,8 +6,6 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
   const [editedPurchase, setEditedPurchase] = useState({ ...purchase });
 
   console.log('editedpuchase', editedPurchase);
-
-  
   console.log('editedPurchase:', editedPurchase);
   console.log('myPurchase:', purchase);
 
@@ -19,7 +17,6 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
     }));
   };
   
-
   const handleSave = () => {
     handleUpdate(editedPurchase);
 
@@ -30,12 +27,14 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
         vendor: editedPurchase.vendor,
         price: editedPurchase.price,
       };
+      const authToken = localStorage.getItem('authToken');
 
       // Make a POST request to materialchangesAPI
       fetch(`${apiBaseUrl}/materialchangesAPI`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify(materialChangeData),
       })
@@ -57,7 +56,6 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
   const handleCancelClick = () => {
     handleCancel(); // Call the cancel function passed as a prop
   };
-
 
   return (
     <div className="edit-purchase">

@@ -31,10 +31,6 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
   const [showExtras, setShowExtras] = useState(false);
 
-  
-
-  
-
   useEffect(() => {
     const fetchData = async () => {
       const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
@@ -48,7 +44,6 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
           },
         });
       };
-
 
       try {
     
