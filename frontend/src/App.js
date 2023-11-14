@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, /*useNavigate*/ } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -86,7 +86,7 @@ function App() {
   );
 }
 
-function ProtectedRoute({ children, isAuthenticated }) {
+/*function ProtectedRoute({ children, isAuthenticated }) {
   const navigate = useNavigate();
 
   if (!isAuthenticated) {
@@ -95,6 +95,6 @@ function ProtectedRoute({ children, isAuthenticated }) {
   }
 
   return children;
-}
+}*/
 
 export default App;

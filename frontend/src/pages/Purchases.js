@@ -84,9 +84,19 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   console.log('purhases, purchases', purchases);
 
   const handleAdd = useCallback((newPurchase) => {
-    
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
     // Make a POST request to add the new purchase
-    fetch(`${apiBaseUrl}/PurchasesAPI`, {
+    fetchWithAuth(`${apiBaseUrl}/PurchasesAPI`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,10 +119,21 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   }, [fetchData, apiBaseUrl]);
 
   const handleDelete = useCallback((deletedPurchase) => {
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
   
     if (isConfirmed) {
-      fetch(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
+      fetchWithAuth(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
       })
         .then(() => {
@@ -135,7 +156,18 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   }, [editingPurchase]);
 
   const handleUpdate = useCallback((updatedPurchase) => {
-    fetch(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
+    fetchWithAuth(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

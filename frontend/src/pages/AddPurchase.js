@@ -31,15 +31,32 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
   const [showExtras, setShowExtras] = useState(false);
 
+  
+
+  
+
   useEffect(() => {
     const fetchData = async () => {
+      const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+      const fetchWithAuth = async (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+      };
+
+
       try {
     
         if (newPurchase.materialid) {
           try {
             const [responseChanges, responseList] = await Promise.all([
-              fetch(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
-              fetch(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
+              fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
+              fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
             ]);
   
             const [dataChanges, dataList] = await Promise.all([
@@ -105,10 +122,22 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
     
 
     try {
-      const responseChanges = await fetch(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`);
+
+      const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`);
       const dataChanges = await responseChanges.json();
 
       const hasChanges =
@@ -117,7 +146,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
           dataChanges.vendor !== newPurchase.vendor);
 
       if (dataChanges && hasChanges) {
-        const response = await fetch(`${apiBaseUrl}/materialchangesAPI/`, {
+        const response = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -144,6 +173,18 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   
   const handleAddMat = useCallback((newMaterial) => {
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
+    
     const materialExists = materials.some(
       (material) => material.matid === newMaterial.matid || material.name === newMaterial.name
     );
@@ -152,7 +193,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       return;
     }
   
-    fetch(`${apiBaseUrl}/materiallist`, {
+    fetchWithAuth(`${apiBaseUrl}/materiallist`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -176,9 +217,21 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   }, [materials, setMaterials, setShowAddMaterialForm, apiBaseUrl]);
 
   const handleAddVendor = useCallback(async (newVendor) => {
+
+    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+
+    const fetchWithAuth = async (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+    };
     try {
       // Send an HTTP request to add the new vendor
-      const addResponse = await fetch(`${apiBaseUrl}/vendors`, {
+      const addResponse = await fetchWithAuth(`${apiBaseUrl}/vendors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +244,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       }
   
       // Fetch the updated list of vendors from '/vendorsAPI'
-      const response = await fetch(`${apiBaseUrl}/vendors`);
+      const response = await fetchWithAuth(`${apiBaseUrl}/vendors`);
   
       if (!response.ok) {
         throw new Error('Failed to fetch vendors');
