@@ -9,65 +9,73 @@ const VendorsFunc = ({apiBaseUrl}) => {
   const [vendors, setVendors] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
+
+
   const fetchData = useCallback(async () => {
     try {
-      const [vendorResponse] = await Promise.all([
-        fetch(`${apiBaseUrl}/vendors`).then((response) => response.json()),
-      ]);
+      const vendorResponse = await fetchAPI(`${apiBaseUrl}/vendors`);
       setVendors(vendorResponse);
       setIsLoading(false);
     } catch (error) {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, fetchAPI]);
+  
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, apiBaseUrl]);
+  }, [fetchData, apiBaseUrl,fetchAPI]);
 
   const handleAddVendor = useCallback((newVendor) => {
-    // Send an HTTP request to add the new vendor
-    fetch(`${apiBaseUrl}/vendors`, {
+    fetchAPI(`${apiBaseUrl}/vendors`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(newVendor),
     })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Error adding vendor');
-        }
-      })
-      .then((data) => {
-        setVendors([...vendors, newVendor]);
-        fetchData();
-      })
-      .catch((error) => {
-        console.log('Error adding vendor:', error);
-      });
-  }, [vendors, setVendors, fetchData, apiBaseUrl]);
+    .then((data) => {
+      setVendors([...vendors, data]); // Assuming the API returns the added vendor
+      fetchData();
+    })
+    .catch((error) => {
+      console.log('Error adding vendor:', error);
+    });
+  }, [vendors, setVendors, fetchData, apiBaseUrl, fetchAPI]);
+  
 
 
   const handleDelete = useCallback((deletedVendor) => {
-    const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
+    const isConfirmed = window.confirm('Are you sure you want to delete this vendor?');
   
     if (isConfirmed) {
-      fetch(`${apiBaseUrl}/vendors/${deletedVendor.vendorid}`, {
+      fetchAPI(`${apiBaseUrl}/vendors/${deletedVendor.vendorid}`, {
         method: 'DELETE',
       })
-        .then(() => {
-          const updatedVendorList = vendors.filter((v) => v.vendorid !== deletedVendor.vendorid);
-          setVendors(updatedVendorList);
-        })
-        .catch((error) => {
-          console.log('Error deleting vendor:', error);
-        });
+      .then(() => {
+        const updatedVendorList = vendors.filter((v) => v.vendorid !== deletedVendor.vendorid);
+        setVendors(updatedVendorList);
+      })
+      .catch((error) => {
+        console.log('Error deleting vendor:', error);
+      });
     }
-  }, [vendors, apiBaseUrl]);
+  }, [vendors, apiBaseUrl, fetchAPI]);
+  
 
   const handleEdit = useCallback((vendor) => {
     if (editingVendor && editingVendor.vendorid === vendor.vendorid) {
@@ -79,24 +87,18 @@ const VendorsFunc = ({apiBaseUrl}) => {
   }, [editingVendor]);
 
   const handleUpdate = useCallback((updatedVendor) => {
-    fetch(`${apiBaseUrl}/vendors/${updatedVendor.vendorid}`, {
+    fetchAPI(`${apiBaseUrl}/vendors/${updatedVendor.vendorid}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(updatedVendor),
     })
-      .then((response) => response.json())
-      .then(() => {
-        fetchData();
-        setEditingVendor(null);
-      })
-      .catch((error) => {
-        console.error('Error updating the vendor:', error);
-      });
-  }, [fetchData, apiBaseUrl]);
-  
-  
+    .then(() => {
+      fetchData();
+      setEditingVendor(null);
+    })
+    .catch((error) => {
+      console.error('Error updating the vendor:', error);
+    });
+  }, [fetchData, apiBaseUrl, fetchAPI]);
   
   const columns = React.useMemo(
     () => [

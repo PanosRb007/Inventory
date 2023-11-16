@@ -8,65 +8,73 @@ const ProjectFunc = ({apiBaseUrl}) => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [projectResponse] = await Promise.all([
-        fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
-      ]);
-      setProjects(projectResponse);
-      setIsLoading(false);
-    } catch (error) {
-      console.log('Error fetching data:', error);
-      setIsLoading(false);
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
     }
-  }, [apiBaseUrl]);
+    return response.json();
+  }, []);
+
+
+  const fetchData = useCallback(async () => {
+  try {
+    const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
+    setProjects(projectResponse);
+    setIsLoading(false);
+  } catch (error) {
+    console.log('Error fetching data:', error);
+    setIsLoading(false);
+  }
+}, [apiBaseUrl, fetchAPI]);
+
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const handleAddProject = useCallback((newProject) => {
-    // Send an HTTP request to add the new project
-    fetch(`${apiBaseUrl}/projectsAPI`, {
+    fetchAPI(`${apiBaseUrl}/projectsAPI`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(newProject),
     })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Error adding project');
-        }
-      })
-      .then((data) => {
-        setProjects([...projects, newProject]);
-        fetchData();
-      })
-      .catch((error) => {
-        console.log('Error adding project:', error);
-      });
-  }, [projects, setProjects, fetchData,apiBaseUrl]);
+    .then((addedProject) => {
+      setProjects([...projects, addedProject]);
+      fetchData();
+    })
+    .catch((error) => {
+      console.log('Error adding project:', error);
+    });
+  }, [projects, fetchData, apiBaseUrl, fetchAPI]);
+  
 
 
-  const handleDelete = useCallback((deletedproject) => {
-    const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
+  const handleDelete = useCallback((deletedProject) => {
+    const isConfirmed = window.confirm('Are you sure you want to delete this project?');
   
     if (isConfirmed) {
-      fetch(`${apiBaseUrl}/projects/${deletedproject.prid}`, {
+      fetchAPI(`${apiBaseUrl}/projectsAPI/${deletedProject.prid}`, {
         method: 'DELETE',
       })
-        .then(() => {
-          const updatedprojectList = projects.filter((p) => p.prid !== deletedproject.prid);
-          setProjects(updatedprojectList);
-        })
-        .catch((error) => {
-          console.log('Error deleting project:', error);
-        });
+      .then(() => {
+        const updatedProjectList = projects.filter((p) => p.prid !== deletedProject.prid);
+        setProjects(updatedProjectList);
+      })
+      .catch((error) => {
+        console.log('Error deleting project:', error);
+      });
     }
-  }, [projects, apiBaseUrl]);
+  }, [projects, apiBaseUrl, fetchAPI]);
+  
 
   const handleEdit = useCallback((project) => {
     if (editingProject && editingProject.prid === project.prid) {
@@ -77,25 +85,19 @@ const ProjectFunc = ({apiBaseUrl}) => {
     setEditingProject(project);
   }, [editingProject]);
 
-  const handleUpdate = useCallback((updatedproject) => {
-    fetch(`${apiBaseUrl}/projects/${updatedproject.prid}`, {
+  const handleUpdate = useCallback((updatedProject) => {
+    fetchAPI(`${apiBaseUrl}/projectsAPI/${updatedProject.prid}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedproject),
+      body: JSON.stringify(updatedProject),
     })
-      .then((response) => response.json())
-      .then(() => {
-        fetchData();
-        setEditingProject(null);
-      })
-      .catch((error) => {
-        console.error('Error updating the project:', error);
-      });
-  }, [fetchData,apiBaseUrl]);
-  
-  
+    .then(() => {
+      fetchData();
+      setEditingProject(null);
+    })
+    .catch((error) => {
+      console.error('Error updating the project:', error);
+    });
+  }, [fetchData, apiBaseUrl, fetchAPI]);
   
   const columns = React.useMemo(
     () => [
@@ -104,7 +106,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
       { Header: 'Description', accessor: 'description' },
       { Header: 'Projected Material Cost', accessor: 'prmatcost' },
       { Header: 'Projected Labor Cost', accessor: 'prlabcost' },
-      { Header: 'Sale', accessor: 'sale' },
+      { Header: 'Sale', accessor: 'v' },
       { Header: 'Real Material Cost', accessor: 'realmatcost' },
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
@@ -129,9 +131,9 @@ const ProjectFunc = ({apiBaseUrl}) => {
     state: { pageIndex, pageSize, globalFilter },
     gotoPage,
     nextPage,
-    prepiousPage,
+    previousPage,
     canNextPage,
-    canPrepiousPage,
+    canPreviousPage,
     setPageSize,
     setGlobalFilter,
   } = useTable(
@@ -166,7 +168,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
       <div className="search">
         <input
           type="text"
-          palue={globalFilter || ''}
+          value={globalFilter || ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
           placeholder="Search..."
         />
@@ -207,8 +209,8 @@ const ProjectFunc = ({apiBaseUrl}) => {
         </tbody>
       </table>
       <div>
-        <button onClick={() => prepiousPage()} disabled={!canPrepiousPage}>
-          Prepious
+        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          Prevhjious
         </button>
         <button onClick={() => nextPage()} disabled={!canNextPage}>
           Next
@@ -232,7 +234,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
           />
         </span>
         <select
-          palue={pageSize}
+          value={pageSize}
           onChange={(e) => {
             setPageSize(Number(e.target.value));
           }}

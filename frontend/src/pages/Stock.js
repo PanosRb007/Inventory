@@ -1,4 +1,4 @@
-import React, {useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import './PurchaseFunc.css';
 
@@ -12,33 +12,64 @@ const Stocks = ({apiBaseUrl}) => {
   const [selectedLocantion, setSelectedLocation] = useState('');
   const [stock, setStock] = useState([]);
 
-
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
 
 
   useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
+        fetchAPI(`${apiBaseUrl}/materiallist`),
+        fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
+        fetchAPI(`${apiBaseUrl}/LocationsAPI`),
+        fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+      ]);
 
-    const fetchData = async () => {
-        try {
-          const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
-            fetch(`${apiBaseUrl}/materiallist`).then((response) => response.json()),
-            fetch(`${apiBaseUrl}/PurchasesAPI`).then((response) => response.json()),
-            fetch(`${apiBaseUrl}/LocationsAPI`).then((response) => response.json()),
-            fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
-          ]);
-      
-          setMaterials(materialResponse);
-          setPurchases(purchaseResponse);
-          setLocations(locationResponse);
-          setOutflows(outflowsResponse);
-          setStock(purchaseResponse.filter(purchase => purchase.location === parseInt(selectedLocantion)));
-       
-        } catch (error) {
-          console.log('Error fetching data:', error);
+      // Filter and process stock based on extras and location
+      const processedStock = purchaseResponse.reduce((acc, purchase) => {
+        if (purchase.location === parseInt(selectedLocantion)) {
+          const material = materialResponse.find(mat => mat.matid === purchase.materialid);
+          if (material) {
+            if (material.extras === 0) {
+              // For extras === 0, include only if it's not already included
+              if (!acc.some(item => item.materialid === purchase.materialid)) {
+                acc.push(purchase);
+              }
+            } else {
+              // For extras === 1, include all
+              acc.push(purchase);
+            }
+          }
         }
-      };
-    fetchData();
+        return acc;
+      }, []);
 
-  }, [selectedLocantion, apiBaseUrl]);
+      setMaterials(materialResponse);
+      setPurchases(purchaseResponse);
+      setLocations(locationResponse);
+      setOutflows(outflowsResponse);
+      setStock(processedStock);
+    } catch (error) {
+      console.log('Error fetching data:', error);
+    }
+  };
+  fetchData();
+}, [apiBaseUrl, fetchAPI, selectedLocantion]);
+
 
   console.log("purchases", purchases);
 

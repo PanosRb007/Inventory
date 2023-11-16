@@ -20,14 +20,29 @@ const ProjectFunc = ({apiBaseUrl}) => {
       setProjectId(projectIdParam);
     }
   }, []);
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
 
   
   const fetchData = useCallback(async () => {
     try {
       const [outflowsResponse, projectsResponse, employeesResponse] = await Promise.all([
-        fetch(`${apiBaseUrl}/outflowsAPI`).then((response) => response.json()),
-        fetch(`${apiBaseUrl}/projectsAPI`).then((response) => response.json()),
-        fetch(`${apiBaseUrl}/employeesAPI`).then((response) => response.json()),
+        fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+        fetchAPI(`${apiBaseUrl}/projectsAPI`),
+        fetchAPI(`${apiBaseUrl}/employeesAPI`),
       ]);
       const filtered = outflowsResponse;
       console.log('filtered', filtered);
@@ -39,7 +54,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, [projectId, apiBaseUrl]);
+  }, [projectId, apiBaseUrl,fetchAPI]);
 
   useEffect(() => {
     fetchData();

@@ -1,95 +1,118 @@
 import React, { useState } from 'react';
 
+const EditProject = ({ project, handleUpdate }) => {
+    const [editedProject, setEditedProject] = useState({ ...project });
 
-const EditProject = ({ vendor, handleUpdate }) => {
-    const [editedVendor, setEditedVendor] = useState({ ...vendor });
-
-     
     const handleInputChange = (event) => {
         const { name, value } = event.target;
-        setEditedVendor((prevVendor) => ({
-          ...prevVendor,
+        setEditedProject((prevProject) => ({
+          ...prevProject,
           [name]: value,
         }));
-      };
-    
-      const handleSubmit = (event) => {
-        event.preventDefault();
-        handleUpdate(editedVendor);
-        resetForm();
-      };
-    
-      const resetForm = () => {
-        setEditedVendor({
-          name: '',
-          field: '',
-          mail: '',
-          tel: '',
-          contactname: ''
-          // Reset additional fields as needed for the vendor
-        });
-      };
+    };
 
-  return (
-    <div className="edit-vendor-container">
-      <h2 className="edit-vendor-heading">Edit Vendor</h2>
-      <form className="edit-vendor-form" onSubmit={handleSubmit}>
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="name">Name:</label>
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        handleUpdate(editedProject);
+        resetForm();
+    };
+
+    const resetForm = () => {
+        setEditedProject({
+          // Reset the fields as needed for the project
+          // Example:
+          name: '',
+          description: '',
+          prmatcost: '',
+          prlabcost: '',
+          sale: '',
+          realmatcost: '',
+          reallabcost: '',
+          totalcost: '',
+          // Add other fields here
+        });
+    };
+
+    return (
+      <div className="add-project-container">
+        <h2 className="add-project-heading">Add Project</h2>
+        <form className="add-project-form" onSubmit={handleSubmit}>
+          <label>
+            Project Name:
             <input
               type="text"
               name="name"
-              id="name"
-              value={editedVendor.name}
+              value={editedProject.name}
               onChange={handleInputChange}
             />
-          </div>
-          <div className="form-group">
-            <label htmlFor="field">Field:</label>
-            <textarea
-              id="field"
-              name="field"
-              value={editedVendor.field}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="mail">Mail:</label>
+          </label>
+          <label>
+            Description:
             <input
-              type="email"
-              name="mail"
-              id="mail"
-              value={editedVendor.mail}
+              type="text"
+              name="description"
+              value={editedProject.description}
               onChange={handleInputChange}
             />
-          </div>
-          <div className="form-group">
-            <label htmlFor="tel">Telephone:</label>
+          </label>
+          <label>
+            Projected Material Cost:
             <input
-              type="tel"
-              name="tel"
-              id="tel"
-              value={editedVendor.tel}
+              type="number"
+              name="prmatcost"
+              value={editedProject.prmatcost}
               onChange={handleInputChange}
             />
-          </div>
-          <div className="form-group">
-            <label htmlFor="contactname">Contact Name:</label>
+          </label>
+          <label>
+            Projected Labor Cost:
             <input
-              type="contactname"
-              name="contactname"
-              id="contactname"
-              value={editedVendor.contactname}
+              type="number"
+              name="prlabcost"
+              value={editedProject.prlabcost}
               onChange={handleInputChange}
             />
-          </div>
-          
-        </div>
-        <button type="submit" className="edit-vendor-btn">Update</button>
-      </form>
-    </div>
-  );
-};
+          </label>
+          <label>
+            Sale:
+            <input
+              type="number"
+              name="sale"
+              value={editedProject.sale}
+              onChange={handleInputChange}
+            />
+          </label>
+          <label>
+            Real Material Cost:
+            <input
+              type="number"
+              name="realmatcost"
+              value={editedProject.realmatcost}
+              onChange={handleInputChange}
+            />
+          </label>
+          <label>
+            Real Labor Cost:
+            <input
+              type="number"
+              name="reallabcost"
+              value={editedProject.reallabcost}
+              onChange={handleInputChange}
+            />
+          </label>
+          <label>
+            Totalcost:
+            <input
+              type="number"
+              name="totalcost"
+              value={editedProject.totalcost}
+              onChange={handleInputChange}
+            />
+          </label>
+          <button type="submit">Edit project</button>
+        </form>
+      </div>
+    );
+  };
 
 export default EditProject;
