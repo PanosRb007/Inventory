@@ -9,7 +9,7 @@ const Stocks = ({apiBaseUrl}) => {
   const [purchases, setPurchases] = useState([]);
   const [locations, setLocations] = useState([]);
   const [outflows, setOutflows] = useState([]);
-  const [selectedLocantion, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
   const [stock, setStock] = useState([]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
@@ -41,7 +41,7 @@ const Stocks = ({apiBaseUrl}) => {
 
       // Filter and process stock based on extras and location
       const processedStock = purchaseResponse.reduce((acc, purchase) => {
-        if (purchase.location === parseInt(selectedLocantion)) {
+        if (purchase.location === parseInt(selectedLocation)) {
           const material = materialResponse.find(mat => mat.matid === purchase.materialid);
           if (material) {
             if (material.extras === 0) {
@@ -68,25 +68,40 @@ const Stocks = ({apiBaseUrl}) => {
     }
   };
   fetchData();
-}, [apiBaseUrl, fetchAPI, selectedLocantion]);
+}, [apiBaseUrl, fetchAPI, selectedLocation]);
 
 
   console.log("purchases", purchases);
+  console.log("outflows", outflows);
 
-  const calculateTotalQuantity = React.useCallback((materialId) => {
-    const selectedMaterial = materials.find((mat) => mat.matid === materialId && mat.extras === 0);
+
+  const calculateTotalCost = useCallback((materialId, location, lotNumber) => {
+    let totalCost = 0;
   
-    if (selectedMaterial) {
-      return purchases.reduce((total, purchase) => {
-        if (purchase.materialid === materialId) {
-          return total + (parseFloat(purchase.quantity) * parseFloat(purchase.price));
-        }
-        return total;
-      }, 0);
+    // Calculate cost from purchases
+    const filteredPurchases = purchases.filter(purchase => 
+      purchase.materialid === materialId && purchase.location === location && purchase.lotnumber === lotNumber
+    );
+    filteredPurchases.forEach(purchase => {
+      totalCost += parseFloat(purchase.quantity) * parseFloat(purchase.price);
+    });
+  
+    // Calculate cost reduction from outflows using FIFO
+    let remainingOutflow = outflows
+      .filter(outflow => outflow.materialid === materialId && outflow.location === location && outflow.lotnumber === lotNumber)
+      .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0);
+  
+    for (const purchase of filteredPurchases) {
+      if (remainingOutflow <= 0) break;
+      const availableQuantity = parseFloat(purchase.quantity);
+      const usedQuantity = Math.min(availableQuantity, remainingOutflow);
+      totalCost -= usedQuantity * parseFloat(purchase.price);
+      remainingOutflow -= usedQuantity;
     }
   
-    return 0; // Return a default value if no matching material is found
-  }, [materials, purchases]);
+    return totalCost;
+  }, [purchases, outflows]);
+  
   
   
   const uniqueMaterialIds = [...new Set(stock.map(item => item.materialid))];
@@ -113,14 +128,42 @@ const Stocks = ({apiBaseUrl}) => {
       },
       { Header: 'Width', accessor: 'width' },
       { Header: 'Lot No', accessor: 'lotnumber' },
-      { Header: 'Quantity', accessor: 'quantity' },
       {
-        Header: 'Average Cost',
-        accessor: (row) => calculateTotalQuantity(row.materialid),
-      },
+  Header: 'Quantity',
+  accessor: (row) => {
+    const materialId = row.materialid;
+    const lotNumber = row.lotnumber;
+    const location = parseInt(selectedLocation);
+
+    // Filter purchases and outflows for the current row's material ID, lot number, and location
+    const filteredPurchases = purchases.filter(purchase => 
+      purchase.materialid === materialId && 
+      purchase.lotnumber === lotNumber && 
+      purchase.location === location
+    );
+
+    const filteredOutflows = outflows.filter(outflow => 
+      outflow.materialid === materialId && 
+      outflow.lotnumber === lotNumber && 
+      outflow.location === location
+    );
+
+    // Calculate total quantity (sum of purchases - sum of outflows)
+    const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
+    const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+
+    return totalPurchases - totalOutflows;
+  }
+},
+
+{
+  Header: 'Average Cost',
+  accessor: (row) => calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber),
+},
+
 
     ],
-    [ materials, calculateTotalQuantity]
+    [ materials, calculateTotalCost, outflows, purchases, selectedLocation]
   );
  
   const {
@@ -164,7 +207,7 @@ const Stocks = ({apiBaseUrl}) => {
     <div>
       <div>
           <label>Location:</label>
-          <select name="location" value={selectedLocantion} onChange={handleChange} required>
+          <select name="location" value={selectedLocation} onChange={handleChange} required>
             <option value="">Select a location</option>
             {locations.map((location) => (
               <option key={location.id} value={location.id}>
