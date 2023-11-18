@@ -33,7 +33,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   useEffect(() => {
     const fetchData = async () => {
-      const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+      const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
       const fetchWithAuth = async (url, options = {}) => {
         return fetch(url, {
@@ -117,7 +117,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
     const fetchWithAuth = async (url, options = {}) => {
       return fetch(url, {
@@ -168,7 +168,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   
   const handleAddMat = useCallback((newMaterial) => {
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
     const fetchWithAuth = async (url, options = {}) => {
       return fetch(url, {
@@ -213,7 +213,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   const handleAddVendor = useCallback(async (newVendor) => {
 
-    const authToken = localStorage.getItem('authToken'); // Retrieve the authToken
+    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
     const fetchWithAuth = async (url, options = {}) => {
       return fetch(url, {

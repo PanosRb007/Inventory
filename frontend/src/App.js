@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, /*useNavigate*/ } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
@@ -17,10 +17,24 @@ const API_BASE_URL = 'https://api.robbie.gr';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  useEffect(() => {
+    // Check if the auth token is present in sessionStorage
+    const authToken = sessionStorage.getItem('authToken');
+    if (authToken) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleLogin = (token) => {
-    localStorage.setItem('authToken', token); 
-    console.log('local', localStorage);
+    // Store the auth token in sessionStorage
+    sessionStorage.setItem('authToken', token);
     setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    // Remove the auth token from sessionStorage
+    sessionStorage.removeItem('authToken');
+    setIsAuthenticated(false);
   };
 
   if (!isAuthenticated) {
@@ -64,7 +78,9 @@ function App() {
               </Link>
             </li>
           </ul>
+          <button onClick={handleLogout}>Logout</button>
         </nav>
+       
         <main className="content">
           <header className="header">
             <h1 className="header-title">ROBBIE</h1>
@@ -78,23 +94,13 @@ function App() {
             <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL}/>} />
             <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL}/>} />
 
-            {/* Add other routes for different pages */}
           </Routes>
+         
         </main>
+        
       </BrowserRouter>
     </div>
   );
 }
-
-/*function ProtectedRoute({ children, isAuthenticated }) {
-  const navigate = useNavigate();
-
-  if (!isAuthenticated) {
-    navigate('/');
-    return null;
-  }
-
-  return children;
-}*/
 
 export default App;

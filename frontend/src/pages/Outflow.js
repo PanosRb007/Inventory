@@ -20,7 +20,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
   };
 
   const fetchAPI = useCallback(async (url, options = {}) => {
-    const authToken = localStorage.getItem('authToken');
+    const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
       ...options,
       headers: {

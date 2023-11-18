@@ -27,7 +27,7 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
         vendor: editedPurchase.vendor,
         price: editedPurchase.price,
       };
-      const authToken = localStorage.getItem('authToken');
+      const authToken = sessionStorage.getItem('authToken');
 
       // Make a POST request to materialchangesAPI
       fetch(`${apiBaseUrl}/materialchangesAPI`, {

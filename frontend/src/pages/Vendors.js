@@ -10,7 +10,7 @@ const VendorsFunc = ({apiBaseUrl}) => {
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
   const fetchAPI = useCallback(async (url, options = {}) => {
-    const authToken = localStorage.getItem('authToken');
+    const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
       ...options,
       headers: {

@@ -10,7 +10,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
   const [materials, setMaterials] = useState([]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
-    const authToken = localStorage.getItem('authToken');
+    const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
       ...options,
       headers: {

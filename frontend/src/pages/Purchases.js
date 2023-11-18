@@ -15,7 +15,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
 
   const fetchAPI = useCallback(async (url, options = {}) => {
-    const authToken = localStorage.getItem('authToken');
+    const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -165,19 +165,24 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       },
       {
         Header: 'Vendor',
-        accessor: (value) => {
-          const vendor = vendors.find((v) => v.vendorid === value.vendor);
-          return vendor ? (
-            <span title={`Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}\n`}>
-              <a href={`${apiBaseUrl}/vendors/${vendor.vendorid}`} target="_blank" rel="noopener noreferrer">
-                {vendor.name}
-              </a>
-            </span>
-          ) : (
-            'Vendor not found'
-          );
+        accessor: (row) => {
+          const vendor = vendors.find((v) => v.vendorid === row.vendor);
+          return vendor ? vendor.name : 'Vendor not found';
+        },
+        Cell: ({ value, row }) => {
+          const vendor = vendors.find((v) => v.vendorid === row.original.vendor);
+          if (vendor) {
+            const tooltipContent = `Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}`;
+            return (
+              <span title={tooltipContent}>
+                {value}
+              </span>
+            );
+          }
+          return 'Vendor not found';
         },
       },
+      
       { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
       },
       { Header: 'Actions', accessor: 'actions',
@@ -189,7 +194,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
         ),
       },
     ],
-    [handleEdit, handleDelete, locations, materials, vendors, materialchanges, apiBaseUrl]
+    [handleEdit, handleDelete, locations, materials, vendors, materialchanges]
   );
 
   function formatDateTime(dateTimeString) {
