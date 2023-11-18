@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, /*useNavigate*/ } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link} from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -7,7 +7,8 @@ import MaterialList from './pages/MaterialList.js';
 import Projects from './pages/Projects.js';
 import ProjectOutflows from './pages/ProjectOutflows.js';
 import Stock from './pages/Stock.js';
-import Login from './pages/Login.js'; // Import the Login component
+import Login from './pages/Login.js'; 
+import MaterialCombiner from './pages/MaterialCombiner.js';
 
 
 import './App.css'; // Import custom CSS for App component
@@ -77,6 +78,11 @@ function App() {
                 <span>Stock</span>
               </Link>
             </li>
+            <li className="nav-item">
+            <Link to="/combine-materials" className="nav-link">
+              <span>Combine Materials</span>
+            </Link>
+            </li>
           </ul>
           <button onClick={handleLogout}>Logout</button>
         </nav>
@@ -93,7 +99,8 @@ function App() {
             <Route path="/Projects" element={<Projects apiBaseUrl={API_BASE_URL}/>} />
             <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL}/>} />
             <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL}/>} />
-
+            <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} />} />
+            
           </Routes>
          
         </main>

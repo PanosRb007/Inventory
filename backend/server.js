@@ -14,7 +14,9 @@ const stocksAPI = require('./stocksAPI');
 const outflowsAPI = require('./outflowsAPI');
 const locationsAPI = require('./locationsAPI');
 const loginAPI = require('./loginAPI');
-const jwt = require('jsonwebtoken');
+const saveCombinedMaterial = require('./saveCombinedMaterial');
+const combinedMaterials = require('./combinedMaterials');
+
 
 const secretKey = '123rbb321'
 const app = express();
@@ -88,6 +90,8 @@ app.use('/projectsAPI', authenticateToken(), projectsAPI(pool));
 app.use('/stocksAPI', authenticateToken(), stocksAPI(pool));
 app.use('/outflowsAPI', authenticateToken(), outflowsAPI(pool));
 app.use('/LocationsAPI', authenticateToken(), locationsAPI(pool));
+app.use('/saveCombinedMaterial', authenticateToken(), saveCombinedMaterial(pool));
+app.use('/combinedMaterials', authenticateToken(), combinedMaterials(pool));
 
 
 
