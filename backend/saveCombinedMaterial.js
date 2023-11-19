@@ -6,11 +6,11 @@ module.exports = (pool) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { name, submaterials } = req.body;
+        const { name, description, submaterials } = req.body;
         const connection = await pool.getConnection();
 
         // Step 1: Save the combined material in your database
-        const [rows] = await connection.execute('INSERT INTO combined_materials (name) VALUES (?)', [name]);
+        const [rows] = await connection.execute('INSERT INTO combined_materials (name, description) VALUES (?,?)', [name, description]);
         const combinedMaterialId = rows.insertId;
 
         // Step 2: Save each submaterial

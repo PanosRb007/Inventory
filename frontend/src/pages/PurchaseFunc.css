@@ -102,3 +102,36 @@ input[type="date"] {
   padding: 8px;
   justify-content: center;
 }
+
+/* Add these styles to your CSS file */
+
+.create-combined-material-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.create-combined-material-popup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1001; /* Above the overlay */
+  width: 80%; /* Adjust as needed */
+  max-width: 500px; /* Adjust as needed */
+}
+
+.close-popup {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 20px;
+  cursor: pointer;
+}

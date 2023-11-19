@@ -13,7 +13,7 @@ import MaterialCombiner from './pages/MaterialCombiner.js';
 
 import './App.css'; // Import custom CSS for App component
 
-const API_BASE_URL = 'https://api.robbie.gr';
+const API_BASE_URL = 'http://localhost:8081';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
