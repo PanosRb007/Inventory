@@ -188,8 +188,8 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       { Header: 'Actions', accessor: 'actions',
         Cell: ({ row }) => (
           <div>
-            <button onClick={() => handleEdit(row.original)}>Edit</button>
-            <button onClick={() => handleDelete(row.original)}>Delete</button>
+            <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
+            <button className='button' onClick={() => handleDelete(row.original)}>Delete</button>
           </div>
         ),
       },
@@ -260,7 +260,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   
 
   return (
-    <div>
+    <div className='container'>
       <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials} apiBaseUrl={apiBaseUrl}/>
 
       <div className="search">
@@ -271,7 +271,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           placeholder="Search..."
         />
       </div>
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -306,11 +306,11 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           })}
         </tbody>
       </table>
-      <div>
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+      <div className = 'pagination'>
+        <button className='button' onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button className='button' onClick={() => nextPage()} disabled={!canNextPage}>
           Next
         </button>
         <span>

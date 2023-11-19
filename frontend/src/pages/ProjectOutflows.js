@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
+import './PurchaseFunc.css';
 
 const ProjectFunc = ({apiBaseUrl}) => {
 
@@ -139,7 +140,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
   }
 
   return (
-    <div>
+    <div className='container'>
     <h1>Cost for Project: {projects.find((prj) => prj.prid === parseInt(projectId))?.name}</h1>
 
 
@@ -151,7 +152,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
           placeholder="Search..."
         />
       </div>
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -180,7 +181,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
           })}
         </tbody>
       </table>
-      <div>
+      <div className = 'pagination'>
       <button onClick={() => previousPage()} disabled={!canPreviousPage}>
   Previous
 </button>

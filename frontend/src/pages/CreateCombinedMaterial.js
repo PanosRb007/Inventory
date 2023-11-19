@@ -1,10 +1,14 @@
 import React from 'react';
 import './CreateCombinedMaterial.css'; // Import CSS for styling
 
-const CombinedMaterialInputForm = ({ combinedMaterialName, combinedMaterialDescription, setcombinedMaterialDescription, setCombinedMaterialName, selectedMaterials, handleMaterialChange, handleMultiplierChange, addMaterial, saveCombinedMaterial, materials, removeMaterial }) => {
+const CombinedMaterialInputForm = ({ onClose, combinedMaterialName, combinedMaterialDescription, setcombinedMaterialDescription, setCombinedMaterialName, selectedMaterials, handleMaterialChange, handleMultiplierChange, addMaterial, saveCombinedMaterial, materials, removeMaterial }) => {
     return (
         <div className="material-input-form">
+            
         <h3>Combine Materials</h3>
+        <span className="close-popup" onClick={onClose}>
+                &times;
+            </span>
         <div className="form-row">
             <div className="form-group">
                 <label htmlFor="comboName">Combo Name</label>

@@ -188,16 +188,15 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     if (error) return <div>Error: {error}</div>;
 
     return (
-        <div>
-            <h3 className="purchase-func-heading">Combined Materials</h3>
-            <button onClick={openCreateCombinedMaterialForm}>Add Material Combination</button> {/* Button to open form */}
+        <div className='container'>
+            <div className='form-group'>
+            <button className='add_btn' onClick={openCreateCombinedMaterialForm}>Add Material Combination</button>
+            </div>
             {showCreateCombinedMaterial && (
                 <div className="create-combined-material-overlay">
                     <div className="create-combined-material-popup">
-                        <span className="close-popup" onClick={closeCreateCombinedMaterialForm}>
-                            &times;
-                        </span>
                         <CreateCombinedMaterial 
+                            onClose={closeCreateCombinedMaterialForm}
                             combinedMaterialName={combinedMaterialName}
                             combinedMaterialDescription={combinedMaterialDescription}
                             setcombinedMaterialDescription={setcombinedMaterialDescription}
@@ -214,7 +213,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
                 </div>
             )}
             <div className="purchase-table-container">
-                <table {...getTableProps()} className="purchase-table">
+                <table {...getTableProps()} className="table">
                     <thead>
                         {headerGroups.map(headerGroup => (
                             <tr {...headerGroup.getHeaderGroupProps()}>

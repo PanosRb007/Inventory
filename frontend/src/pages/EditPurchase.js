@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import './PurchaseFunc.css';
 const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, handleCancel, apiBaseUrl}) => {
   
   
@@ -58,9 +58,10 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
   };
 
   return (
-    <div className="edit-purchase">
-      <h2>Edit Purchase</h2>
-      <div>
+    <div className="container">
+  <h2>Edit Purchase</h2>
+  <div className="form">
+    <div>
       <label>
         Location:
         <select name="location" value={editedPurchase.location} onChange={handleChange} required>
@@ -72,46 +73,46 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
           ))}
         </select>
       </label>
-      </div>      
-      {hideWidthAndLotNo ? null : (
-        <>
-          <div>
-            <label>
-              Width:
-              <input type="text" name="width" value={editedPurchase.width} onChange={handleChange} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Lot No:
-              <input
-                type="text"
-                name="lotnumber"
-                value={editedPurchase.lotnumber}
-                onChange={handleChange}
-              />
-            </label>
-          </div>
-        </>
-      )}
-      <div>
-        <label>
-          Quantity:
-          <input
-            type="text"
-            name="quantity"
-            value={editedPurchase.quantity}
-            onChange={handleChange}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          Price:
-          <input type="text" name="price" value={editedPurchase.price} onChange={handleChange} />
-        </label>
-      </div>
-      <div>
+    </div>
+    {hideWidthAndLotNo ? null : (
+      <>
+        <div>
+          <label>
+            Width:
+            <input type="text" name="width" value={editedPurchase.width} onChange={handleChange} />
+          </label>
+        </div>
+        <div>
+          <label>
+            Lot No:
+            <input
+              type="text"
+              name="lotnumber"
+              value={editedPurchase.lotnumber}
+              onChange={handleChange}
+            />
+          </label>
+        </div>
+      </>
+    )}
+    <div>
+      <label>
+        Quantity:
+        <input
+          type="text"
+          name="quantity"
+          value={editedPurchase.quantity}
+          onChange={handleChange}
+        />
+      </label>
+    </div>
+    <div>
+      <label>
+        Price:
+        <input type="text" name="price" value={editedPurchase.price} onChange={handleChange} />
+      </label>
+    </div>
+    <div>
       <label>
         Vendor:
         <select name="vendor" value={editedPurchase.vendor} onChange={handleChange} required>
@@ -123,14 +124,15 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
           ))}
         </select>
       </label>
-      </div>
-      <div>
-        <button onClick={handleSave}>Save</button>
-        <button type="button" className="cancel-btn" onClick={handleCancelClick}>
-          Cancel
-        </button>
-      </div>
     </div>
+  </div>
+  <div>
+    <button onClick={handleSave}>Save</button>
+    <button type="button" className="cancel-btn" onClick={handleCancelClick}>
+      Cancel
+    </button>
+  </div>
+</div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './PurchaseFunc.css';
 
 const AddVendor = ({handleAddVendor}) => {
   const [newVendor, setNewVendor] = useState({
@@ -38,27 +39,30 @@ const AddVendor = ({handleAddVendor}) => {
   };
 
   return (
-    <div className="add-vendor-container">
-      <h2 className="add-vendor-heading">Add Vendor</h2>
-      <form className="add-vendor-form" onSubmit={handleSubmit}>
-        <label>
-          Vendor Name:
+    <div className="container">
+      <div>
+        <h2 className="heading">Add Vendor</h2>
+      </div> 
+      <form className="form" onSubmit={handleSubmit}>
+        <div>
+          <label>Vendor Name:</label>
           <input
             type="text"
             name="name"
             value={newVendor.name}
             onChange={handleInputChange}
           />
-        </label>
-        <label>
-          Field:
-          <input
-            type="text"
-            name="field"
-            value={newVendor.field}
-            onChange={handleInputChange}
-          />
-        </label>
+        </div>
+        <div>
+          <label>Field:</label>
+            <input
+              type="text"
+              name="field"
+              value={newVendor.field}
+              onChange={handleInputChange}
+            />
+        </div>
+        <div>
         <label>
           Email:
           <input
@@ -68,6 +72,8 @@ const AddVendor = ({handleAddVendor}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Telephone:
           <input
@@ -77,6 +83,8 @@ const AddVendor = ({handleAddVendor}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Contact Name:
           <input
@@ -86,7 +94,10 @@ const AddVendor = ({handleAddVendor}) => {
             onChange={handleInputChange}
           />
         </label>
-        <button type="submit">Add Vendor</button>
+        </div>
+        <div>
+        <button className='add_btn' type="submit">Add Vendor</button>
+        </div>
       </form>
     </div>
   );

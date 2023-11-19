@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import './PurchaseFunc.css';
 
 const Editvendor = ({ vendor, handleUpdate }) => {
     const [editedVendor, setEditedVendor] = useState({ ...vendor });
@@ -31,9 +31,9 @@ const Editvendor = ({ vendor, handleUpdate }) => {
       };
 
   return (
-    <div className="edit-vendor-container">
-      <h2 className="edit-vendor-heading">Edit Vendor</h2>
-      <form className="edit-vendor-form" onSubmit={handleSubmit}>
+    <div className="container">
+      <h2 className="heading">Edit Vendor</h2>
+      <form className="form" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="name">Name:</label>
@@ -86,7 +86,7 @@ const Editvendor = ({ vendor, handleUpdate }) => {
           </div>
           
         </div>
-        <button type="submit" className="edit-vendor-btn">Update</button>
+        <button type="submit" className="add_btn">Update</button>
       </form>
     </div>
   );

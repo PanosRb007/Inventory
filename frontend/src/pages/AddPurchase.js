@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Select from 'react-select';
-import './AddPurchase.css';
+import './PurchaseFunc.css';
 import AddMaterial from './AddMaterial.js';
 import AddVendor from './AddVendor.js';
 
@@ -255,13 +255,11 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   
 
   return (
-    <div>
+    <div className='container'>
       <div>
-      <h2 className="add-heading">Add Purchase</h2>
+      <h2 className="heading">Add Purchase</h2>
       </div>
-        <div>
-        </div>
-      <form onSubmit={handleSubmit} className="add-form">
+      <form onSubmit={handleSubmit} className="form">
         <div>
           <label>Location:</label>
           <select name="location" value={newPurchase.location} onChange={handleChange} required>
@@ -355,8 +353,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         </button>
       </form>
       {showAddMaterialForm && (
-        <div className="add-material-overlay">
-          <div className="add-material-popup">
+        <div className="overlay">
+          <div className="popup">
             <span className="close-popup" onClick={() => setShowAddMaterialForm(false)}>
               &times;
             </span>
@@ -366,8 +364,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       )}
 
       {showAddVendorForm && (
-        <div className="add-material-overlay">
-          <div className="add-material-popup">
+        <div className="overlay">
+          <div className="popup">
             <span className="close-popup" onClick={() => setShowAddVendorForm(false)}>
               &times;
             </span>

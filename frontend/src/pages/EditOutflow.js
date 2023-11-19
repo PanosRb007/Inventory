@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
-import './EditOutflow.css';
+import './PurchaseFunc.css';
 
 const EditOutflow = ({outflow, handleUpdate, handleCancel, outflows, purchases, locations, materials, employees, projects }) => {
   console.log('materiallls',materials);
@@ -261,7 +261,7 @@ const EditOutflow = ({outflow, handleUpdate, handleCancel, outflows, purchases, 
   };
    
   return (
-    <form onSubmit={handleSubmit} className="add-form">
+    <form onSubmit={handleSubmit} className="form">
       <div>
         <label>Location:</label>
         <Select

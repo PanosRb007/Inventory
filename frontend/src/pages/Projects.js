@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import AddProject from './AddProject.js'; // Make sure to adjust the import path
 import EditProject from './EditProject.js'; // Make sure to adjust the import path
+import './PurchaseFunc.css';
 
 const ProjectFunc = ({apiBaseUrl}) => {
   const [editingProject, setEditingProject] = useState(null);
@@ -162,7 +163,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
   }
 
   return (
-    <div>
+    <div className='container'>
       <AddProject handleAddProject={handleAddProject} />
 
       <div className="search">
@@ -173,7 +174,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
           placeholder="Search..."
         />
       </div>
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>

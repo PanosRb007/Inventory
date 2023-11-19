@@ -257,10 +257,10 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
   };
    
   return (
-    <form onSubmit={handleSubmit} className="add-form">
-      <div>
+    <form onSubmit={handleSubmit} className="form">
+      <div className='form-row'>
         <label>Location:</label>
-        <Select
+        <Select 
           name="location"
           value={newOutflow.location ? { value: newOutflow.location, label: locations.find(loc => loc.id === newOutflow.location)?.locationname } : null}
           options={locations.map((location) => ({

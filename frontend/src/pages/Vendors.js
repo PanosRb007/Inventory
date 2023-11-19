@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import AddVendor from './AddVendor.js';
 import EditVendor from './EditVendor.js';
-
+import './PurchaseFunc.css';
 
 const VendorsFunc = ({apiBaseUrl}) => {
   const [editingVendor, setEditingVendor] = useState(null);
@@ -160,7 +160,7 @@ const VendorsFunc = ({apiBaseUrl}) => {
   }
 
   return (
-    <div>
+    <div className='container'>
       <AddVendor handleAddVendor={handleAddVendor} />
 
       <div className="search">
@@ -171,7 +171,7 @@ const VendorsFunc = ({apiBaseUrl}) => {
           placeholder="Search..."
         />
       </div>
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>

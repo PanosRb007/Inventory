@@ -274,7 +274,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
 
 
   return (
-    <div>
+    <div className='container'>
       <AddOutflow 
         handleAdd={handleAdd} 
         locations={locations} 
@@ -298,7 +298,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
       />
       </div>
 
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -344,7 +344,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         </tbody>
       </table>
 
-      <div>
+      <div className = 'pagination'>
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>

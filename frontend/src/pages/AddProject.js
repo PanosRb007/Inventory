@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './PurchaseFunc.css';
 
 const AddProject = ({handleAddProject}) => {
   const [newProject, setNewProject] = useState({
@@ -42,9 +43,10 @@ const AddProject = ({handleAddProject}) => {
   };
 
   return (
-    <div className="add-project-container">
-      <h2 className="add-project-heading">Add Project</h2>
-      <form className="add-project-form" onSubmit={handleSubmit}>
+    <div className="container">
+      <h2 className="heading">Add Project</h2>
+      <form className="form" onSubmit={handleSubmit}>
+        <div>
         <label>
           Project Name:
           <input
@@ -54,6 +56,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Description:
           <input
@@ -63,6 +67,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Projected Material Cost:
           <input
@@ -72,6 +78,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Projected Labor Cost:
           <input
@@ -81,6 +89,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Sale:
           <input
@@ -90,6 +100,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Real Material Cost:
           <input
@@ -99,6 +111,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Real Labor Cost:
           <input
@@ -108,6 +122,8 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
+        </div>
+        <div>
         <label>
           Totalcost:
           <input
@@ -117,7 +133,10 @@ const AddProject = ({handleAddProject}) => {
             onChange={handleInputChange}
           />
         </label>
-        <button type="submit">Add project</button>
+        </div>
+        <div>
+        <button className='add_btn' type="submit">Add project</button>
+        </div>
       </form>
     </div>
   );

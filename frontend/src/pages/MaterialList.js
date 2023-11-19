@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import './MaterialList.css';
+import './PurchaseFunc.css';
 import EditMaterial from './EditMaterial.js';
 import AddMaterial from './AddMaterial.js';
 
@@ -171,7 +171,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
   }
 
   return (
-    <div>
+    <div className='container'>
       <AddMaterial handleAdd={handleAdd}/>
       <div className="search">
         <input
@@ -181,7 +181,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
           placeholder="Search..."
         />
       </div>
-      <table {...getTableProps()} className="material-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -216,7 +216,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
           })}
         </tbody>
       </table>
-      <div>
+      <div className = 'pagination'>
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>

@@ -204,7 +204,7 @@ const Stocks = ({apiBaseUrl}) => {
 
 
   return (
-    <div>
+    <div className='container'>
       <div>
           <label>Location:</label>
           <select name="location" value={selectedLocation} onChange={handleChange} required>
@@ -229,7 +229,7 @@ const Stocks = ({apiBaseUrl}) => {
       />
       </div>
 
-      <table {...getTableProps()} className="purchase-table">
+      <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -260,7 +260,7 @@ const Stocks = ({apiBaseUrl}) => {
         </tbody>
       </table>
 
-      <div>
+      <div className='pagination'> 
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>

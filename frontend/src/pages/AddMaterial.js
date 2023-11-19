@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './AddMaterial.css';
+import './PurchaseFunc.css';
 
 const AddMaterial = ({ handleAdd }) => {
   const [newMaterial, setNewMaterial] = useState({
@@ -41,9 +41,9 @@ const AddMaterial = ({ handleAdd }) => {
   };
 
   return (
-    <div className="add-material-container">
-      <h2 className="add-material-heading">Add Material</h2>
-      <form className="add-material-form" onSubmit={handleSubmit}>
+    <div className="container">
+      <h2 className="heading">Add Material</h2>
+      <form className="form" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="matid">Material ID:</label>
@@ -133,7 +133,7 @@ const AddMaterial = ({ handleAdd }) => {
             />
           </div>
         </div>
-        <button type="submit" className="add-material-btn">
+        <button type="submit" className="add_btn">
           Add
         </button>
       </form>
