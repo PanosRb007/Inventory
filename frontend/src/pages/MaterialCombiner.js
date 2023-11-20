@@ -212,7 +212,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
                     </div>
                 </div>
             )}
-            <div className="purchase-table-container">
+            <div className="table-container">
                 <table {...getTableProps()} className="table">
                     <thead>
                         {headerGroups.map(headerGroup => (
