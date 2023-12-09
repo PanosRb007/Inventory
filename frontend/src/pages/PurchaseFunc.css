@@ -231,6 +231,7 @@ body {
   font-weight: bold;
   display: block;
   margin-bottom: 6px;
+
 }
 
 /* Example: Style buttons */
@@ -247,4 +248,9 @@ body {
 
 .form-group button:hover {
   background-color: #c40000;
+}
+
+.comment-cell {
+  max-width: 100px; /* Adjust the maximum height as needed */
+  overflow: auto; /* Add scrollbar when the content overflows the max height */
 }

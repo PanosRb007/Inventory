@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import EditPurchase from './EditPurchase.js';
+import PurchaseVerification from './PurchaseVerification.js';
 import './PurchaseFunc.css';
 import AddPurchase from './AddPurchase.js';
 
 const PurchaseFunc = ({ apiBaseUrl }) => {
   const [purchases, setPurchases] = useState([]);
   const [editingPurchase, setEditingPurchase] = useState(null);
+  const [verPurchase, setVerPurchase] = useState(null);
   const [locations, setLocations] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -100,6 +102,15 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setEditingPurchase(purchase);
   }, [editingPurchase]);
 
+  const handleVerification = useCallback((purchase) => {
+    if (verPurchase && verPurchase.id === purchase.id) {
+      alert('Purchase is already being edited.');
+      return;
+    }
+
+    setVerPurchase(purchase);
+  }, [verPurchase]);
+
   const handleUpdate = useCallback(async (updatedPurchase) => {
     try {
       await fetchAPI(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
@@ -111,6 +122,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       });
       fetchData();
       setEditingPurchase(null);
+      setVerPurchase(null);
     } catch (error) {
       console.error('Error updating the purchase:', error);
     }
@@ -119,6 +131,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
   const handleCancel = () => {
     setEditingPurchase(null);
+    setVerPurchase(null);
   };
 
   const columns = React.useMemo(
@@ -192,11 +205,24 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           <div>
             <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
             <button className='button' onClick={() => handleDelete(row.original)}>Delete</button>
+            <button className='button' onClick={() => handleVerification(row.original)}>Verification</button>
           </div>
         ),
       },
+      {
+        Header: 'Comments',
+        accessor: 'comments',
+        Cell: ({ cell }) => (
+          <div className="comment-cell">
+            {cell.value}
+          </div>
+        ),
+      },
+      {
+        Header: 'Verification Date', accessor: 'verification', Cell: ({ value }) => formatDateTime(value),
+      },
     ],
-    [handleEdit, handleDelete, locations, materials, vendors, materialchanges]
+    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges]
   );
 
   function formatDateTime(dateTimeString) {
@@ -300,6 +326,13 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
                   <tr>
                     <td colSpan={columns.length}>
                       <EditPurchase purchase={editingPurchase} handleUpdate={handleUpdate} vendors={vendors} locations={locations} materials={materials} purchases={purchases} setPurchases={setPurchases} handleCancel={handleCancel} apiBaseUrl={apiBaseUrl} />
+                    </td>
+                  </tr>
+                )}
+                {verPurchase && verPurchase.id === row.original.id && (
+                  <tr>
+                    <td colSpan={columns.length}>
+                      <PurchaseVerification purchase={verPurchase} handleCancel={handleCancel} handleUpdate={handleUpdate} />
                     </td>
                   </tr>
                 )}

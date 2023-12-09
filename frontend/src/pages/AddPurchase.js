@@ -26,6 +26,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     vendorname: '',
     width: null,
     lotnumber: '',
+    invdate: '',
   };
 
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
