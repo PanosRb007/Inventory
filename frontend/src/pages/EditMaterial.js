@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './EditMaterial.css';
+import './PurchaseFunc.css';
 
 const EditMaterial = ({ material, handleUpdate }) => {
   const [name, setName] = useState(material.name || ''); // Set to empty string if `material.name` is null or undefined

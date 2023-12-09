@@ -132,10 +132,11 @@ const AddMaterial = ({ handleAdd }) => {
               required
             />
           </div>
+          <button type="submit" className="add_btn">
+            Add
+          </button>
         </div>
-        <button type="submit" className="add_btn">
-          Add
-        </button>
+
       </form>
     </div>
   );

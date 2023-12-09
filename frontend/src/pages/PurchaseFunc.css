@@ -1,3 +1,59 @@
+/* App.css */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Times New Roman',sans-serif;
+}
+
+.App {
+  display: grid;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 100px;
+  background-color: #3b0808;
+  padding: 10px;
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  height: 100%;
+  overflow-y: auto;
+
+}
+
+.header {
+  text-align: center;
+  margin: 20px;
+}
+
+.header-title {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.navbar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+}
+
+.nav-item {
+  margin: 8px 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.content {
+  margin-left: 125px; /* Adjust this to match the width of the sidebar */
+}
+
 .add_btn {
   padding: 8px 16px;
   background-color: #e20000;
@@ -6,7 +62,6 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  margin-top: 20px;
 }
 
 .add_btn:hover {
@@ -32,58 +87,13 @@
   
 }
 
-.form {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-
-.form-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.form div {
-  flex: 1; /* Equal width for form elements within the row */
-  margin: 0 10px;
-}
-
-.form-group {
-  margin: 0 10px;
-}
-
-.form label {
-  font-weight: bold;
-  align-content: center;
-  display: block; /* Ensure labels are displayed as blocks for proper alignment */
-}
-
-label {
-  font-weight: bold;
-  align-content: center;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"] {
-  width: 100%; /* Make input fields take up the entire width of their parent */
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
 
 .table-container {
   margin-top: 20px;
 }
 
 .table {
-  width: 100%;
+  width:  100%;
   border-collapse: collapse;
 }
 
@@ -152,8 +162,8 @@ input[type="date"] {
 }
 
 .search {
-  width: calc(100% - 125px); /* Subtract the sidebar width from the available viewport width */
-  max-height: 50px; /* Set the maximum height for the search container */
+  width: calc(100% - 150px); /* Subtract the sidebar width from the available viewport width */
+  height: 30px; /* Set the maximum height for the search container */
   margin: 0 auto;
   display: flex;
   padding: 8px;
@@ -189,8 +199,52 @@ input[type="date"] {
   font-size: 20px;
 }
 
-/* Ensure the form container has a relative position for the absolute positioning of the close button */
-.material-input-form {
-  position: relative;
-  /* other styles */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center; /* Adjust alignment as needed */
+}
+
+.form-group {
+  flex: 0 0 calc(33.33% - 10px); /* Adjust width and margin as needed */
+  margin-bottom: 20px; /* Add margin between form elements */
+  box-sizing: border-box;
+}
+
+/* If you want a specific width for certain form elements, you can override the general width rule for those elements */
+.form-group input,
+.form-group textarea,
+.form-group select,
+.form-group .select-field__control {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+/* Add more specific styling for form elements within a .form-group as needed */
+
+/* Example: Style labels */
+.form-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Example: Style buttons */
+.form-group button {
+  width: auto; /* Adjust button width as needed */
+  padding: 8px 16px;
+  background-color: #e20000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.form-group button:hover {
+  background-color: #c40000;
 }

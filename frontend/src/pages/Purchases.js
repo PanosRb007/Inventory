@@ -4,7 +4,7 @@ import EditPurchase from './EditPurchase.js';
 import './PurchaseFunc.css';
 import AddPurchase from './AddPurchase.js';
 
-const PurchaseFunc = ({apiBaseUrl}) => {
+const PurchaseFunc = ({ apiBaseUrl }) => {
   const [purchases, setPurchases] = useState([]);
   const [editingPurchase, setEditingPurchase] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -29,7 +29,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
     }
     return response.json();
   }, []);
-  
+
   const fetchData = useCallback(async () => {
     try {
       const [purchaseData, locationData, materialData, vendorData, materialchangesData] = await Promise.all([
@@ -49,7 +49,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchAPI,apiBaseUrl]);
+  }, [fetchAPI, apiBaseUrl]);
 
   useEffect(() => {
     fetchData();
@@ -71,12 +71,12 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       console.error('Error adding purchase:', error.message);
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
-  
+
 
   const handleDelete = useCallback((deletedPurchase) => {
-    
+
     const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
-  
+
     if (isConfirmed) {
       fetchAPI(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
@@ -89,7 +89,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           console.log('Error deleting purchase:', error);
         });
     }
-  }, [purchases, apiBaseUrl,fetchAPI]);
+  }, [purchases, apiBaseUrl, fetchAPI]);
 
   const handleEdit = useCallback((purchase) => {
     if (editingPurchase && editingPurchase.id === purchase.id) {
@@ -115,7 +115,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       console.error('Error updating the purchase:', error);
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
-  
+
 
   const handleCancel = () => {
     setEditingPurchase(null);
@@ -127,7 +127,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       {
         Header: 'Location',
         accessor: (value) => {
-          const locationnm  = locations.find((loc) => loc.id ===  value.location);
+          const locationnm = locations.find((loc) => loc.id === value.location);
           return locationnm ? locationnm.locationname : 'location not found';
         },
       },
@@ -148,7 +148,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
         Cell: ({ row }) => {
           const materialpricechanges = materialchanges.filter((mp) => mp.material_id === row.original.materialid);
           const tooltipContent = materialpricechanges.map((mp) => `Date: ${formatDateTime(mp.change_date)} Price: ${(mp.price)} €  Vendor: ${vendors.find(vendor => vendor.vendorid === mp.vendor)?.name}`).join('\n');
-          
+
           return (
             <span title={tooltipContent || 'Vendor not found'}>
               {(row.original.price)} €
@@ -182,10 +182,12 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           return 'Vendor not found';
         },
       },
-      
-      { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
+
+      {
+        Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
       },
-      { Header: 'Actions', accessor: 'actions',
+      {
+        Header: 'Actions', accessor: 'actions',
         Cell: ({ row }) => (
           <div>
             <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
@@ -207,12 +209,12 @@ const PurchaseFunc = ({apiBaseUrl}) => {
       second: '2-digit',
       timeZone: 'UTC', // Ensure the input date is interpreted as UTC
     };
-  
-      const dateTime = new Date(dateTimeString);
-      const formattedDateTime = dateTime.toLocaleString('en-GB', options);
+
+    const dateTime = new Date(dateTimeString);
+    const formattedDateTime = dateTime.toLocaleString('en-GB', options);
     return formattedDateTime;
   }
-  
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -257,11 +259,11 @@ const PurchaseFunc = ({apiBaseUrl}) => {
   if (error) {
     return <div>Error: {error}</div>;
   }
-  
+
 
   return (
     <div className='container'>
-      <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials} apiBaseUrl={apiBaseUrl}/>
+      <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials} apiBaseUrl={apiBaseUrl} />
 
       <div className="search">
         <input
@@ -297,7 +299,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
                 {editingPurchase && editingPurchase.id === row.original.id && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditPurchase purchase={editingPurchase} handleUpdate={handleUpdate} vendors={vendors} locations={locations} materials={materials} purchases={purchases} setPurchases={setPurchases} handleCancel={handleCancel} apiBaseUrl={apiBaseUrl}/>
+                      <EditPurchase purchase={editingPurchase} handleUpdate={handleUpdate} vendors={vendors} locations={locations} materials={materials} purchases={purchases} setPurchases={setPurchases} handleCancel={handleCancel} apiBaseUrl={apiBaseUrl} />
                     </td>
                   </tr>
                 )}
@@ -306,7 +308,7 @@ const PurchaseFunc = ({apiBaseUrl}) => {
           })}
         </tbody>
       </table>
-      <div className = 'pagination'>
+      <div className='pagination'>
         <button className='button' onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>

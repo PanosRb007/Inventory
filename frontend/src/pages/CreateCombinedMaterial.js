@@ -1,7 +1,35 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './CreateCombinedMaterial.css'; // Import CSS for styling
 
-const CombinedMaterialInputForm = ({ onClose, combinedMaterialName, combinedMaterialDescription, setcombinedMaterialDescription, setCombinedMaterialName, selectedMaterials, handleMaterialChange, handleMultiplierChange, addMaterial, saveCombinedMaterial, materials, removeMaterial }) => {
+
+const CombinedMaterialInputForm = ({ onClose, 
+                                     combinedMaterialName, 
+                                     combinedMaterialDescription, 
+                                     setcombinedMaterialDescription, 
+                                     setCombinedMaterialName, 
+                                     selectedMaterials, 
+                                     handleMaterialChange, 
+                                     handleMultiplierChange, 
+                                     addMaterial, 
+                                     saveCombinedMaterial, 
+                                     materials, 
+                                     removeMaterial,
+                                     editingMaterial  }) => {
+    useEffect(() => {
+        if (editingMaterial) {
+            setCombinedMaterialName(editingMaterial.name);
+            setcombinedMaterialDescription(editingMaterial.description);
+            }
+    }, [editingMaterial, setCombinedMaterialName, setcombinedMaterialDescription]);
+
+    const handleSave = () => {
+        if (editingMaterial) {
+            // Logic to update an existing material
+        } else {
+            saveCombinedMaterial(); // Save new material
+        }
+    };
+
     return (
         <div className="material-input-form">
             
@@ -72,8 +100,8 @@ const CombinedMaterialInputForm = ({ onClose, combinedMaterialName, combinedMate
             </div>
         ))}
 
-        <button className="btn btn-primary add-btn" onClick={addMaterial}>Add Material</button>
-        <button className="btn btn-success save-btn" onClick={saveCombinedMaterial}>Save Combined Material</button>
+        <button className="btn btn-primary add-btn" onClick={addMaterial} >Add Material</button>
+        <button className="btn btn-success save-btn" onClick={handleSave}>Save Combined Material</button>
     </div>
     
     );

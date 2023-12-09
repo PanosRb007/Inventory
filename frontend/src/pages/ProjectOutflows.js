@@ -141,7 +141,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
 
   return (
     <div className='container'>
-    <h1>Cost for Project: {projects.find((prj) => prj.prid === parseInt(projectId))?.name}</h1>
+    <h1 className='header'>Cost for Project: {projects.find((prj) => prj.prid === parseInt(projectId))?.name}</h1>
 
 
       <div className="search">

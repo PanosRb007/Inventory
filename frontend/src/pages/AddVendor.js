@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PurchaseFunc.css';
 
-const AddVendor = ({handleAddVendor}) => {
+const AddVendor = ({ handleAddVendor }) => {
   const [newVendor, setNewVendor] = useState({
     name: '',
     field: '',
@@ -19,7 +19,7 @@ const AddVendor = ({handleAddVendor}) => {
     }));
   };
 
- 
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -42,61 +42,63 @@ const AddVendor = ({handleAddVendor}) => {
     <div className="container">
       <div>
         <h2 className="heading">Add Vendor</h2>
-      </div> 
+      </div>
       <form className="form" onSubmit={handleSubmit}>
-        <div>
-          <label>Vendor Name:</label>
-          <input
-            type="text"
-            name="name"
-            value={newVendor.name}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Field:</label>
+        <div className='form-row'>
+          <div className='form-group'>
+            <label>Vendor Name:</label>
+            <input
+              type="text"
+              name="name"
+              value={newVendor.name}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className='form-group'>
+            <label>Field:</label>
             <input
               type="text"
               name="field"
               value={newVendor.field}
               onChange={handleInputChange}
             />
-        </div>
-        <div>
-        <label>
-          Email:
-          <input
-            type="email"
-            name="mail"
-            value={newVendor.mail}
-            onChange={handleInputChange}
-          />
-        </label>
-        </div>
-        <div>
-        <label>
-          Telephone:
-          <input
-            type="tel"
-            name="tel"
-            value={newVendor.tel}
-            onChange={handleInputChange}
-          />
-        </label>
-        </div>
-        <div>
-        <label>
-          Contact Name:
-          <input
-            type="text"
-            name="contactname"
-            value={newVendor.contactname}
-            onChange={handleInputChange}
-          />
-        </label>
-        </div>
-        <div>
-        <button className='add_btn' type="submit">Add Vendor</button>
+          </div>
+          <div className='form-group'>
+            <label>
+              Email:</label>
+            <input
+              type="email"
+              name="mail"
+              value={newVendor.mail}
+              onChange={handleInputChange}
+            />
+
+          </div>
+          <div className='form-group'>
+            <label>
+              Telephone:</label>
+            <input
+              type="tel"
+              name="tel"
+              value={newVendor.tel}
+              onChange={handleInputChange}
+            />
+
+          </div>
+          <div className='form-group'>
+            <label>
+              Contact Name:</label>
+            <input
+              type="text"
+              name="contactname"
+              value={newVendor.contactname}
+              onChange={handleInputChange}
+            />
+
+          </div>
+          <div>
+            <button className='add_btn' type="submit">Add Vendor</button>
+          </div>
         </div>
       </form>
     </div>

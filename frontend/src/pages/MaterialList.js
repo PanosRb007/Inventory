@@ -5,8 +5,8 @@ import EditMaterial from './EditMaterial.js';
 import AddMaterial from './AddMaterial.js';
 
 
-const MaterialList = React.memo(({apiBaseUrl}) => {
-  
+const MaterialList = React.memo(({ apiBaseUrl }) => {
+
   const [materials, setMaterials] = useState([]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
@@ -35,11 +35,11 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
         console.log('Error fetching data:', error);
       }
     };
-  
+
     fetchData();
   }, [apiBaseUrl, fetchAPI]);
 
-  
+
 
   const [editingMaterial, setEditingMaterial] = useState(null);
 
@@ -51,7 +51,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       alert('Material ID or name already exists.');
       return;
     }
-  
+
     try {
       const addedMaterial = await fetchAPI(`${apiBaseUrl}/materiallist`, {
         method: 'POST',
@@ -62,11 +62,11 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       console.log('Error adding material:', error);
     }
   }, [materials, setMaterials, apiBaseUrl, fetchAPI]);
-   
+
 
   const handleDelete = useCallback(async (deletedMaterial) => {
     const confirmDeletion = window.confirm('Are you sure you want to delete this material?');
-  
+
     if (confirmDeletion) {
       try {
         await fetchAPI(`${apiBaseUrl}/MaterialList/${deletedMaterial.matid}`, {
@@ -79,7 +79,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       }
     }
   }, [materials, setMaterials, apiBaseUrl, fetchAPI]);
-  
+
 
   const handleEdit = useCallback((material) => {
     if (editingMaterial && editingMaterial.matid === material.matid) {
@@ -99,7 +99,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       alert('Material ID or name already exists.');
       return;
     }
-  
+
     try {
       await fetchAPI(`${apiBaseUrl}/MaterialList/${updatedMaterial.matid}`, {
         method: 'PUT',
@@ -117,7 +117,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       console.log('Error updating material:', error);
     }
   }, [materials, setMaterials, setEditingMaterial, apiBaseUrl, fetchAPI]);
-  
+
 
   const columns = React.useMemo(
     () => [
@@ -126,7 +126,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
       { Header: 'Description', accessor: 'description' },
       { Header: 'Field', accessor: 'field' },
       { Header: 'Unit of Measure', accessor: 'unit_of_measure' },
-      { Header: 'Extra Characteristics', accessor: 'extras'},
+      { Header: 'Extra Characteristics', accessor: 'extras' },
       { Header: 'Shelf Life', accessor: 'shelflife' },
       { Header: 'Minimum Stock', accessor: 'minstock' },
       {
@@ -172,7 +172,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
 
   return (
     <div className='container'>
-      <AddMaterial handleAdd={handleAdd}/>
+      <AddMaterial handleAdd={handleAdd} />
       <div className="search">
         <input
           type="text"
@@ -216,11 +216,11 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
           })}
         </tbody>
       </table>
-      <div className = 'pagination'>
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+      <div className='pagination'>
+        <button className='button' onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button className='button' onClick={() => nextPage()} disabled={!canNextPage}>
           Next
         </button>
         <span>
@@ -254,7 +254,7 @@ const MaterialList = React.memo(({apiBaseUrl}) => {
           ))}
         </select>
       </div>
-      
+
     </div>
   );
 });

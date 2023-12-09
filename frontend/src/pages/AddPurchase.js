@@ -46,41 +46,41 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       };
 
       try {
-    
+
         if (newPurchase.materialid) {
           try {
             const [responseChanges, responseList] = await Promise.all([
               fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
               fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
             ]);
-  
+
             const [dataChanges, dataList] = await Promise.all([
               responseChanges.json(),
               responseList.json(),
             ]);
-  
-              if (dataList && dataList.extras === 1) {
-                setShowExtras(true);
-              } else {
-                setShowExtras(false);
-              }
-  
-              if (dataChanges && dataChanges.price && dataChanges.vendor) {
-                setNewPurchase((prevPurchase) => ({
-                  ...prevPurchase,
-                  price: dataChanges.price,
-                  vendor: dataChanges.vendor,
-                  vendorname: vendors.find((vendor) => vendor.vendorid === dataChanges.vendor).name,
-                }));
-              } else {
-                setNewPurchase((prevPurchase) => ({
-                  ...prevPurchase,
-                  price: '',
-                  vendor: '',
-                  vendorname: '',
-                }));
-              }
-  
+
+            if (dataList && dataList.extras === 1) {
+              setShowExtras(true);
+            } else {
+              setShowExtras(false);
+            }
+
+            if (dataChanges && dataChanges.price && dataChanges.vendor) {
+              setNewPurchase((prevPurchase) => ({
+                ...prevPurchase,
+                price: dataChanges.price,
+                vendor: dataChanges.vendor,
+                vendorname: vendors.find((vendor) => vendor.vendorid === dataChanges.vendor).name,
+              }));
+            } else {
+              setNewPurchase((prevPurchase) => ({
+                ...prevPurchase,
+                price: '',
+                vendor: '',
+                vendorname: '',
+              }));
+            }
+
             setNewPurchase((prevPurchase) => ({
               ...prevPurchase,
               materialname: dataList && dataList.name ? dataList.name : '',
@@ -102,10 +102,10 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         console.error('Error fetching data:', error);
       }
     };
-  
+
     fetchData();
   }, [newPurchase.materialid, vendors, apiBaseUrl]);
-  
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -128,7 +128,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         },
       });
     };
-    
+
 
     try {
 
@@ -166,7 +166,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     }
   };
 
-  
+
   const handleAddMat = useCallback((newMaterial) => {
     const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
@@ -179,7 +179,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         },
       });
     };
-    
+
     const materialExists = materials.some(
       (material) => material.matid === newMaterial.matid || material.name === newMaterial.name
     );
@@ -187,7 +187,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       alert('Material ID or name already exists.');
       return;
     }
-  
+
     fetchWithAuth(`${apiBaseUrl}/materiallist`, {
       method: 'POST',
       headers: {
@@ -233,18 +233,18 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         },
         body: JSON.stringify(newVendor),
       });
-  
+
       if (!addResponse.ok) {
         throw new Error('Error adding vendor');
       }
-  
+
       // Fetch the updated list of vendors from '/vendorsAPI'
       const response = await fetchWithAuth(`${apiBaseUrl}/vendors`);
-  
+
       if (!response.ok) {
         throw new Error('Failed to fetch vendors');
       }
-  
+
       const data = await response.json();
       setVendors(data); // Assuming 'setVendors' is a state updater function
       setShowAddVendorForm(false);
@@ -252,105 +252,111 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       console.error('Error handling the form submission:', error);
     }
   }, [setVendors, setShowAddVendorForm, apiBaseUrl]);
-  
+
 
   return (
     <div className='container'>
       <div>
-      <h2 className="heading">Add Purchase</h2>
+        <h2 className="heading">Add Purchase</h2>
       </div>
       <form onSubmit={handleSubmit} className="form">
-        <div>
-          <label>Location:</label>
-          <select name="location" value={newPurchase.location} onChange={handleChange} required>
-            <option value="">Select a location</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.locationname}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Material ID:<span className="add-icon" onClick={openAddMaterialForm}>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Location:</label>
+            <select name="location" value={newPurchase.location} onChange={handleChange} required>
+              <option value="">Select a location</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.locationname}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Material ID:<span className="add-icon" onClick={openAddMaterialForm}>
               +
             </span></label>
             <Select
-            name="materialid"
-            value={newPurchase.materialid ? { value: newPurchase.materialid, label: newPurchase.materialid } : null}
-            options={materials.map((material) => ({
-              value: material.matid,
-              label: material.matid,
-            }))}
-            onChange={(selectedOption) => handleChange({ target: { name: 'materialid', value: selectedOption.value } })}
-            placeholder="Select a material"
-            required // Add the required attribute
-          />   
-        </div>
-        <div>
-          <label>Material Name:</label>
-          <input type="text" name="materialname" value={newPurchase.materialname} readOnly required />
-        </div>
-        {showExtras && (
-          <div>
-            <label>Width:</label>
-            <input
-              type="number"
-              name="width"
-              value={newPurchase.width || ''}
-              onChange={handleChange}
-              required
+              classNamePrefix="select-field"
+              name="materialid"
+              value={newPurchase.materialid ? { value: newPurchase.materialid, label: newPurchase.materialid } : null}
+              options={materials.map((material) => ({
+                value: material.matid,
+                label: material.matid,
+              }))}
+              onChange={(selectedOption) => handleChange({ target: { name: 'materialid', value: selectedOption.value } })}
+              placeholder="Select a material"
+              required // Add the required attribute
+
             />
           </div>
-        )}
-        {showExtras && (
-          <div>
-            <label>LOT#:</label>
+          <div className="form-group">
+            <label>Material Name:</label>
+            <input type="text" name="materialname" value={newPurchase.materialname} readOnly required />
+          </div>
+          {showExtras && (
+            <div className="form-group">
+              <label>Width:</label>
+              <input
+                type="number"
+                name="width"
+                value={newPurchase.width || ''}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          )}
+          {showExtras && (
+            <div className="form-group">
+              <label>LOT#:</label>
+              <input
+                type="text"
+                name="lotnumber"
+                value={newPurchase.lotnumber || ''}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          )}
+          <div className="form-group">
+            <label>Quantity:</label>
+            <input type="text" name="quantity" value={newPurchase.quantity} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <label>Price:</label>
             <input
               type="text"
-              name="lotnumber"
-              value={newPurchase.lotnumber || ''}
+              name="price"
+              value={newPurchase.price || ''}
               onChange={handleChange}
               required
+
             />
           </div>
-        )}
-        <div>
-          <label>Quantity:</label>
-          <input type="text" name="quantity" value={newPurchase.quantity} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Price:</label>
-          <input
-            type="text"
-            name="price"
-            value={newPurchase.price || ''}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Vendor:<span className="add-icon" onClick={openAddVendorForm}>
+          <div className="form-group">
+            <label>Vendor:<span className="add-icon" onClick={openAddVendorForm}>
               +
             </span></label>
-          <Select
-            name="vendor"
-            value={newPurchase.vendor ? { value: newPurchase.vendor, label: vendors.find(ven => ven.vendorid === newPurchase.vendor)?.name } : null}
-            options={vendors.map((vendor) => ({
-              value: parseInt(vendor.vendorid),
-              label: vendor.name,
-            }))}
-            onChange={(selectedOption) =>
-              handleChange({ target: { name: 'vendor', value: selectedOption.value, vendorname: selectedOption.label } })
-            }
-            placeholder="Select a Vendor"
-            isSearchable
-            required
-          />
+            <Select
+              name="vendor"
+              value={newPurchase.vendor ? { value: newPurchase.vendor, label: vendors.find(ven => ven.vendorid === newPurchase.vendor)?.name } : null}
+              options={vendors.map((vendor) => ({
+                value: parseInt(vendor.vendorid),
+                label: vendor.name,
+              }))}
+              onChange={(selectedOption) =>
+                handleChange({ target: { name: 'vendor', value: selectedOption.value, vendorname: selectedOption.label } })
+              }
+              placeholder="Select a Vendor"
+              isSearchable
+              required
+              className="select-field"
+            />
+          </div>
+          <button type="submit" className="add_btn">
+            Add Purchase
+          </button>
         </div>
-        <button type="submit" className="add_btn">
-          Add Purchase
-        </button>
       </form>
       {showAddMaterialForm && (
         <div className="overlay">
@@ -369,7 +375,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             <span className="close-popup" onClick={() => setShowAddVendorForm(false)}>
               &times;
             </span>
-            <AddVendor handleAddVendor={handleAddVendor}/>
+            <AddVendor handleAddVendor={handleAddVendor} />
           </div>
         </div>
       )}

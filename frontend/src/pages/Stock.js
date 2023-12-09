@@ -3,7 +3,7 @@ import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table
 import './PurchaseFunc.css';
 
 
-const Stocks = ({apiBaseUrl}) => {
+const Stocks = ({ apiBaseUrl }) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -30,45 +30,45 @@ const Stocks = ({apiBaseUrl}) => {
 
 
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
-        fetchAPI(`${apiBaseUrl}/materiallist`),
-        fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
-        fetchAPI(`${apiBaseUrl}/LocationsAPI`),
-        fetchAPI(`${apiBaseUrl}/outflowsAPI`),
-      ]);
+    const fetchData = async () => {
+      try {
+        const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
+          fetchAPI(`${apiBaseUrl}/materiallist`),
+          fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
+          fetchAPI(`${apiBaseUrl}/LocationsAPI`),
+          fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+        ]);
 
-      // Filter and process stock based on extras and location
-      const processedStock = purchaseResponse.reduce((acc, purchase) => {
-        if (purchase.location === parseInt(selectedLocation)) {
-          const material = materialResponse.find(mat => mat.matid === purchase.materialid);
-          if (material) {
-            if (material.extras === 0) {
-              // For extras === 0, include only if it's not already included
-              if (!acc.some(item => item.materialid === purchase.materialid)) {
+        // Filter and process stock based on extras and location
+        const processedStock = purchaseResponse.reduce((acc, purchase) => {
+          if (purchase.location === parseInt(selectedLocation)) {
+            const material = materialResponse.find(mat => mat.matid === purchase.materialid);
+            if (material) {
+              if (material.extras === 0) {
+                // For extras === 0, include only if it's not already included
+                if (!acc.some(item => item.materialid === purchase.materialid)) {
+                  acc.push(purchase);
+                }
+              } else {
+                // For extras === 1, include all
                 acc.push(purchase);
               }
-            } else {
-              // For extras === 1, include all
-              acc.push(purchase);
             }
           }
-        }
-        return acc;
-      }, []);
+          return acc;
+        }, []);
 
-      setMaterials(materialResponse);
-      setPurchases(purchaseResponse);
-      setLocations(locationResponse);
-      setOutflows(outflowsResponse);
-      setStock(processedStock);
-    } catch (error) {
-      console.log('Error fetching data:', error);
-    }
-  };
-  fetchData();
-}, [apiBaseUrl, fetchAPI, selectedLocation]);
+        setMaterials(materialResponse);
+        setPurchases(purchaseResponse);
+        setLocations(locationResponse);
+        setOutflows(outflowsResponse);
+        setStock(processedStock);
+      } catch (error) {
+        console.log('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, [apiBaseUrl, fetchAPI, selectedLocation]);
 
 
   console.log("purchases", purchases);
@@ -77,20 +77,20 @@ const Stocks = ({apiBaseUrl}) => {
 
   const calculateTotalCost = useCallback((materialId, location, lotNumber) => {
     let totalCost = 0;
-  
+
     // Calculate cost from purchases
-    const filteredPurchases = purchases.filter(purchase => 
+    const filteredPurchases = purchases.filter(purchase =>
       purchase.materialid === materialId && purchase.location === location && purchase.lotnumber === lotNumber
     );
     filteredPurchases.forEach(purchase => {
       totalCost += parseFloat(purchase.quantity) * parseFloat(purchase.price);
     });
-  
+
     // Calculate cost reduction from outflows using FIFO
     let remainingOutflow = outflows
       .filter(outflow => outflow.materialid === materialId && outflow.location === location && outflow.lotnumber === lotNumber)
       .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0);
-  
+
     for (const purchase of filteredPurchases) {
       if (remainingOutflow <= 0) break;
       const availableQuantity = parseFloat(purchase.quantity);
@@ -98,12 +98,12 @@ const Stocks = ({apiBaseUrl}) => {
       totalCost -= usedQuantity * parseFloat(purchase.price);
       remainingOutflow -= usedQuantity;
     }
-  
+
     return totalCost;
   }, [purchases, outflows]);
-  
-  
-  
+
+
+
   const uniqueMaterialIds = [...new Set(stock.map(item => item.materialid))];
 
   console.log('uniqueMaterialIds', uniqueMaterialIds);
@@ -113,10 +113,10 @@ const Stocks = ({apiBaseUrl}) => {
     const { value } = e.target;
     setSelectedLocation(value)
   };
-  
+
   const columns = React.useMemo(
     () => [
-      
+
       { Header: 'ID', accessor: 'id' },
       { Header: 'Material ID', accessor: 'materialid' },
       {
@@ -129,43 +129,43 @@ const Stocks = ({apiBaseUrl}) => {
       { Header: 'Width', accessor: 'width' },
       { Header: 'Lot No', accessor: 'lotnumber' },
       {
-  Header: 'Quantity',
-  accessor: (row) => {
-    const materialId = row.materialid;
-    const lotNumber = row.lotnumber;
-    const location = parseInt(selectedLocation);
+        Header: 'Quantity',
+        accessor: (row) => {
+          const materialId = row.materialid;
+          const lotNumber = row.lotnumber;
+          const location = parseInt(selectedLocation);
 
-    // Filter purchases and outflows for the current row's material ID, lot number, and location
-    const filteredPurchases = purchases.filter(purchase => 
-      purchase.materialid === materialId && 
-      purchase.lotnumber === lotNumber && 
-      purchase.location === location
-    );
+          // Filter purchases and outflows for the current row's material ID, lot number, and location
+          const filteredPurchases = purchases.filter(purchase =>
+            purchase.materialid === materialId &&
+            purchase.lotnumber === lotNumber &&
+            purchase.location === location
+          );
 
-    const filteredOutflows = outflows.filter(outflow => 
-      outflow.materialid === materialId && 
-      outflow.lotnumber === lotNumber && 
-      outflow.location === location
-    );
+          const filteredOutflows = outflows.filter(outflow =>
+            outflow.materialid === materialId &&
+            outflow.lotnumber === lotNumber &&
+            outflow.location === location
+          );
 
-    // Calculate total quantity (sum of purchases - sum of outflows)
-    const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
-    const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+          // Calculate total quantity (sum of purchases - sum of outflows)
+          const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
+          const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
 
-    return totalPurchases - totalOutflows;
-  }
-},
+          return totalPurchases - totalOutflows;
+        }
+      },
 
-{
-  Header: 'Average Cost',
-  accessor: (row) => calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber),
-},
+      {
+        Header: 'Average Cost',
+        accessor: (row) => calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber),
+      },
 
 
     ],
-    [ materials, calculateTotalCost, outflows, purchases, selectedLocation]
+    [materials, calculateTotalCost, outflows, purchases, selectedLocation]
   );
- 
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -205,28 +205,28 @@ const Stocks = ({apiBaseUrl}) => {
 
   return (
     <div className='container'>
-      <div>
-          <label>Location:</label>
-          <select name="location" value={selectedLocation} onChange={handleChange} required>
-            <option value="">Select a location</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.locationname}
-              </option>
-            ))}
-          </select>
-     </div>
+      <div className='form-group'>
+        <label>Location:</label>
+        <select name="location" value={selectedLocation} onChange={handleChange} required>
+          <option value="">Select a location</option>
+          {locations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {location.locationname}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="search">
-      <input
-        type="text"
-        value={globalFilter || ''}
-        onChange={(e) => {
-          console.log('Global filter value:', e.target.value); // Add this line
-          setGlobalFilter(e.target.value);
-        }}
-        placeholder="Search..."
-      />
+        <input
+          type="text"
+          value={globalFilter || ''}
+          onChange={(e) => {
+            console.log('Global filter value:', e.target.value); // Add this line
+            setGlobalFilter(e.target.value);
+          }}
+          placeholder="Search..."
+        />
       </div>
 
       <table {...getTableProps()} className="table">
@@ -243,29 +243,29 @@ const Stocks = ({apiBaseUrl}) => {
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-        {page.map((row) => {
-        prepareRow(row);
-        return (
-          <React.Fragment key={row.getRowProps().key}>
-            <tr {...row.getRowProps()}>
-              {row.cells.map((cell) => (
-                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-              ))}
-            </tr>
-            
-          </React.Fragment>
-        );
-      })}
+          {page.map((row) => {
+            prepareRow(row);
+            return (
+              <React.Fragment key={row.getRowProps().key}>
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+
+              </React.Fragment>
+            );
+          })}
 
         </tbody>
       </table>
 
-      <div className='pagination'> 
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+      <div className='pagination'>
+        <button className='button' onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>
 
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button className='button' onClick={() => nextPage()} disabled={!canNextPage}>
           Next
         </button>
 

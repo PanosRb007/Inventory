@@ -11,7 +11,7 @@ import Login from './pages/Login.js';
 import MaterialCombiner from './pages/MaterialCombiner.js';
 
 
-import './App.css'; // Import custom CSS for App component
+import './pages/PurchaseFunc.css'; // Import custom CSS for App component
 
 const API_BASE_URL = 'https://api.robbie.gr';
 
