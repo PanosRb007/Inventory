@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PurchaseFunc.css';
 
-const EditMaterial = ({ material, handleUpdate }) => {
+const EditMaterial = ({ material, handleUpdate, handleCancel}) => {
   const [name, setName] = useState(material.name || ''); // Set to empty string if `material.name` is null or undefined
   const [description, setDescription] = useState(material.description || '');
   const [field, setField] = useState(material.field || '');
@@ -30,9 +30,9 @@ const EditMaterial = ({ material, handleUpdate }) => {
   };
 
   return (
-    <div className="edit-material-container">
-      <h2 className="edit-material-heading">Edit Material</h2>
-      <form className="edit-material-form" onSubmit={handleSubmit}>
+    <div className="container">
+      <h2 className="heading">Edit Material</h2>
+      <form className="form" onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="name">Name:</label>
@@ -97,7 +97,8 @@ const EditMaterial = ({ material, handleUpdate }) => {
             />
           </div>
         </div>
-        <button type="submit" className="edit-material-btn">Update</button>
+        <button type="submit" className="edit-btn">Update</button>
+        <button type="button" className="add_btn" onClick={handleCancel}>Cancel</button>
       </form>
     </div>
   );

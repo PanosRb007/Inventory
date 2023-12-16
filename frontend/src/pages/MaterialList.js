@@ -80,6 +80,10 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
     }
   }, [materials, setMaterials, apiBaseUrl, fetchAPI]);
 
+  const handleCancel = () => {
+    setEditingMaterial(null);
+  };
+
 
   const handleEdit = useCallback((material) => {
     if (editingMaterial && editingMaterial.matid === material.matid) {
@@ -207,7 +211,7 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
                 {editingMaterial && editingMaterial.matid === row.original.matid && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditMaterial material={editingMaterial} handleUpdate={handleUpdate} />
+                      <EditMaterial material={editingMaterial} handleUpdate={handleUpdate} handleCancel={handleCancel} />
                     </td>
                   </tr>
                 )}

@@ -14,6 +14,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     cost: '',
     employee: '',
     project: '',
+    comments: '',
   };
 
   const [newOutflow, setNewOutflow] = useState(initialOutflowState);
@@ -237,14 +238,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     }
   };
 
-  console.log('availmat', availableMaterials);
-  console.log('extras', showExtras);
-  console.log('availwidth', availableWidths);
-  console.log('new', newOutflow);
-  console.log('availlot', availableLots);
-  console.log('availquant', availableQuantity);
-  console.log('availlot', availableLots);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -350,6 +343,17 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           </div>
         )}
 
+        {showExtras && newOutflow.quantity && (
+          <div className='form-group'>
+            <label>Comments:</label>
+            <textarea
+              name="comments"
+              value={newOutflow.comments}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+
         {!showExtras && newOutflow.materialid && (
           <div className='form-group'>
             <label>Quantity:</label>
@@ -364,6 +368,16 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
             <div>
               Available Quantity: {availableQuantity}
             </div>
+          </div>
+        )}
+        {!showExtras && newOutflow.quantity && (
+          <div className='form-group'>
+            <label>Comments:</label>
+            <textarea
+              name="comments"
+              value={newOutflow.comments}
+              onChange={handleChange}
+            />
           </div>
         )}
         {!showExtras && newOutflow.quantity && (

@@ -99,6 +99,10 @@ const VendorsFunc = ({apiBaseUrl}) => {
       console.error('Error updating the vendor:', error);
     });
   }, [fetchData, apiBaseUrl, fetchAPI]);
+
+  const handleCancel = () => {
+    setEditingVendor(null);
+  };
   
   const columns = React.useMemo(
     () => [
@@ -197,7 +201,7 @@ const VendorsFunc = ({apiBaseUrl}) => {
                 {editingVendor && editingVendor.vendorid === row.original.vendorid && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditVendor vendor={editingVendor} handleUpdate={handleUpdate} />
+                      <EditVendor vendor={editingVendor} handleUpdate={handleUpdate} handleCancel={handleCancel} />
                     </td>
                   </tr>
                 )}

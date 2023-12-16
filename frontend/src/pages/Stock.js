@@ -158,8 +158,13 @@ const Stocks = ({ apiBaseUrl }) => {
 
       {
         Header: 'Average Cost',
-        accessor: (row) => calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber),
+        accessor: (row) => {
+          const totalCost = calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber);
+          const formattedCost = row.width ? (totalCost * parseFloat(row.width)).toFixed(2) : totalCost.toFixed(2);
+          return `${formattedCost} €`;
+        },
       },
+
 
 
     ],

@@ -10,7 +10,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
   const [materialChanges, setMaterialChanges] = useState([]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedMaterials, setSelectedMaterials] = useState([{ materialId: '', multiplier: 1, unitPrice: 0 }]);
+  const [selectedMaterials, setSelectedMaterials] = useState([{ materialId: '', multiplier: null, unitPrice: 0 }]);
   const [combinedMaterials, setCombinedMaterials] = useState([]);
   const [showCreateCombinedMaterial, setShowCreateCombinedMaterial] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);

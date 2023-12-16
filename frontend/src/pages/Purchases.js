@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import EditPurchase from './EditPurchase.js';
 import PurchaseVerification from './PurchaseVerification.js';
@@ -15,6 +15,9 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   const [materialchanges, setMaterialchanges] = useState([]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
+  const [globalFilterOne, setGlobalFilterOne] = useState('');
+  const [globalFilterTwo, setGlobalFilterTwo] = useState('');
+
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -58,6 +61,27 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   }, [fetchData]);
 
   console.log('purhases, purchases', purchases);
+
+  const filteredData = useMemo(() => {
+    return purchases.filter(row => {
+      // Find the location name for the current row
+      const location = locations.find(loc => loc.id === row.location);
+      const locationName = location ? location.locationname.toLowerCase() : '';
+
+      // Find the vendor name for the current row
+      const vendor = vendors.find(v => v.vendorid === row.vendor);
+      const vendorName = vendor ? vendor.name.toLowerCase() : '';
+
+      const material = materials.find(m => m.matid === row.materialid);
+      const materialName = material ? material.name.toLowerCase() : '';
+
+      // Create a string that includes all the row values, location name, and vendor name
+      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + vendorName+ ' ' + materialName;
+
+      // Check if the row string includes both global filters
+      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+    });
+  }, [purchases, globalFilterOne, globalFilterTwo, locations, vendors, materials]);
 
   const handleAdd = useCallback(async (newPurchase) => {
     try {
@@ -247,18 +271,17 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     headerGroups,
     page,
     prepareRow,
-    state: { pageIndex, pageSize, globalFilter },
+    state: { pageIndex, pageSize },
     gotoPage,
     nextPage,
     previousPage,
     canNextPage,
     canPreviousPage,
     setPageSize,
-    setGlobalFilter,
   } = useTable(
     {
       columns,
-      data: purchases,
+      data: filteredData,
       locations,
       materials,
       initialState: {
@@ -293,10 +316,14 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
       <div className="search">
         <input
-          type="text"
-          value={globalFilter || ''}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Search..."
+          value={globalFilterOne}
+          onChange={e => setGlobalFilterOne(e.target.value)}
+          placeholder="Global Filter 1"
+        />
+        <input
+          value={globalFilterTwo}
+          onChange={e => setGlobalFilterTwo(e.target.value)}
+          placeholder="Global Filter 2"
         />
       </div>
       <table {...getTableProps()} className="table">

@@ -2,14 +2,16 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import './PurchaseFunc.css';
 
-const ProjectFunc = ({apiBaseUrl}) => {
+const ProjectFunc = ({ apiBaseUrl }) => {
 
-    // State to store the projectId from the query parameter
+  // State to store the projectId from the query parameter
   const [projectId, setProjectId] = useState(null);
   const [projects, setProjects] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
   const [employees, setEmployees] = useState([]);
+  const [materials, setMaterials] = useState([]);
+
 
   useEffect(() => {
     // Parse the query parameter from the URL
@@ -37,25 +39,27 @@ const ProjectFunc = ({apiBaseUrl}) => {
     return response.json();
   }, []);
 
-  
+
   const fetchData = useCallback(async () => {
     try {
-      const [outflowsResponse, projectsResponse, employeesResponse] = await Promise.all([
+      const [outflowsResponse, projectsResponse, employeesResponse, materialsResponse] = await Promise.all([
         fetchAPI(`${apiBaseUrl}/outflowsAPI`),
         fetchAPI(`${apiBaseUrl}/projectsAPI`),
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
+        fetchAPI(`${apiBaseUrl}/materiallist`),
+
       ]);
       const filtered = outflowsResponse;
-      console.log('filtered', filtered);
       setEmployees(employeesResponse);
       setProjects(projectsResponse);
+      setMaterials(materialsResponse);
       setOutflows(filtered.filter((res) => res.project === parseInt(projectId)));
       setIsLoading(false);
     } catch (error) {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
-  }, [projectId, apiBaseUrl,fetchAPI]);
+  }, [projectId, apiBaseUrl, fetchAPI]);
 
   useEffect(() => {
     fetchData();
@@ -65,21 +69,44 @@ const ProjectFunc = ({apiBaseUrl}) => {
   console.log('projectid', projectId);
   console.log('projects', projects);
 
+  function formatDateTime(dateTimeString) {
+    const options = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'UTC', // Ensure the input date is interpreted as UTC
+    };
   
-  
+      const dateTime = new Date(dateTimeString);
+      const formattedDateTime = dateTime.toLocaleString('en-GB', options);
+    return formattedDateTime;
+  }
+
   const columns = React.useMemo(
     () => [
       { Header: 'ID', accessor: 'outflowid' },
-      { Header: 'Date', accessor: 'date' },
+      { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
+      },
 
       { Header: 'Material Id', accessor: 'materialid' },
+      {
+        Header: 'Material Name',
+        accessor: (row) => {
+          const material = materials.find((material) => material.matid === row.materialid);
+          return material ? material.name : 'Material not found';
+        },
+      },
+
       { Header: 'Quantity', accessor: 'quantity' },
       {
         Header: 'Cost/Unit',
         accessor: (row) => {
           const cost = parseFloat(row.cost); // Get the cost value
           const quantity = parseFloat(row.quantity); // Get the quantity value
-      
+
           // Check if both cost and quantity are valid numbers
           if (typeof cost === 'number' && typeof quantity === 'number' && quantity !== 0) {
             // Calculate the cost per unit and format it
@@ -100,11 +127,11 @@ const ProjectFunc = ({apiBaseUrl}) => {
           return employee ? `${employee.name} ${employee.surname}` : 'Employee not found';
         },
       },
-   
+
     ],
-    [employees]
+    [employees, materials]
   );
-  
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -141,7 +168,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
 
   return (
     <div className='container'>
-    <h1 className='header'>Cost for Project: {projects.find((prj) => prj.prid === parseInt(projectId))?.name}</h1>
+      <h1 className='header'>Cost for Project: {projects.find((prj) => prj.prid === parseInt(projectId))?.name}</h1>
 
 
       <div className="search">
@@ -175,54 +202,55 @@ const ProjectFunc = ({apiBaseUrl}) => {
                     <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                   ))}
                 </tr>
-                
+
               </React.Fragment>
             );
           })}
         </tbody>
       </table>
-      <div className = 'pagination'>
-      <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-  Previous
-</button>
-<button onClick={() => nextPage()} disabled={!canNextPage}>
-  Next
-</button>
-<span>
-  Page{' '}
-  <strong>
-    {pageIndex + 1} of {Math.ceil(outflows.length / pageSize)}
-  </strong>{' '}
-</span>
-<span>
-  | Go to page:{' '}
-  <input
-    type="number"
-    defaultValue={pageIndex + 1} // Corrected the typo here
-    onChange={(e) => {
-      const page = e.target.value ? Number(e.target.value) - 1 : 0;
-      gotoPage(page);
-    }}
-    style={{ width: '50px' }}
-  />
-</span>
-<select
-  value={pageSize}
-  onChange={(e) => {
-    setPageSize(Number(e.target.value));
-  }}
->
-  {[10, 25, 50].map((pageSize) => (
-    <option key={pageSize} value={pageSize}>
-      Show {pageSize}
-    </option>
-  ))}
-</select>
+      <div className='pagination'>
+        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          Previous
+        </button>
+        <button onClick={() => nextPage()} disabled={!canNextPage}>
+          Next
+        </button>
+        <span>
+          Page{' '}
+          <strong>
+            {pageIndex + 1} of {Math.ceil(outflows.length / pageSize)}
+          </strong>{' '}
+        </span>
+        <span>
+          | Go to page:{' '}
+          <input
+            type="number"
+            defaultValue={pageIndex + 1}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+              gotoPage(page);
+            }}
+            style={{ width: '50px' }}
+          />
+        </span>
+        <select
+          value={pageSize}
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+          }}
+        >
+          {[10, 25, 50].map((pageSize) => (
+            <option key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </option>
+          ))}
+        </select>
 
       </div>
       <div className="total-cost">
-        <strong>Total Cost:</strong> {outflows.reduce((acc, row) => acc + parseFloat(row.cost), 0)}
+        <strong>Total Cost:</strong> {outflows.reduce((acc, row) => acc + parseFloat(row.cost), 0).toFixed(2)} €
       </div>
+
     </div>
   );
 };

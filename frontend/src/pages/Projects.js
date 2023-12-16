@@ -99,6 +99,10 @@ const ProjectFunc = ({apiBaseUrl}) => {
       console.error('Error updating the project:', error);
     });
   }, [fetchData, apiBaseUrl, fetchAPI]);
+
+  const handleCancel = () => {
+    setEditingProject(null);
+  };
   
   const columns = React.useMemo(
     () => [
@@ -200,7 +204,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
                 {editingProject && editingProject.prid === row.original.prid && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditProject project={editingProject} handleUpdate={handleUpdate} />
+                      <EditProject project={editingProject} handleUpdate={handleUpdate} handleCancel={handleCancel} />
                     </td>
                   </tr>
                 )}

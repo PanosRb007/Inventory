@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PurchaseFunc.css';
 
-const Editvendor = ({ vendor, handleUpdate }) => {
+const Editvendor = ({ vendor, handleUpdate, handleCancel }) => {
     const [editedVendor, setEditedVendor] = useState({ ...vendor });
 
      
@@ -87,6 +87,7 @@ const Editvendor = ({ vendor, handleUpdate }) => {
           
         </div>
         <button type="submit" className="add_btn">Update</button>
+        <button type="button" className="add_btn" onClick={handleCancel}>Cancel</button>
       </form>
     </div>
   );

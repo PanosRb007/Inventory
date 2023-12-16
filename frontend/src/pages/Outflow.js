@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect } from 'react';
+import React, {useMemo, useState, useCallback, useEffect } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import EditOutflow from './EditOutflow.js';
 import './PurchaseFunc.css';
@@ -13,6 +13,8 @@ const OutflowFunc = ({apiBaseUrl}) => {
   const [employees, setEmployees] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [editingOutflow, setEditingOutflow] = useState(null);
+  const [globalFilterOne, setGlobalFilterOne] = useState('');
+  const [globalFilterTwo, setGlobalFilterTwo] = useState('');
 
   const openProjectOutflowTable = (projectId) => {
     // Append projectId as a query parameter to the URL
@@ -64,6 +66,27 @@ const OutflowFunc = ({apiBaseUrl}) => {
   
     // Rest of your code
   }, [apiBaseUrl,fetchAPI]);
+
+  const filteredData = useMemo(() => {
+    return outflows.filter(row => {
+      // Find the location name for the current row
+      const location = locations.find(loc => loc.id === row.location);
+      const locationName = location ? location.locationname.toLowerCase() : '';
+
+      // Find the vendor name for the current row
+      const employee = employees.find(e => e.empid === row.employee);
+      const employeeName = employee ? employee.name.toLowerCase() : '';
+
+      const material = materials.find(m => m.matid === row.materialid);
+      const materialName = material ? material.name.toLowerCase() : '';
+
+      // Create a string that includes all the row values, location name, and vendor name
+      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + employeeName + ' ' + materialName;
+
+      // Check if the row string includes both global filters
+      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+    });
+  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials]);
 
   console.log('outflowspurch', purchases);
 
@@ -219,7 +242,8 @@ const OutflowFunc = ({apiBaseUrl}) => {
             </span>
           );
         },
-      },        
+      }, 
+      { Header: 'Comments', accessor: 'comments' },       
       { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
       },
       { Header: 'Actions', accessor: 'actions',
@@ -240,18 +264,18 @@ const OutflowFunc = ({apiBaseUrl}) => {
     headerGroups,
     page,
     prepareRow,
-    state: { pageIndex, pageSize, globalFilter },
+    state: { pageIndex, pageSize },
     gotoPage,
     nextPage,
     previousPage,
     canNextPage,
     canPreviousPage,
     setPageSize,
-    setGlobalFilter,
+  
   } = useTable(
     {
       columns,
-      data: outflows,
+      data: filteredData,
       locations,
       materials,
       employees,
@@ -288,14 +312,15 @@ const OutflowFunc = ({apiBaseUrl}) => {
 
       <div className="search">
       <input
-        type="text"
-        value={globalFilter || ''}
-        onChange={(e) => {
-          console.log('Global filter value:', e.target.value); // Add this line
-          setGlobalFilter(e.target.value);
-        }}
-        placeholder="Search..."
-      />
+          value={globalFilterOne}
+          onChange={e => setGlobalFilterOne(e.target.value)}
+          placeholder="Global Filter 1"
+        />
+        <input
+          value={globalFilterTwo}
+          onChange={e => setGlobalFilterTwo(e.target.value)}
+          placeholder="Global Filter 2"
+        />
       </div>
 
       <table {...getTableProps()} className="table">
