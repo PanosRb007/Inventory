@@ -201,6 +201,33 @@ const OutflowFunc = ({apiBaseUrl}) => {
       { Header: 'Lot No', accessor: 'lotnumber' },
       { Header: 'Quantity', accessor: 'quantity' },
       {
+        Header: 'Remaining Quantity',
+        accessor: (row) => {
+          const materialId = row.materialid;
+          const lotNumber = row.lotnumber;
+          const location = row.location;
+
+          // Filter purchases and outflows for the current row's material ID, lot number, and location
+          const filteredPurchases = purchases.filter(purchase =>
+            purchase.materialid === materialId &&
+            purchase.lotnumber === lotNumber &&
+            purchase.location === location
+          );
+
+          const filteredOutflows = outflows.filter(outflow =>
+            outflow.materialid === materialId &&
+            outflow.lotnumber === lotNumber &&
+            outflow.location === location
+          );
+
+          // Calculate total quantity (sum of purchases - sum of outflows)
+          const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
+          const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+
+          return totalPurchases - totalOutflows;
+        }
+      },
+      {
         Header: 'Cost',
         accessor: 'cost',
         Cell: ({ value }) => {
@@ -255,7 +282,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         ),
       },
     ],
-    [handleEdit, handleDelete, materials, locations, employees, projects, outflows]
+    [handleEdit, handleDelete, materials, locations, employees, projects, outflows, purchases]
   );
  
   const {

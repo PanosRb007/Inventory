@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import './PurchaseFunc.css';
 
@@ -11,6 +11,8 @@ const Stocks = ({ apiBaseUrl }) => {
   const [outflows, setOutflows] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [stock, setStock] = useState([]);
+  const [globalFilterOne, setGlobalFilterOne] = useState('');
+  const [globalFilterTwo, setGlobalFilterTwo] = useState('');
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -70,7 +72,19 @@ const Stocks = ({ apiBaseUrl }) => {
     fetchData();
   }, [apiBaseUrl, fetchAPI, selectedLocation]);
 
+  const filteredData = useMemo(() => {
+    return stock.filter(row => {
 
+      const material = materials.find(m => m.matid === row.materialid);
+      const materialName = material ? material.name.toLowerCase() : '';
+
+      // Create a string that includes all the row values, location name, and vendor name
+      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') +  ' ' + materialName;
+
+      // Check if the row string includes both global filters
+      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+    });
+  }, [stock, globalFilterOne, globalFilterTwo, materials]);
   console.log("purchases", purchases);
   console.log("outflows", outflows);
 
@@ -177,18 +191,17 @@ const Stocks = ({ apiBaseUrl }) => {
     headerGroups,
     page,
     prepareRow,
-    state: { pageIndex, pageSize, globalFilter },
+    state: { pageIndex, pageSize },
     gotoPage,
     nextPage,
     previousPage,
     canNextPage,
     canPreviousPage,
     setPageSize,
-    setGlobalFilter,
   } = useTable(
     {
       columns,
-      data: stock,
+      data: filteredData,
       locations,
       materials,
       initialState: {
@@ -223,14 +236,15 @@ const Stocks = ({ apiBaseUrl }) => {
       </div>
 
       <div className="search">
+      <input
+          value={globalFilterOne}
+          onChange={e => setGlobalFilterOne(e.target.value)}
+          placeholder="Global Filter 1"
+        />
         <input
-          type="text"
-          value={globalFilter || ''}
-          onChange={(e) => {
-            console.log('Global filter value:', e.target.value); // Add this line
-            setGlobalFilter(e.target.value);
-          }}
-          placeholder="Search..."
+          value={globalFilterTwo}
+          onChange={e => setGlobalFilterTwo(e.target.value)}
+          placeholder="Global Filter 2"
         />
       </div>
 
