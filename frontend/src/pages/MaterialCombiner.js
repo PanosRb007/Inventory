@@ -63,10 +63,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     fetchData();
   }, [fetchData]); // Dependency array includes fetchData to ensure it runs when fetchData changes
 
-
-
   console.log('tabledata', combinedMaterials);
-
 
   const handleMaterialChange = (index, value) => {
     const updatedMaterials = [...selectedMaterials];
@@ -88,7 +85,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
   };
 
   const addMaterial = () => {
-    setSelectedMaterials([...selectedMaterials, { materialId: '', multiplier: 1, unitPrice: 0 }]);
+    setSelectedMaterials([...selectedMaterials, { materialId: '', multiplier: null, unitPrice: 0 }]);
   };
 
   const removeMaterial = (index) => {

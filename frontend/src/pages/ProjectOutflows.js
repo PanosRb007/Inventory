@@ -23,6 +23,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       setProjectId(projectIdParam);
     }
   }, []);
+
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
@@ -70,20 +71,21 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   console.log('projects', projects);
 
   function formatDateTime(dateTimeString) {
-    const options = {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZone: 'UTC', // Ensure the input date is interpreted as UTC
-    };
-  
-      const dateTime = new Date(dateTimeString);
-      const formattedDateTime = dateTime.toLocaleString('en-GB', options);
-    return formattedDateTime;
-  }
+  const options = {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Europe/Athens', // Set to Athens time zone for Greece
+  };
+
+  const dateTime = new Date(dateTimeString);
+  const formattedDateTime = dateTime.toLocaleString('el-GR', options);
+  return formattedDateTime;
+}
+
 
   const columns = React.useMemo(
     () => [

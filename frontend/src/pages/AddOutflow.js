@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import Select from 'react-select';
 import './PurchaseFunc.css';
+import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases }) => {
+const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases,apiBaseUrl, setProjects, fetchData }) => {
   const initialOutflowState = {
     location: '',
     locationname: '',
@@ -17,12 +18,34 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     comments: '',
   };
 
+  const fetchAPI = useCallback(async (url, options = {}) => {
+    const authToken = sessionStorage.getItem('authToken');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      throw new Error(errorResponse.message || `Error fetching ${url}`);
+    }
+    return response.json();
+  }, []);
+
   const [newOutflow, setNewOutflow] = useState(initialOutflowState);
   const [showExtras, setShowExtras] = useState(false);
   const [availableMaterials, setAvailableMaterials] = useState([]);
   const [availableWidths, setAvailableWidths] = useState([]);
   const [availableLots, setAvailableLots] = useState([]);
   const [availableQuantity, setAvailableQuantity] = useState(0);
+  const [showAddProjectForm, setShowAddProjectForm] = useState(false);
+
+  const openAddProjectForm = () => {
+    setShowAddProjectForm(true);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -249,7 +272,32 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     }
   };
 
+  
+  const handleAddProject = useCallback((newProject) => {
+    fetchAPI(`${apiBaseUrl}/projectsAPI`, {
+      method: 'POST',
+      body: JSON.stringify(newProject),
+    })
+    .then(() => {
+      // Fetch the updated list of projects after successfully adding a new project
+      return fetchAPI(`${apiBaseUrl}/projectsAPI`);
+    })
+    .then(data => {
+      // Update the projects state with the fetched data
+      setProjects(data);
+      setShowAddProjectForm(false); // Close the form if needed
+    })
+    .catch((error) => {
+      console.error('Error in operation:', error);
+    });
+  }, [apiBaseUrl, fetchAPI, setProjects]);
+  
+  
+  
+  
+
   return (
+    <div className='container'>
     <form onSubmit={handleSubmit} className="form">
       <div className='form-row'>
         <div className='form-group'>
@@ -418,7 +466,9 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
         )}
         {newOutflow.employee && (
           <div className='form-group'>
-            <label>Project:</label>
+            <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
+              +
+            </span></label>
             <Select
               name="project"
               value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
@@ -438,6 +488,17 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
       </div>
 
     </form>
+    {showAddProjectForm && (
+      <div className="overlay">
+        <div className="popup">
+          <span className="close-popup" onClick={() => setShowAddProjectForm(false)}>
+            &times;
+          </span>
+          <AddProject handleAddProject={handleAddProject} />
+        </div>
+      </div>
+    )}
+    </div>
   );
 };
 

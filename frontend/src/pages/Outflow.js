@@ -168,13 +168,14 @@ const OutflowFunc = ({apiBaseUrl}) => {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZone: 'UTC', // Ensure the input date is interpreted as UTC
+      timeZone: 'Europe/Athens', // Set to Athens time zone for Greece
     };
   
-      const dateTime = new Date(dateTimeString);
-      const formattedDateTime = dateTime.toLocaleString('en-GB', options);
+    const dateTime = new Date(dateTimeString);
+    const formattedDateTime = dateTime.toLocaleString('el-GR', options);
     return formattedDateTime;
   }
+  
 
   
   
@@ -335,6 +336,10 @@ const OutflowFunc = ({apiBaseUrl}) => {
         outflows={outflows} 
         setOutflows={setOutflows} 
         purchases={purchases}
+        fetchAPI={fetchAPI}
+        apiBaseUrl={apiBaseUrl}
+        setProjects={setProjects}
+        useEffect={useEffect}
       />
 
       <div className="search">

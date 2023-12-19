@@ -7,7 +7,9 @@ import './PurchaseFunc.css';
 const ProjectFunc = ({apiBaseUrl}) => {
   const [editingProject, setEditingProject] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [outflows, setOutflows] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
+
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -30,7 +32,9 @@ const ProjectFunc = ({apiBaseUrl}) => {
   const fetchData = useCallback(async () => {
   try {
     const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
+    const outflowsResponse = await fetchAPI(`${apiBaseUrl}/outflowsAPI`)
     setProjects(projectResponse);
+    setOutflows(outflowsResponse);
     setIsLoading(false);
   } catch (error) {
     console.log('Error fetching data:', error);
@@ -103,11 +107,31 @@ const ProjectFunc = ({apiBaseUrl}) => {
   const handleCancel = () => {
     setEditingProject(null);
   };
+  const openProjectOutflowTable = (projectId) => {
+    // Append projectId as a query parameter to the URL
+    window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
+  };
   
   const columns = React.useMemo(
     () => [
       { Header: 'ID', accessor: 'prid' },
-      { Header: 'Name', accessor: 'name' },
+      { 
+        Header: 'Name', 
+        accessor: 'name',
+        Cell: ({ row }) => {
+          // Assuming projectOutflows is available in the component's scope
+          const projectOutflows = outflows.filter((outflow) => outflow.project === row.id);
+          return (
+            <span
+              title={projectOutflows.length > 0 ? projectOutflows.map((outflow) => `Outflow ID: ${outflow.outflowid} Material ID:${outflow.materialid} Quantity: ${outflow.quantity}`).join('\n') : 'No outflows for this project'}
+              style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+              onClick={() => openProjectOutflowTable(row.original.prid)}
+            >
+              {row.original.name}
+            </span>
+          );
+        }
+      },
       { Header: 'Description', accessor: 'description' },
       { Header: 'Projected Material Cost', accessor: 'prmatcost' },
       { Header: 'Projected Labor Cost', accessor: 'prlabcost' },
@@ -124,7 +148,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
         ),
       },
     ],
-    [handleEdit, handleDelete]
+    [handleEdit, handleDelete, outflows]
   );
   
   const {
