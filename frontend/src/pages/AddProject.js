@@ -21,8 +21,6 @@ const AddProject = ({ handleAddProject }) => {
     }));
   };
 
-
-
   const handleSubmit = (event) => {
     event.preventDefault();
     handleAddProject(newProject);

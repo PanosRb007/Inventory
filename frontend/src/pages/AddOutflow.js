@@ -3,7 +3,7 @@ import Select from 'react-select';
 import './PurchaseFunc.css';
 import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases,apiBaseUrl, setProjects, fetchData }) => {
+const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases,apiBaseUrl, setProjects, instOutflow }) => {
   const initialOutflowState = {
     location: '',
     locationname: '',

@@ -4,6 +4,7 @@ import EditPurchase from './EditPurchase.js';
 import PurchaseVerification from './PurchaseVerification.js';
 import './PurchaseFunc.css';
 import AddPurchase from './AddPurchase.js';
+import InstOut from './InstOut.js';
 
 const PurchaseFunc = ({ apiBaseUrl }) => {
   const [purchases, setPurchases] = useState([]);
@@ -12,12 +13,23 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   const [locations, setLocations] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [outflows, setOutflows] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [materialchanges, setMaterialchanges] = useState([]);
+  const [selectedOutflowRow, setSelectedOutflowRow] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
   const [globalFilterOne, setGlobalFilterOne] = useState('');
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
+  const [showAddInstOutflowForm, setShowAddInstOutflowForm] = useState(false);
 
+  const openAddOutflowForm = useCallback((row) => {
+    setSelectedOutflowRow(row);
+    setShowAddInstOutflowForm(true);
+  }, []);
+  
+  
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -26,6 +38,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       headers: {
         ...options.headers,
         'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
       },
     });
     if (!response.ok) {
@@ -37,18 +50,24 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [purchaseData, locationData, materialData, vendorData, materialchangesData] = await Promise.all([
+      const [purchaseData, locationData, materialData, vendorData, materialchangesData, outflowsData, employeesData, projectsData] = await Promise.all([
         fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
         fetchAPI(`${apiBaseUrl}/LocationsAPI`),
         fetchAPI(`${apiBaseUrl}/materiallist`),
         fetchAPI(`${apiBaseUrl}/vendors`),
         fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
+        fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+        fetchAPI(`${apiBaseUrl}/employeesAPI`),
+        fetchAPI(`${apiBaseUrl}/projectsAPI`),
       ]);
       setPurchases(purchaseData);
       setLocations(locationData);
       setMaterials(materialData);
       setVendors(vendorData);
       setMaterialchanges(materialchangesData);
+      setOutflows(outflowsData);
+      setEmployees(employeesData);
+      setProjects(projectsData);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -158,6 +177,22 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setVerPurchase(null);
   };
 
+  const handleAddInstOutflow = useCallback((newOutflow) => {
+    fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
+      method: 'POST',
+      body: JSON.stringify(newOutflow),
+    })
+      .then((data) => {
+        setOutflows(data);
+        setShowAddInstOutflowForm(false);
+        console.log('Outflow added successfully', data);
+      })
+      .catch((error) => {
+        console.error('Error adding outflow:', error.message);
+      });
+  }, [setOutflows, apiBaseUrl, fetchAPI,setShowAddInstOutflowForm]);
+  
+
   const columns = React.useMemo(
     () => [
       { Header: 'ID', accessor: 'id' },
@@ -227,6 +262,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Header: 'Actions', accessor: 'actions',
         Cell: ({ row }) => (
           <div>
+            <button className='button' onClick={() => openAddOutflowForm(row.original)}>Ins.Out</button>
             <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
             <button className='button' onClick={() => handleDelete(row.original)}>Delete</button>
             <button className='button' onClick={() => handleVerification(row.original)}>Verification</button>
@@ -246,7 +282,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Header: 'Verification Date', accessor: 'verification', Cell: ({ value }) => formatDateTime(value),
       },
     ],
-    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges]
+    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges,openAddOutflowForm]
   );
 
   function formatDateTime(dateTimeString) {
@@ -407,6 +443,30 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           ))}
         </select>
       </div>
+      {showAddInstOutflowForm && selectedOutflowRow && (
+  <div className="overlay">
+    <div className="popup">
+      <span className="close-popup" onClick={() => setShowAddInstOutflowForm(false)}>
+        &times;
+      </span>
+      <InstOut
+        handleAddInstOutflow={handleAddInstOutflow}
+        locations={locations}
+        materials={materials}
+        employees={employees}
+        projects={projects}
+        outflows={outflows}
+        purchases={purchases}
+        apiBaseUrl={apiBaseUrl}
+        setProjects={setProjects}
+        instOutflow={selectedOutflowRow}
+      />
+    </div>
+  </div>
+)}
+
+
+
     </div>
   );
 };
