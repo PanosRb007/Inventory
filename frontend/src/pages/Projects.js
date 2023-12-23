@@ -60,7 +60,6 @@ const ProjectFunc = ({apiBaseUrl}) => {
       console.log('Error adding project:', error);
     });
   }, [projects, fetchData, apiBaseUrl, fetchAPI]);
-  
 
 
   const handleDelete = useCallback((deletedProject) => {
@@ -90,10 +89,13 @@ const ProjectFunc = ({apiBaseUrl}) => {
     setEditingProject(project);
   }, [editingProject]);
 
-  const handleUpdate = useCallback((updatedProject) => {
+  const handleUpdate = useCallback((updatedProject, updatedStatus) => {
     fetchAPI(`${apiBaseUrl}/projectsAPI/${updatedProject.prid}`, {
       method: 'PUT',
-      body: JSON.stringify(updatedProject),
+      body: JSON.stringify({
+        ...updatedProject,
+        status: updatedStatus, // Update the 'completed' property
+      }),
     })
     .then(() => {
       fetchData();
@@ -103,6 +105,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
       console.error('Error updating the project:', error);
     });
   }, [fetchData, apiBaseUrl, fetchAPI]);
+  
 
   const handleCancel = () => {
     setEditingProject(null);
@@ -139,6 +142,27 @@ const ProjectFunc = ({apiBaseUrl}) => {
       { Header: 'Real Material Cost', accessor: 'realmatcost' },
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
+      {
+        Header: 'Status',
+        accessor: 'status',
+        Cell: ({ row }) => {
+          // Extracting the first element of the status data array
+          const statusValue = row.original.status.data[0];
+          return (
+            <label>
+              Completed:
+              <input
+                type="checkbox"
+                checked={statusValue === 1} // Use the extracted value for comparison
+                onChange={() => handleUpdate(row.original, statusValue === 1 ? 0 : 1)}
+              />
+            </label>
+          );
+        },
+      },
+      
+      
+      
       { Header: 'Actions', accessor: 'actions',
         Cell: ({ row }) => (
           <div>
@@ -148,7 +172,7 @@ const ProjectFunc = ({apiBaseUrl}) => {
         ),
       },
     ],
-    [handleEdit, handleDelete, outflows]
+    [handleEdit, handleDelete, outflows, handleUpdate]
   );
   
   const {

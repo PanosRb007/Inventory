@@ -466,21 +466,24 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
         )}
         {newOutflow.employee && (
           <div className='form-group'>
-            <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
-              +
-            </span></label>
-            <Select
-              name="project"
-              value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
-              options={projects.map((project) => ({
+          <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
+            +
+          </span></label>
+          <Select
+            name="project"
+            value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
+            options={projects
+              .filter(project => project.status.data[0] === 0) // Filter projects where status.data[0] is 1
+              .map((project) => ({
                 value: project.prid,
                 label: project.name,
               }))}
-              onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
-              placeholder="Select a Project"
-              required
-            />
-          </div>
+            onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
+            placeholder="Select a Project"
+            required
+          />
+        </div>
+        
         )}
         <button type="submit" className="add_btn">
           Add Outflow

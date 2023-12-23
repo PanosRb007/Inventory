@@ -126,6 +126,12 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
               </select>
             </label>
           </div>
+          <div className='form-group'>
+          <label>
+            Comments:
+            <textarea type="text" name="comments" value={editedPurchase.comments} onChange={handleChange} />
+          </label>
+        </div>
         </div>
       </div>
       <div>

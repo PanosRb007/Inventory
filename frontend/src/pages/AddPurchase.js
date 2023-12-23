@@ -26,6 +26,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     vendorname: '',
     width: null,
     lotnumber: '',
+    comments:'',
     invdate: '',
   };
 
@@ -354,6 +355,12 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               className="select-field"
             />
           </div>
+          <div className='form-group'>
+          <label>
+            Comments:
+            <textarea type="text" name="comments" value={newPurchase.comments} onChange={handleChange} />
+          </label>
+        </div>
           <button type="submit" className="add_btn">
             Add Purchase
           </button>

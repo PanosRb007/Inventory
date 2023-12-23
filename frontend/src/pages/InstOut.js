@@ -22,127 +22,70 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
     const [showExtras, setShowExtras] = useState(false);
     const [showAddProjectForm, setShowAddProjectForm] = useState(false);
 
+
     useEffect(() => {
         if (instOutflow) {
             const hasExtras = materials.find((m) => m.matid === newOutflow.materialid)?.extras === 1;
             setShowExtras(hasExtras);
-            const purchase = purchases.find((pur) => pur.materialid === newOutflow.materialid && pur.lotnumber === newOutflow.lotnumber);
-            if (purchase && showExtras) {
+
+            if (showExtras) {
                 setNewOutflow(prev => ({
                     ...prev,
-                    cost: purchase.price * newOutflow.width * newOutflow.quantity
+                    cost: newOutflow.price * newOutflow.width * newOutflow.quantity
                 }));
-            }else {
+
+            } else {
                 const filteredPurchases = purchases.filter(pur =>
                     pur.location === newOutflow.location &&
                     pur.materialid === newOutflow.materialid
-                  );
-                  console.log("Filtered Purchases:", filteredPurchases);
-      
-                  const filteredOutflows = outflows.filter(out =>
+                );
+                console.log("Filtered Purchases:", filteredPurchases);
+
+                const filteredOutflows = outflows.filter(out =>
                     out.location === newOutflow.location &&
                     out.materialid === newOutflow.materialid
-                  );
-                  console.log("Filtered Outflows:", filteredOutflows);
-      
-                  // Calculate sum of previous outflows
-                  const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
-                  console.log("Sum of previous outflows:", totalPreviousOutflows);
-      
-                  let sumOfQuantities = 0;
-                  let totalCost = 0;
-                  let remainingOutflowQuantity = newOutflow.quantity;
-                  let remQuant = 0;
-      
-                  for (const purchase of filteredPurchases) {
+                );
+                console.log("Filtered Outflows:", filteredOutflows);
+
+                // Calculate sum of previous outflows
+
+                const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
+                let sumOfQuantities = 0;
+                let totalCost = 0;
+                let remainingOutflowQuantity = newOutflow.quantity;
+                let remQuant = 0;
+
+                for (const purchase of filteredPurchases) {
                     const purchaseQuantity = parseFloat(purchase.quantity);
                     const purchasePrice = parseFloat(purchase.price);
-                    console.log("purchase:", purchase);
-                    console.log("purchaseQuantity:", purchaseQuantity);
-                    console.log("purchasePrice:", purchasePrice);
                     sumOfQuantities += purchaseQuantity;
                     remQuant = sumOfQuantities - totalPreviousOutflows;
-                    console.log("remQuantfinal:", remQuant);
-      
+
                     if (sumOfQuantities >= totalPreviousOutflows) {
-                      if (remainingOutflowQuantity <= remQuant) {
-                        console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                        console.log("remQuant quantity inside k:", remQuant);
-                        totalCost += remainingOutflowQuantity * purchasePrice;
-                        console.log("totalcost:", totalCost);
-                        break;
-                      } else {
-                        console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                        console.log("remQuant quantity inside k:", remQuant);
-                        totalCost += remQuant * purchasePrice;
-                        console.log("totalcost:", totalCost);
-                        remainingOutflowQuantity -= remQuant;
-                      }
-                      continue;
+                        if (remainingOutflowQuantity <= remQuant) {
+                            console.log("outflow quantity inside k:", remainingOutflowQuantity);
+                            console.log("remQuant quantity inside k:", remQuant);
+                            totalCost += remainingOutflowQuantity * purchasePrice;
+                            console.log("totalcost:", totalCost);
+                            break;
+                        } else {
+                            console.log("outflow quantity inside k:", remainingOutflowQuantity);
+                            console.log("remQuant quantity inside k:", remQuant);
+                            totalCost += remQuant * purchasePrice;
+                            console.log("totalcost:", totalCost);
+                            remainingOutflowQuantity -= remQuant;
+                        }
+                        continue;
                     }
-      
-                  }
-                  setNewOutflow((prevPurchase) => ({
+
+                }
+                setNewOutflow((prevPurchase) => ({
                     ...prevPurchase,
                     cost: totalCost,
-                  }));
+                }));
             }
-        } else {
-            const filteredPurchases = purchases.filter(pur =>
-                pur.location === newOutflow.location &&
-                pur.materialid === newOutflow.materialid
-              );
-              console.log("Filtered Purchases:", filteredPurchases);
-  
-              const filteredOutflows = outflows.filter(out =>
-                out.location === newOutflow.location &&
-                out.materialid === newOutflow.materialid
-              );
-              console.log("Filtered Outflows:", filteredOutflows);
-  
-              // Calculate sum of previous outflows
-              const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
-              console.log("Sum of previous outflows:", totalPreviousOutflows);
-  
-              let sumOfQuantities = 0;
-              let totalCost = 0;
-              let remainingOutflowQuantity = newOutflow.quantity;
-              let remQuant = 0;
-  
-              for (const purchase of filteredPurchases) {
-                const purchaseQuantity = parseFloat(purchase.quantity);
-                const purchasePrice = parseFloat(purchase.price);
-                console.log("purchase:", purchase);
-                console.log("purchaseQuantity:", purchaseQuantity);
-                console.log("purchasePrice:", purchasePrice);
-                sumOfQuantities += purchaseQuantity;
-                remQuant = sumOfQuantities - totalPreviousOutflows;
-                console.log("remQuantfinal:", remQuant);
-  
-                if (sumOfQuantities >= totalPreviousOutflows) {
-                  if (remainingOutflowQuantity <= remQuant) {
-                    console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                    console.log("remQuant quantity inside k:", remQuant);
-                    totalCost += remainingOutflowQuantity * purchasePrice;
-                    console.log("totalcost:", totalCost);
-                    break;
-                  } else {
-                    console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                    console.log("remQuant quantity inside k:", remQuant);
-                    totalCost += remQuant * purchasePrice;
-                    console.log("totalcost:", totalCost);
-                    remainingOutflowQuantity -= remQuant;
-                  }
-                  continue;
-                }
-  
-              }
-              setNewOutflow((prevPurchase) => ({
-                ...prevPurchase,
-                cost: totalCost,
-              }));
         }
-    }, [instOutflow, materials, purchases, newOutflow.materialid, newOutflow.lotnumber, newOutflow.quantity, newOutflow.width,outflows,newOutflow.location,showExtras]);
+    }, [instOutflow, newOutflow.price, materials, purchases, newOutflow.materialid, newOutflow.lotnumber, newOutflow.quantity, newOutflow.width, outflows, newOutflow.location, showExtras]);
 
 
     const fetchAPI = useCallback(async (url, options = {}) => {
@@ -206,6 +149,43 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
     }, [apiBaseUrl, fetchAPI, setProjects]);
 
 
+
+    const calculateAvailableQuantity = () => {
+        let result = 0; // Default result to 0
+
+        if (showExtras) {
+            // Calculate total purchased quantity for a specific material and lot number
+            const totalPurchasedQuantity = purchases
+                .filter(p => p.lotnumber === newOutflow.lotnumber && p.materialid === newOutflow.materialid)
+                .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
+
+            // Calculate total outflow quantity for a specific material and lot number
+            const totalOutflowQuantity = outflows
+                .filter(out => out.materialid === newOutflow.materialid && out.lotnumber === newOutflow.lotnumber)
+                .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
+
+            // Calculate the available quantity
+            result = totalPurchasedQuantity - totalOutflowQuantity;
+        } else {
+            const totalPurchasedQuantity = purchases
+                .filter(p => p.materialid === newOutflow.materialid)
+                .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
+
+            // Calculate total outflow quantity for a specific material and lot number
+            const totalOutflowQuantity = outflows
+                .filter(out => out.materialid === newOutflow.materialid)
+                .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
+
+            // Calculate the available quantity
+            result = totalPurchasedQuantity - totalOutflowQuantity;
+
+
+        }
+
+        return result; // Return the calculated result
+    };
+    const materialAvailableQuantity = useMemo(calculateAvailableQuantity, [newOutflow, purchases, outflows, showExtras]);
+
     return (
         <div className='container'>
             <form onSubmit={handleSubmit} className="form">
@@ -222,7 +202,7 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
                         </div>
                         <div className='form-group'>
                             <label>Material Name:</label>
-                            <input type="text" name="materialname" value={materials.find(m => m.matid === newOutflow.materialid)?.name ||''} readOnly required />
+                            <input type="text" name="materialname" value={materials.find(m => m.matid === newOutflow.materialid)?.name || ''} readOnly required />
                         </div>
                     </div>
 
@@ -243,9 +223,10 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
 
                     <div className='form-group'>
                         <label>Quantity:</label>
-                        <input type="number" name="quantity" value={parseFloat(newOutflow.quantity) || ''} onChange={handleChange} required />
+                        <input type="number" name="quantity" value={parseFloat(newOutflow.quantity) || ''} onChange={handleChange} required
+                            max={materialAvailableQuantity} />
                         <div>
-
+                            Available Quantity: {materialAvailableQuantity}
                         </div>
                     </div>
 
@@ -277,21 +258,23 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
 
 
                     <div className='form-group'>
-                        <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
-                            +
-                        </span></label>
-                        <Select
-                            name="project"
-                            value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
-                            options={projects.map((project) => ({
-                                value: project.prid,
-                                label: project.name,
-                            }))}
-                            onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
-                            placeholder="Select a Project"
-                            required
-                        />
-                    </div>
+          <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
+            +
+          </span></label>
+          <Select
+            name="project"
+            value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
+            options={projects
+              .filter(project => project.status.data[0] === 0) // Filter projects where status.data[0] is 1
+              .map((project) => ({
+                value: project.prid,
+                label: project.name,
+              }))}
+            onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
+            placeholder="Select a Project"
+            required
+          />
+        </div>
 
                     <button type="submit" className="add_btn">
                         Add Outflow

@@ -80,13 +80,16 @@ const OutflowFunc = ({apiBaseUrl}) => {
       const material = materials.find(m => m.matid === row.materialid);
       const materialName = material ? material.name.toLowerCase() : '';
 
+      const project = projects.find(p => p.prid === row.project);
+      const projectName = project ? project.name.toLowerCase() : '';
+
       // Create a string that includes all the row values, location name, and vendor name
-      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + employeeName + ' ' + materialName;
+      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + employeeName + ' ' + materialName + ' ' + projectName;
 
       // Check if the row string includes both global filters
       return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
     });
-  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials]);
+  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials, projects]);
 
   console.log('outflowspurch', purchases);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Select from 'react-select';
 import './PurchaseFunc.css';
 
@@ -247,6 +247,42 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
     }
   };
 
+  const calculateAvailableQuantity = () => {
+    let result = 0; // Default result to 0
+
+    if (showExtras) {
+        // Calculate total purchased quantity for a specific material and lot number
+        const totalPurchasedQuantity = purchases
+            .filter(p => p.lotnumber ===editedOutflow.lotnumber && p.materialid ===editedOutflow.materialid)
+            .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
+
+        // Calculate total outflow quantity for a specific material and lot number
+        const totalOutflowQuantity = outflows
+            .filter(out => out.materialid ===editedOutflow.materialid && out.lotnumber ===editedOutflow.lotnumber)
+            .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
+
+        // Calculate the available quantity
+        result = totalPurchasedQuantity - totalOutflowQuantity;
+    } else {
+        const totalPurchasedQuantity = purchases
+            .filter(p => p.materialid ===editedOutflow.materialid)
+            .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
+
+        // Calculate total outflow quantity for a specific material and lot number
+        const totalOutflowQuantity = outflows
+            .filter(out => out.materialid ===editedOutflow.materialid)
+            .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
+
+        // Calculate the available quantity
+        result = totalPurchasedQuantity - totalOutflowQuantity;
+
+
+    }
+
+    return result; // Return the calculated result
+};
+const materialAvailableQuantity = useMemo(calculateAvailableQuantity, [editedOutflow, purchases, outflows, showExtras]);
+
   console.log('availmat', availableMaterials);
   console.log('extras', showExtras);
   console.log('availwidth', availableWidths);
@@ -338,7 +374,12 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
           {showExtras && editedOutflow.width && (
             <div className='form-group'>
               <label>Quantity:</label>
-              <input type="text" name="quantity" value={editedOutflow.quantity || ''} onChange={handleChange} required />
+              <input type="number" name="quantity" value={editedOutflow.quantity || ''} onChange={handleChange} required 
+              max={parseFloat(materialAvailableQuantity)+parseFloat(outflow.quantity)}
+              />
+              <div>
+                Available Quantity: {parseFloat(materialAvailableQuantity)+parseFloat(outflow.quantity)}
+              </div>
             </div>
           )}
           {showExtras && editedOutflow.quantity && (
@@ -371,10 +412,10 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
                 value={editedOutflow.quantity || ''}
                 onChange={handleChange}
                 required
-                max={availableQuantity}
+                max={parseFloat(materialAvailableQuantity)+parseFloat(outflow.quantity)}
               />
               <div>
-                Available Quantity: {availableQuantity}
+                Available Quantity: {parseFloat(materialAvailableQuantity)+parseFloat(outflow.quantity)}
               </div>
             </div>
           )}
@@ -430,6 +471,12 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
               />
             </div>
           )}
+          <div className='form-group'>
+          <label>
+            Comments:
+            <textarea type="text" name="comments" value={editedOutflow.comments} onChange={handleChange} />
+          </label>
+        </div>
           <button type="submit" className="add_btn">
             Edit
           </button>
