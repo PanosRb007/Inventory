@@ -21,7 +21,7 @@ const usersrouter = (secretKey, pool) => {
       const user = results[0];
   
       // Generate a JWT token
-      const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '1h' });
+      const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '8h' });
       console.log('token', token);
   
       res.json({ success: true, token });

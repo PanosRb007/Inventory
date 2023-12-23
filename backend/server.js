@@ -14,10 +14,10 @@ const stocksAPI = require('./stocksAPI');
 const outflowsAPI = require('./outflowsAPI');
 const locationsAPI = require('./locationsAPI');
 const loginAPI = require('./loginAPI');
-const jwt = require('jsonwebtoken');
-
 const saveCombinedMaterial = require('./saveCombinedMaterial');
 const combinedMaterials = require('./combinedMaterials');
+const jwt = require('jsonwebtoken');
+
 
 
 const secretKey = '123rbb321'
@@ -97,11 +97,11 @@ app.use('/combinedMaterials', authenticateToken(), combinedMaterials(pool));
 
 
 
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something broke!', error: err.message });
+  res.status(500).send('Something broke!');
 });
-
 
 // Start the server
 app.listen(port, () => {

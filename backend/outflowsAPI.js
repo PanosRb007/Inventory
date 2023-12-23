@@ -34,10 +34,10 @@ const createoutflowRouter = (pool) => {
 
   // Add a new outflow
   router.post('/', async (req, res) => {
-    const { location, materialid, width, lotnumber, quantity, employee, project, cost } = req.body;
+    const { location, materialid, width, lotnumber, quantity, employee, project, cost, comments } = req.body;
     try {
-      const sql = 'INSERT INTO outflows (location, materialid, width, lotnumber, quantity, employee, project, cost) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)';
-      await pool.query(sql, [location, materialid, width, lotnumber, quantity, employee, project, cost]);
+      const sql = 'INSERT INTO outflows (location, materialid, width, lotnumber, quantity, employee, project, cost, comments) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      await pool.query(sql, [location, materialid, width, lotnumber, quantity, employee, project, cost, comments]);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error adding outflow:', error);
@@ -48,11 +48,11 @@ const createoutflowRouter = (pool) => {
   // Update an existing outflow
   router.put('/:outflowid', async (req, res) => {
     const { outflowid } = req.params;
-    const { location, materialid, width, lotnumber, quantity, employee, project, cost } = req.body;
+    const { location, materialid, width, lotnumber, quantity, employee, project, cost, comments } = req.body;
   
     try {
-      const sql = 'UPDATE outflows SET location=?, materialid=?, width=?, lotnumber=?, quantity=?, employee=?, project=?, cost=? WHERE outflowid=?';
-      await pool.query(sql, [location, materialid, width, lotnumber, quantity, employee, project, cost, outflowid]);
+      const sql = 'UPDATE outflows SET location=?, materialid=?, width=?, lotnumber=?, quantity=?, employee=?, project=?, cost=?, comments=? WHERE outflowid=?';
+      await pool.query(sql, [location, materialid, width, lotnumber, quantity, employee, project, cost, comments, outflowid]);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error updating outflow:', error);

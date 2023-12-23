@@ -34,10 +34,10 @@ const createprojectRouter = (pool) => {
 
   // Add a new project
   router.post('/', async (req, res) => {
-    const { name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate  } = req.body;
+    const { name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate, status  } = req.body;
     try {
-      const sql = 'INSERT INTO projects (name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      await pool.query(sql, [name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate ]);
+      const sql = 'INSERT INTO projects (name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate, status ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      await pool.query(sql, [name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate, status ]);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error adding project:', error);
@@ -48,10 +48,10 @@ const createprojectRouter = (pool) => {
   // Update an existing project
   router.put('/:prid', async (req, res) => {
     const { prid } = req.params;
-    const { name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate  } = req.body;
+    const { name, description, prmatcost , prlabcost ,sale, realmatcost, reallabcost, totalcost, enddate, status  } = req.body;
     try {
-      const sql = 'UPDATE projects SET name = ?, description = ?, prmatcost = ?, prlabcost = ?, sale = ?, realmatcost = ?, reallabcost = ?, totalcost = ?, enddate = ? WHERE prid = ?';
-      await pool.query(sql, [name, description, prmatcost , prlabcost, sale, realmatcost, reallabcost, totalcost, enddate , prid]);
+      const sql = 'UPDATE projects SET name = ?, description = ?, prmatcost = ?, prlabcost = ?, sale = ?, realmatcost = ?, reallabcost = ?, totalcost = ?, enddate = ?, status = ? WHERE prid = ?';
+      await pool.query(sql, [name, description, prmatcost , prlabcost, sale, realmatcost, reallabcost, totalcost, enddate, status , prid]);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error updating project:', error);

@@ -68,17 +68,17 @@ module.exports = (pool) => {
   
   router.post('/', async (req, res) => {
     try {
-      const { location, materialid, width, lotnumber, quantity, price, vendor } = req.body;
+      const { location, materialid, width, lotnumber, quantity, price, vendor, comments} = req.body;
   
       // Check if all required properties are provided in the request body
       if (!location || !materialid || !quantity || !price || !vendor) {
         return res.status(400).json({ error: 'All fields are required' });
       }
   
-      const sql = `INSERT INTO purchase (location, materialid, width, lotnumber, quantity, price, vendor ) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `INSERT INTO purchase (location, materialid, width, lotnumber, quantity, price, vendor, comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   
       const { pool } = req.app.locals;
-      await pool.query(sql, [location, materialid, width, lotnumber, quantity, price, vendor ]);
+      await pool.query(sql, [location, materialid, width, lotnumber, quantity, price, vendor, comments]);
   
       res.status(200).json({ success: true });
     } catch (error) {
@@ -90,13 +90,13 @@ module.exports = (pool) => {
   
   router.put('/:id', async (req, res) => {
     try {
-      const { location, materialid, quantity, width, lotnumber, price, vendor } = req.body;
+      const { location, materialid, quantity, width, lotnumber, price, vendor, comments, verification } = req.body;
       const purchaseId = req.params.id;
   
-      const sql = `UPDATE purchase SET location=?, materialid=?, quantity=?, width=?, lotnumber= ?, price=?, vendor=? WHERE id=?`;
+      const sql = `UPDATE purchase SET location=?, materialid=?, quantity=?, width=?, lotnumber= ?, price=?, vendor=? ,comments=? , verification=? WHERE id=?`;
   
       const { pool } = req.app.locals;
-      await pool.query(sql, [location, materialid, quantity,width, lotnumber, price, vendor, purchaseId]);
+      await pool.query(sql, [location, materialid, quantity,width, lotnumber, price, vendor, comments, verification, purchaseId]);
   
       res.status(200).json({ success: true });
     } catch (error) {
