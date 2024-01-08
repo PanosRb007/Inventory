@@ -46,21 +46,13 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('combined'));
 app.locals.pool = pool;
-app.use((req, res, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-        const duration = Date.now() - start;
-        console.log(`${req.method} ${req.originalUrl} took ${duration}ms`);
-    });
-    next();
-});
 
 function authenticateToken() {
   return (req, res, next) => {
-    console.log('authenticateToken middleware called');
+   
     const authHeader = req.header('Authorization');
     const token = authHeader && authHeader.split(' ')[1];
-    console.log('AuthToken received:', token);
+
 
     if (!token) {
       console.log('No token provided');
@@ -69,10 +61,8 @@ function authenticateToken() {
 
     jwt.verify(token, secretKey, (err, user) => {
       if (err) {
-        console.log('Token verification failed:', err.message);
         return res.status(403).json({ message: 'Forbidden: Invalid token' });
       }
-      console.log('Token verified successfully:', user);
       req.user = user;
       next();
     });
@@ -92,7 +82,7 @@ app.use('/projectsAPI', authenticateToken(), projectsAPI(pool));
 app.use('/stocksAPI', authenticateToken(), stocksAPI(pool));
 app.use('/outflowsAPI', authenticateToken(), outflowsAPI(pool));
 app.use('/LocationsAPI', authenticateToken(), locationsAPI(pool));
-app.use('/saveCombinedMaterial', authenticateToken(), saveCombinedMaterial(pool));
+app.use('/submaterials', authenticateToken(), saveCombinedMaterial(pool));
 app.use('/combinedMaterials', authenticateToken(), combinedMaterials(pool));
 
 

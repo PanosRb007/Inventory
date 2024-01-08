@@ -1,29 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTable, useGlobalFilter, usePagination } from 'react-table';
-import CreateCombinedMaterial from './CreateCombinedMaterial.js'; // Import the new component
+import CreateCombinedMaterial from './CreateCombinedMaterial.js';
+import EditCombinedMaterial from './EditCombinedMaterial.js';
 import './PurchaseFunc.css';
 
 const MaterialCombiner = ({ apiBaseUrl }) => {
-  const [combinedMaterialName, setCombinedMaterialName] = useState('');
-  const [combinedMaterialDescription, setcombinedMaterialDescription] = useState('');
-  const [materials, setMaterials] = useState([]);
-  const [materialChanges, setMaterialChanges] = useState([]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedMaterials, setSelectedMaterials] = useState([{ materialId: '', multiplier: null, unitPrice: 0 }]);
   const [combinedMaterials, setCombinedMaterials] = useState([]);
   const [showCreateCombinedMaterial, setShowCreateCombinedMaterial] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState(null);
-
-
-  const openCreateCombinedMaterialForm = () => {
-    setShowCreateCombinedMaterial(true);
-  };
-
-  const closeCreateCombinedMaterialForm = () => {
-    setShowCreateCombinedMaterial(false);
-  };
-
+  const [showEditCombinedMaterial, setShowEditCombinedMaterial] = useState(false);
+  const [editingMaterialId, setEditingMaterialId] = useState(null);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -31,7 +18,8 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
       ...options,
       headers: {
         ...options.headers,
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
       },
     });
     if (!response.ok) {
@@ -43,115 +31,70 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      setIsLoading(true); // Set loading state to true at the beginning of the fetch operation
-
-      const materialData = await fetchAPI(`${apiBaseUrl}/materiallist`);
-      const materialChangesData = await fetchAPI(`${apiBaseUrl}/materialchangesAPI`);
+      setIsLoading(true);
       const combinedMaterialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials`);
-
-      setMaterials(materialData);
-      setMaterialChanges(materialChangesData);
       setCombinedMaterials(combinedMaterialData);
     } catch (error) {
-      setError(error.message); // Set error state if there's an error during fetching
+      setError(error.message);
     } finally {
-      setIsLoading(false); // Set loading state to false once fetching is complete
+      setIsLoading(false);
     }
-  }, [fetchAPI, apiBaseUrl]); // Dependencies for useCallback
+  }, [fetchAPI, apiBaseUrl]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]); // Dependency array includes fetchData to ensure it runs when fetchData changes
+    fetchData().catch(console.error);
+  }, [fetchData]);
 
-  console.log('tabledata', combinedMaterials);
+  const openCreateCombinedMaterialForm = useCallback(() => {
+    setShowCreateCombinedMaterial(true);
+  }, []);
 
-  const handleMaterialChange = (index, value) => {
-    const updatedMaterials = [...selectedMaterials];
-    updatedMaterials[index].materialId = value;
-
-    const latestPriceEntry = materialChanges
-      .filter(mp => mp.material_id === value)
-      .sort((a, b) => b.change_id - a.change_id)[0];
-
-    updatedMaterials[index].unitPrice = latestPriceEntry ? parseFloat(latestPriceEntry.price) : 0;
-
-    setSelectedMaterials(updatedMaterials);
+  const closeCreateCombinedMaterialForm = () => {
+    setShowCreateCombinedMaterial(false);
   };
 
-  const handleMultiplierChange = (index, value) => {
-    const updatedMaterials = [...selectedMaterials];
-    updatedMaterials[index].multiplier = Number(value);
-    setSelectedMaterials(updatedMaterials);
-  };
+  const openEditCombinedMaterialForm = useCallback(async (materialId) => {
+    setEditingMaterialId(materialId);
+    setShowEditCombinedMaterial(true);
 
-  const addMaterial = () => {
-    setSelectedMaterials([...selectedMaterials, { materialId: '', multiplier: null, unitPrice: 0 }]);
-  };
-
-  const removeMaterial = (index) => {
-    const updatedMaterials = selectedMaterials.filter((_, i) => i !== index);
-    setSelectedMaterials(updatedMaterials);
-  };
-
-  const saveCombinedMaterial = async () => {
-    try {
-      const payload = {
-        name: combinedMaterialName,
-        description: combinedMaterialDescription,
-        submaterials: selectedMaterials
-      };
-      await fetchAPI(`${apiBaseUrl}/saveCombinedMaterial`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      alert('Combined material saved successfully!');
-      fetchData(); // Fetch the updated list of combined materials
-
-      // Reset the form fields
-      setCombinedMaterialName('');
-      setcombinedMaterialDescription('');
-      setSelectedMaterials([{ materialId: '', multiplier: 1, unitPrice: 0 }]);
-      closeCreateCombinedMaterialForm();
-    } catch (error) {
-      alert(`Error: ${error.message}`);
+    if (!combinedMaterials.some((material) => material.id === materialId)) {
+      try {
+        const materialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`);
+        setCombinedMaterials((prevMaterials) => [...prevMaterials, materialData]);
+      } catch (error) {
+        console.error('Error fetching material for edit:', error);
+      }
     }
+  }, [apiBaseUrl, combinedMaterials, fetchAPI]);
+
+  console.log('matcomb',combinedMaterials);
+  
+  const closeEditCombinedMaterialForm = () => {
+    setEditingMaterialId(null);
+    setShowEditCombinedMaterial(false);
   };
 
-  const handleEdit = useCallback((materialId) => {
-    const materialToEdit = combinedMaterials.find(material => material.id === materialId);
-    if (materialToEdit) {
-      setEditingMaterial(materialToEdit);
-      openCreateCombinedMaterialForm();
-    }
-  }, [combinedMaterials]); // Add any dependencies here
-
-
-
+  
   const handleDelete = useCallback(async (materialId) => {
     if (window.confirm('Are you sure you want to delete this material?')) {
       try {
-        await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`, {
-          method: 'DELETE',
-        });
-        // Refresh the list or remove the item from the state
+        await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`, { method: 'DELETE' });
+        fetchData();
       } catch (error) {
         alert(`Error: ${error.message}`);
       }
     }
-  }, [fetchAPI, apiBaseUrl]); // Add any dependencies here
+  }, [fetchAPI, apiBaseUrl, fetchData]);
 
   const columns = React.useMemo(
     () => [
       {
         Header: 'ID',
-        accessor: 'id'
+        accessor: 'id',
       },
       {
         Header: 'Combo Name',
-        accessor: 'name'
+        accessor: 'name',
       },
       {
         Header: 'Description',
@@ -160,23 +103,20 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
       {
         Header: 'Total Cost',
         accessor: 'totalCost',
-        Cell: ({ value }) => `$${value.toFixed(2)}`
       },
-
       {
         Header: 'Actions',
-        accessor: '', // This is an empty accessor as this column doesn't correspond to a specific data field
-        Cell: ({ row }) => ( // Destructure row from the cell object
+        accessor: '',
+        Cell: ({ row }) => (
           <div>
-            <button onClick={() => handleEdit(row.original.id)}>Edit</button>
+            <button onClick={() => openEditCombinedMaterialForm(row.original.id)}>Edit</button>
             <button onClick={() => handleDelete(row.original.id)}>Delete</button>
           </div>
-        )
-      }
+        ),
+      },
     ],
-    [handleDelete, handleEdit]
+    [openEditCombinedMaterialForm, handleDelete]
   );
-
 
   const {
     getTableProps,
@@ -205,16 +145,16 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     usePagination
   );
 
-
-
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className='container'>
-      <div className='form-group'>
-        <div className='form-row'>
-          <button className='add_btn' onClick={openCreateCombinedMaterialForm}>Add Material Combination</button>
+    <div className="container">
+      <div className="form-group">
+        <div className="form-row">
+          <button className="add_btn" onClick={openCreateCombinedMaterialForm}>
+            Add Material Combination
+          </button>
         </div>
       </div>
       {showCreateCombinedMaterial && (
@@ -222,18 +162,22 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
           <div className="popup">
             <CreateCombinedMaterial
               onClose={closeCreateCombinedMaterialForm}
-              combinedMaterialName={combinedMaterialName}
-              setCombinedMaterialName={setCombinedMaterialName}
-              combinedMaterialDescription={combinedMaterialDescription}
-              setcombinedMaterialDescription={setcombinedMaterialDescription}
-              selectedMaterials={selectedMaterials}
-              handleMaterialChange={handleMaterialChange}
-              handleMultiplierChange={handleMultiplierChange}
-              addMaterial={addMaterial}
-              saveCombinedMaterial={saveCombinedMaterial}
-              materials={materials}
-              removeMaterial={removeMaterial}
-              editingMaterial={editingMaterial}
+              fetchAPI={fetchAPI}
+              apiBaseUrl={apiBaseUrl}
+              onMaterialAdded={fetchData}
+            />
+          </div>
+        </div>
+      )}
+      {showEditCombinedMaterial && (
+        <div className="overlay">
+          <div className="popup">
+            <EditCombinedMaterial
+              onClose={closeEditCombinedMaterialForm}
+              fetchAPI={fetchAPI}
+              apiBaseUrl={apiBaseUrl}
+              materialId={editingMaterialId}
+              onMaterialEdited={fetchData}
             />
           </div>
         </div>
@@ -251,9 +195,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()}>
-                  {column.render('Header')}
-                </th>
+                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
               ))}
             </tr>
           ))}
@@ -262,23 +204,20 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
           {page.map((row) => {
             prepareRow(row);
             return (
-              <React.Fragment key={row.getRowProps().key}>
-                <tr {...row.getRowProps()}>
-                  {row.cells.map((cell) => (
-                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                  ))}
-                </tr>
-
-              </React.Fragment>
+              <tr {...row.getRowProps()}>
+                {row.cells.map((cell) => (
+                  <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                ))}
+              </tr>
             );
           })}
         </tbody>
       </table>
-      <div className='pagination'>
-        <button className='button' onClick={() => previousPage()} disabled={!canPreviousPage}>
+      <div className="pagination">
+        <button className="button" onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>
-        <button className='button' onClick={() => nextPage()} disabled={!canNextPage}>
+        <button className="button" onClick={() => nextPage()} disabled={!canNextPage}>
           Next
         </button>
         <span>

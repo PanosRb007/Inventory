@@ -29,8 +29,6 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setShowAddInstOutflowForm(true);
   }, []);
   
-  
-
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
