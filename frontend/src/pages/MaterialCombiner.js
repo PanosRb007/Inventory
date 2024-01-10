@@ -53,28 +53,16 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     setShowCreateCombinedMaterial(false);
   };
 
-  const openEditCombinedMaterialForm = useCallback(async (materialId) => {
+  const openEditCombinedMaterialForm = useCallback((materialId) => {
     setEditingMaterialId(materialId);
     setShowEditCombinedMaterial(true);
+  }, []);
 
-    if (!combinedMaterials.some((material) => material.id === materialId)) {
-      try {
-        const materialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`);
-        setCombinedMaterials((prevMaterials) => [...prevMaterials, materialData]);
-      } catch (error) {
-        console.error('Error fetching material for edit:', error);
-      }
-    }
-  }, [apiBaseUrl, combinedMaterials, fetchAPI]);
-
-  console.log('matcomb',combinedMaterials);
-  
   const closeEditCombinedMaterialForm = () => {
     setEditingMaterialId(null);
     setShowEditCombinedMaterial(false);
   };
 
-  
   const handleDelete = useCallback(async (materialId) => {
     if (window.confirm('Are you sure you want to delete this material?')) {
       try {
@@ -256,3 +244,4 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
 };
 
 export default MaterialCombiner;
+

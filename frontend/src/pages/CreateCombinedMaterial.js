@@ -12,7 +12,7 @@ const CombinedMaterialInputForm = ({
         description: '',
     };
     const initialEmptyMaterial = {
-        combined_material_id: '',
+        combined_material_id: null,
         materialId: '',
         multiplier: 1,  // Assuming a default multiplier of 1
     };
@@ -60,7 +60,8 @@ const CombinedMaterialInputForm = ({
               description: comboMat.description,
             }),
           });
-      
+          
+          console.log(combinedMaterialData);
           // Check if the combined material was successfully created
           if (combinedMaterialData.success) {
             // Extract the ID of the newly created combined material

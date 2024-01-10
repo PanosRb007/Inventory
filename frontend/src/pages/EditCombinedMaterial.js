@@ -9,9 +9,6 @@ const EditCombinedMaterial = ({
     onMaterialUpdated,
 }) => {
     const [materialData, setMaterialData] = useState({
-        name: '',
-        description: '',
-        submaterials: [],
     });
     const [error, setError] = useState(null);
     const [allMaterials, setAllMaterials] = useState([]);
@@ -24,14 +21,22 @@ const EditCombinedMaterial = ({
                 setAllMaterials(materials);
                 const data = await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`);
                 setMaterialData(data);
-                const subs = await fetchAPI(`${apiBaseUrl}/submaterials/${materialId}`);
-                setSubmaterials(subs);
+                const submatdata = await fetchAPI(`${apiBaseUrl}/submaterials/${materialId}`);
+                setSubmaterials(submatdata);
+
+
+
             } catch (error) {
                 setError(error.message);
             }
         };
         fetchData();
     }, [materialId, fetchAPI, apiBaseUrl]);
+    console.log(submaterials);
+    console.log('gggg', submaterials);
+    console.log(materialId);
+
+
 
     const handleMaterialChange = (e) => {
         const { name, value } = e.target;
@@ -113,50 +118,47 @@ const EditCombinedMaterial = ({
                         value={materialData.description}
                         onChange={handleMaterialChange}
                     />
-                </div>
+                </div>    
             </div>
-
-
-            <h4>Submaterials:</h4>
-            {materialData.submaterials.map((submat, index) => (
+            {allMaterials.length > 0 && submaterials.map((selection, index) => (
                 <div key={index} className="material-selection">
                     <div className="form-row">
                         <div className="form-group">
+                            <label>Material</label>
                             <select
-                                value={submat.material_id}
-                                onChange={(e) => handleSubmaterialChange(index, 'material_id', e.target.value)}
+                                value={submaterials.material_id}
+                                onChange={(e) => handleSubmaterialChange(index, 'materialId', e.target.value)}
+                                className="form-control"
                             >
                                 <option value="">Select Material</option>
-                                {allMaterials.map((mat) => (
-                                    <option key={mat.matid} value={mat.matid}>
-                                        {mat.name}
-                                    </option>
+                                {allMaterials.map(material => (
+                                    <option key={material.matid} value={material.matid}>{material.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="form-group">
+                            <label>Multiplier</label>
                             <input
                                 type="number"
-                                value={submat.multiplier}
+                                value={selection.multiplier}
                                 onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
+                                className="form-control"
                             />
                         </div>
                         <div className="price-remove-container">
-                            <div className="unit-price">
-                                <span>
-                                Unit Price: {submat.price ? parseFloat(submat.price).toFixed(2) : '0.00'}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="price-remove-container">
-                        {materialData.submaterials.length > 1 && (
-                                <button className="remove-btn" onClick={() => removeSubmaterial(index)}>Remove</button>
+                            {submaterials.length > 1 && (
+                                <button
+                                    className="remove-btn"
+                                    onClick={() => removeSubmaterial(index)}
+                                >
+                                    Remove
+                                </button>
                             )}
                         </div>
                     </div>
                 </div>
-
             ))}
+
             <button className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
 
             <div className="form-actions">

@@ -42,7 +42,7 @@ const createsubmaterialrouter = (pool) => {
       try {
         await connection.beginTransaction();
 
-        const sql = 'INSERT INTO submaterials (combined_material_id, material_id, multiplier) VALUES ?)';
+        const sql = 'INSERT INTO submaterials (combined_material_id, material_id, multiplier) VALUES ?';
         const values = submaterials.map(sub => [sub.combined_material_id, sub.material_id, sub.multiplier]);
 
         await connection.query(sql, [values]);
