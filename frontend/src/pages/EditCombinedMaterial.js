@@ -126,7 +126,7 @@ const EditCombinedMaterial = ({
                         <div className="form-group">
                             <label>Material</label>
                             <select
-                                value={submaterials.material_id}
+                                value={selection.material_id}
                                 onChange={(e) => handleSubmaterialChange(index, 'materialId', e.target.value)}
                                 className="form-control"
                             >

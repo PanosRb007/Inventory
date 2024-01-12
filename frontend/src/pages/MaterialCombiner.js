@@ -33,7 +33,38 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     try {
       setIsLoading(true);
       const combinedMaterialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials`);
-      setCombinedMaterials(combinedMaterialData);
+      const submaterialsData = await fetchAPI(`${apiBaseUrl}/submaterials`);
+      const materialChangesData = await fetchAPI(`${apiBaseUrl}/materialchangesAPI`);
+
+      const calculateTotalCost = (combinedMaterialId, submaterialsData, materialChangesData) => {
+        const relevantSubmaterials = submaterialsData.filter(submat => submat.combined_material_id === combinedMaterialId);
+      
+        const totalCost = relevantSubmaterials.reduce((acc, submat) => {
+          // Filter to find all changes for this material
+          const changesForMaterial = materialChangesData.filter(mc => mc.material_id === submat.material_id);
+      
+          // Find the change with the largest change_id
+          const latestChange = changesForMaterial.reduce((latest, current) => {
+            return (latest.change_id > current.change_id) ? latest : current;
+          }, { change_id: -1, price: 0 });
+      
+          // Use the price from the latest change
+          const latestPrice = parseFloat(latestChange.price);
+      
+          return acc + (latestPrice * submat.multiplier);
+        }, 0);
+      
+        return totalCost;
+      };
+      
+      
+
+      const combinedMaterialsWithCost = combinedMaterialData.map(material => ({
+        ...material,
+        totalCost: calculateTotalCost(material.id, submaterialsData, materialChangesData)
+      }));
+
+      setCombinedMaterials(combinedMaterialsWithCost);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -44,6 +75,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
   useEffect(() => {
     fetchData().catch(console.error);
   }, [fetchData]);
+
 
   const openCreateCombinedMaterialForm = useCallback(() => {
     setShowCreateCombinedMaterial(true);
@@ -74,6 +106,8 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
     }
   }, [fetchAPI, apiBaseUrl, fetchData]);
 
+  
+
   const columns = React.useMemo(
     () => [
       {
@@ -91,7 +125,8 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
       {
         Header: 'Total Cost',
         accessor: 'totalCost',
-      },
+        Cell: ({ value }) => `${value.toFixed(2)}€` // Format as currency
+      }      ,
       {
         Header: 'Actions',
         accessor: '',
