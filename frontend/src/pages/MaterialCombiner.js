@@ -18,7 +18,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
       ...options,
       headers: {
         ...options.headers,
-        Authorization: `Bearer ${authToken}`,
+        'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
     });
