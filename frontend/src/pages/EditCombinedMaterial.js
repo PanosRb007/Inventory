@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import './CreateCombinedMaterial.css'; // Import CSS for styling
+import './CreateCombinedMaterial.css';
 
 const EditCombinedMaterial = ({
     materialId,
     onClose,
     fetchAPI,
     apiBaseUrl,
-    onMaterialUpdated,
+    onMaterialEdited,
 }) => {
-    const [materialData, setMaterialData] = useState({
-    });
-    const [error, setError] = useState(null);
+    const [materialData, setMaterialData] = useState({ name: '', description: '', submaterials: [] });
     const [allMaterials, setAllMaterials] = useState([]);
     const [submaterials, setSubmaterials] = useState([]);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -23,46 +22,36 @@ const EditCombinedMaterial = ({
                 setMaterialData(data);
                 const submatdata = await fetchAPI(`${apiBaseUrl}/submaterials/${materialId}`);
                 setSubmaterials(submatdata);
-
-
-
             } catch (error) {
                 setError(error.message);
             }
         };
         fetchData();
     }, [materialId, fetchAPI, apiBaseUrl]);
-    console.log(submaterials);
-    console.log('gggg', submaterials);
-    console.log(materialId);
-
-
 
     const handleMaterialChange = (e) => {
         const { name, value } = e.target;
-        setMaterialData((prevData) => ({
+        setMaterialData(prevData => ({
             ...prevData,
             [name]: value,
         }));
     };
 
     const handleSubmaterialChange = (index, field, value) => {
-        const updatedSubmaterials = materialData.submaterials.map((submat, i) =>
+        const updatedSubmaterials = submaterials.map((submat, i) =>
             i === index ? { ...submat, [field]: value } : submat
         );
-        setMaterialData({ ...materialData, submaterials: updatedSubmaterials });
+        setSubmaterials(updatedSubmaterials);
+        console.log('editsubmat', submaterials);
     };
 
     const addSubmaterial = () => {
-        setMaterialData({
-            ...materialData,
-            submaterials: [...materialData.submaterials, { material_id: '', multiplier: 1, price: 0 }],
-        });
+        setSubmaterials([...submaterials, { material_id: '', multiplier: 1 }]);
     };
 
     const removeSubmaterial = (index) => {
-        const filteredSubmaterials = materialData.submaterials.filter((_, i) => i !== index);
-        setMaterialData({ ...materialData, submaterials: filteredSubmaterials });
+        const filteredSubmaterials = submaterials.filter((_, i) => i !== index);
+        setSubmaterials(filteredSubmaterials);
     };
 
     const saveChanges = async () => {
@@ -72,21 +61,32 @@ const EditCombinedMaterial = ({
         }
 
         try {
-            const response = await fetchAPI(`${apiBaseUrl}/saveCombinedMaterial/${materialId}`, {
+            // Delete old submaterials
+            await fetchAPI(`${apiBaseUrl}/submaterials/${materialId}`, {
+                method: 'DELETE'
+            });
+
+            // Update combined material
+            await fetchAPI(`${apiBaseUrl}/combinedMaterials/${materialId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(materialData),
+                body: JSON.stringify({ ...materialData }),
             });
 
-            if (response.ok) {
-                onMaterialUpdated(); // Trigger refresh of material list
-                onClose(); // Close the popup
-            } else {
-                const errorData = await response.json();
-                setError(errorData.message || "Failed to update material");
-            }
+
+            // Add new submaterials
+            await fetchAPI(`${apiBaseUrl}/submaterials`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ submaterials: submaterials.map(sub => ({ ...sub, combined_material_id: materialId })) }),
+            });
+
+            onMaterialEdited(); // Trigger refresh of material list
+            onClose(); // Close the popup
         } catch (error) {
             setError(error.message);
         }
@@ -95,10 +95,8 @@ const EditCombinedMaterial = ({
     return (
         <div className="material-input-form">
             <h3>Edit Combined Material</h3>
-            {error && <div>Error: {error}</div>}
-            <span className="close-popup" onClick={onClose}>
-                &times;
-            </span>
+            {error && <div className="error-message">Error: {error}</div>}
+            <span className="close-popup" onClick={onClose}>&times;</span>
             <div className="form-row">
                 <div className="form-group">
                     <label htmlFor="name">Name:</label>
@@ -107,9 +105,9 @@ const EditCombinedMaterial = ({
                         name="name"
                         value={materialData.name}
                         onChange={handleMaterialChange}
+                        className="form-control"
                     />
                 </div>
-
                 <div className="form-group">
                     <label htmlFor="description">Description:</label>
                     <textarea
@@ -117,17 +115,19 @@ const EditCombinedMaterial = ({
                         name="description"
                         value={materialData.description}
                         onChange={handleMaterialChange}
+                        className="form-control"
                     />
-                </div>    
+                </div>
             </div>
-            {allMaterials.length > 0 && submaterials.map((selection, index) => (
+
+            {submaterials.map((submaterial, index) => (
                 <div key={index} className="material-selection">
                     <div className="form-row">
                         <div className="form-group">
                             <label>Material</label>
                             <select
-                                value={selection.material_id}
-                                onChange={(e) => handleSubmaterialChange(index, 'materialId', e.target.value)}
+                                value={submaterial.material_id}
+                                onChange={(e) => handleSubmaterialChange(index, 'material_id', e.target.value)}
                                 className="form-control"
                             >
                                 <option value="">Select Material</option>
@@ -140,7 +140,7 @@ const EditCombinedMaterial = ({
                             <label>Multiplier</label>
                             <input
                                 type="number"
-                                value={selection.multiplier}
+                                value={submaterial.multiplier}
                                 onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
                                 className="form-control"
                             />
@@ -159,14 +159,13 @@ const EditCombinedMaterial = ({
                 </div>
             ))}
 
-            <button className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
-
-            <div className="form-actions">
+            <button
+                className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
+            <div>
                 <button className="btn btn-success save-btn" onClick={saveChanges}>Save Changes</button>
-                <button className="btn btn-primary add-btn" onClick={onClose}>Cancel</button>
+                <button className="remove-btn" onClick={onClose}>Cancel</button>
             </div>
         </div>
-
     );
 };
 

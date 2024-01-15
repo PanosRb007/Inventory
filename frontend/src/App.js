@@ -9,11 +9,12 @@ import ProjectOutflows from './pages/ProjectOutflows.js';
 import Stock from './pages/Stock.js';
 import Login from './pages/Login.js';
 import MaterialCombiner from './pages/MaterialCombiner.js';
+import OrderList from './pages/Order_List.js';
 
 
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
 
-const API_BASE_URL ='https://api.robbie.gr'; /* 'http://localhost:8081';*/
+const API_BASE_URL ='https://api.robbie.gr';  /*'http://localhost:8081';*/
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -83,6 +84,11 @@ function App() {
                 <span>Combine Materials</span>
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/OrderList" className="nav-link">
+                <span>Order List</span>
+              </Link>
+            </li>
           </ul>
           <button onClick={handleLogout}>Logout</button>
         </nav>
@@ -100,6 +106,7 @@ function App() {
             <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL} />} />
             <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} />} />
             <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} />} />
+            <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} />} />
 
           </Routes>
 

@@ -52,58 +52,58 @@ const CombinedMaterialInputForm = ({
 
     const saveCombinedMaterial = async () => {
         try {
-          // Attempt to save the new combined material by making a POST request
-          const combinedMaterialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials`, {
-            method: 'POST',
-            body: JSON.stringify({
-              name: comboMat.name,
-              description: comboMat.description,
-            }),
-          });
-          
-          console.log(combinedMaterialData);
-          // Check if the combined material was successfully created
-          if (combinedMaterialData.success) {
-            // Extract the ID of the newly created combined material
-            const combined_material_id = combinedMaterialData.id;
-            console.log('combined_material_id', combined_material_id);
-      
-            // Prepare submaterials payload
-            const submaterialsPayload = submaterials.map(submaterial => ({
-              combined_material_id: combined_material_id, // This is the insertId from the combined material creation
-              material_id: submaterial.materialId,
-              multiplier: submaterial.multiplier,
-            }));
-      
-            // Send a POST request to add submaterials
-            const submaterialsResponse = await fetchAPI(`${apiBaseUrl}/submaterials`, {
-              method: 'POST',
-              body: JSON.stringify({ submaterials: submaterialsPayload }),
+            // Attempt to save the new combined material by making a POST request
+            const combinedMaterialData = await fetchAPI(`${apiBaseUrl}/combinedMaterials`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: comboMat.name,
+                    description: comboMat.description,
+                }),
             });
-      
-            // Check if the submaterials were successfully added
-            if (submaterialsResponse.success) {
-              alert('Combined material and submaterials saved successfully!');
-              setComboMat(initialComboMat); // Reset the form to initial state
-              setSubmaterials([initialEmptyMaterial]); // Reset the submaterials
-              onMaterialAdded(); // Invoke callback for material addition
-              onClose(); // Close the form/modal
+
+            console.log(combinedMaterialData);
+            // Check if the combined material was successfully created
+            if (combinedMaterialData.success) {
+                // Extract the ID of the newly created combined material
+                const combined_material_id = combinedMaterialData.id;
+                console.log('combined_material_id', combined_material_id);
+
+                // Prepare submaterials payload
+                const submaterialsPayload = submaterials.map(submaterial => ({
+                    combined_material_id: combined_material_id, // This is the insertId from the combined material creation
+                    material_id: submaterial.materialId,
+                    multiplier: submaterial.multiplier,
+                }));
+
+                // Send a POST request to add submaterials
+                const submaterialsResponse = await fetchAPI(`${apiBaseUrl}/submaterials`, {
+                    method: 'POST',
+                    body: JSON.stringify({ submaterials: submaterialsPayload }),
+                });
+
+                // Check if the submaterials were successfully added
+                if (submaterialsResponse.success) {
+                    alert('Combined material and submaterials saved successfully!');
+                    setComboMat(initialComboMat); // Reset the form to initial state
+                    setSubmaterials([initialEmptyMaterial]); // Reset the submaterials
+                    onMaterialAdded(); // Invoke callback for material addition
+                    onClose(); // Close the form/modal
+                } else {
+                    // Handle the case where the API response indicates failure in adding submaterials
+                    alert(`Error creating submaterials: ${submaterialsResponse.error || 'Unknown error'}`);
+                }
             } else {
-              // Handle the case where the API response indicates failure in adding submaterials
-              alert(`Error creating submaterials: ${submaterialsResponse.error || 'Unknown error'}`);
+                // Handle the case where the API response indicates failure in creating combined material
+                console.error('Failed to create combined material');
+                alert('Failed to create combined material');
             }
-          } else {
-            // Handle the case where the API response indicates failure in creating combined material
-            console.error('Failed to create combined material');
-            alert('Failed to create combined material');
-          }
         } catch (error) {
-          // Handle any errors that occurred during the process
-          console.error('Error in saveCombinedMaterial:', error);
-          alert(`Error: ${error.message}`);
+            // Handle any errors that occurred during the process
+            console.error('Error in saveCombinedMaterial:', error);
+            alert(`Error: ${error.message}`);
         }
-      };
-      
+    };
+
 
     const addMaterial = () => {
         setSubmaterials([...submaterials, { ...initialEmptyMaterial }]);

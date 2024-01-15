@@ -175,6 +175,31 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setVerPurchase(null);
   };
 
+  const handleOrder = useCallback(async (row) => {
+    // Extract the necessary details from the row
+    const orderData = {
+      location_id: row.location,
+      material_id: row.materialid,
+      vendor_id: row.vendor,
+      // Add any other fields that are required for the order
+    };
+  
+    try {
+      // Make a POST request to the order_list API
+      await fetchAPI(`${apiBaseUrl}/order_listAPI`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+      // Optionally, handle any actions after successful posting
+    } catch (error) {
+      console.error('Error creating order:', error.message);
+    }
+  }, [fetchAPI, apiBaseUrl]);
+  
+
   const handleAddInstOutflow = useCallback((newOutflow) => {
     fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
       method: 'POST',
@@ -264,6 +289,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
             <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
             <button className='button' onClick={() => handleDelete(row.original)}>Delete</button>
             <button className='button' onClick={() => handleVerification(row.original)}>Verification</button>
+            <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
           </div>
         ),
       },
@@ -280,7 +306,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Header: 'Verification Date', accessor: 'verification', Cell: ({ value }) => formatDateTime(value),
       },
     ],
-    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges,openAddOutflowForm]
+    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges,openAddOutflowForm, handleOrder]
   );
 
   function formatDateTime(dateTimeString) {

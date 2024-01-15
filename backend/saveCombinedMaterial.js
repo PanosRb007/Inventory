@@ -81,7 +81,7 @@ const createsubmaterialrouter = (pool) => {
     const { id } = req.params;
 
     try {
-      const sql = 'DELETE FROM submaterials WHERE id = ?';
+      const sql = 'DELETE FROM submaterials WHERE combined_material_id = ?';
       await pool.query(sql, [id]);
       res.status(200).json({ success: true });
     } catch (error) {
