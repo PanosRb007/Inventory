@@ -12,6 +12,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [outflows, setOutflows] = useState([]);
+  const [materialchanges, setMaterialchanges] = useState([]);
   const [editingOutflow, setEditingOutflow] = useState(null);
   const [globalFilterOne, setGlobalFilterOne] = useState('');
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
@@ -42,13 +43,14 @@ const OutflowFunc = ({apiBaseUrl}) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse] = await Promise.all([
+        const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse,materialchangesData] = await Promise.all([
           fetchAPI(`${apiBaseUrl}/materiallist`),
           fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
           fetchAPI(`${apiBaseUrl}/LocationsAPI`),
           fetchAPI(`${apiBaseUrl}/projectsAPI`),
           fetchAPI(`${apiBaseUrl}/employeesAPI`),
           fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+          fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
         ]);
   
         setMaterials(materialResponse);
@@ -57,6 +59,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         setProjects(projectResponse);
         setEmployees(employeesResponse);
         setOutflows(outflowsResponse);
+        setMaterialchanges(materialchangesData);
       } catch (error) {
         console.log('Error fetching data:', error);
       }
@@ -162,6 +165,45 @@ const OutflowFunc = ({apiBaseUrl}) => {
   const handleCancel = () => {
     setEditingOutflow(null);
   };
+
+  const handleOrder = useCallback(async (row) => {
+    // Extract the necessary details from the row
+    const orderData = {
+      location_id: row.location,
+      material_id: row.materialid,
+      vendor_id: (() => {
+        // Filter materialchanges based on materialId
+        const filteredMaterialChanges = materialchanges.filter(
+          (materialChange) => materialChange.material_id === row.materialid
+        );
+  
+        // Sort filtered materialchanges by date in descending order to get the latest record
+        const latestMaterialChange = filteredMaterialChanges.reduce((latest, current) => {
+          return (latest.change_id > current.change_id) ? latest : current;
+        }, { change_id: -1, vendor: 0 });
+    
+  
+        // Extract the vendor_id from the latest material change record
+        return latestMaterialChange ? latestMaterialChange.vendor : '';
+      })(),
+      // Add any other fields that are required for the order
+    };
+  
+  
+    try {
+      // Make a POST request to the order_list API
+      await fetchAPI(`${apiBaseUrl}/order_listAPI`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+      // Optionally, handle any actions after successful posting
+    } catch (error) {
+      console.error('Error creating order:', error.message);
+    }
+  }, [fetchAPI, apiBaseUrl, materialchanges]);
 
   function formatDateTime(dateTimeString) {
     const options = {
@@ -282,11 +324,12 @@ const OutflowFunc = ({apiBaseUrl}) => {
           <div>
             <button onClick={() => handleEdit(row.original)}>Edit</button>
             <button onClick={() => handleDelete(row.original)}>Delete</button>
+            <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
           </div>
         ),
       },
     ],
-    [handleEdit, handleDelete, materials, locations, employees, projects, outflows, purchases]
+    [handleEdit,handleOrder, handleDelete, materials, locations, employees, projects, outflows, purchases]
   );
  
   const {
