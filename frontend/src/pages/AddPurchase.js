@@ -26,7 +26,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     vendorname: '',
     width: null,
     lotnumber: '',
-    comments:'',
+    comments: '',
     invdate: '',
   };
 
@@ -107,6 +107,25 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
     fetchData();
   }, [newPurchase.materialid, vendors, apiBaseUrl]);
+
+  const handleMaterialIdChange = (selectedOption) => {
+    const material = materials.find(m => m.matid === selectedOption.value);
+    setNewPurchase(prevPurchase => ({
+      ...prevPurchase,
+      materialid: selectedOption.value,
+      materialname: material ? material.name : '',
+    }));
+  };
+
+  const handleMaterialNameChange = (selectedOption) => {
+    const material = materials.find(m => m.name === selectedOption.label);
+    setNewPurchase(prevPurchase => ({
+      ...prevPurchase,
+      materialid: material ? material.matid : '',
+      materialname: selectedOption.label,
+    }));
+  };
+
 
 
   const handleChange = (e) => {
@@ -286,15 +305,27 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
                 value: material.matid,
                 label: material.matid,
               }))}
-              onChange={(selectedOption) => handleChange({ target: { name: 'materialid', value: selectedOption.value } })}
+              onChange={handleMaterialIdChange}
               placeholder="Select a material"
-              required // Add the required attribute
-
+              required
+              
             />
           </div>
           <div className="form-group">
             <label>Material Name:</label>
-            <input type="text" name="materialname" value={newPurchase.materialname} readOnly required />
+            <Select
+              classNamePrefix="select-field"
+              name="materialname"
+              value={newPurchase.materialname ? { value: newPurchase.materialname, label: newPurchase.materialname } : null}
+              options={materials.map((material) => ({
+                value: material.name,
+                label: material.name,
+              }))}
+              onChange={handleMaterialNameChange}
+              placeholder="Select a material name"
+              required
+             
+            />
           </div>
           {showExtras && (
             <div className="form-group">
@@ -356,11 +387,11 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             />
           </div>
           <div className='form-group'>
-          <label>
-            Comments:
-            <textarea type="text" name="comments" value={newPurchase.comments} onChange={handleChange} />
-          </label>
-        </div>
+            <label>
+              Comments:
+              <textarea type="text" name="comments" value={newPurchase.comments} onChange={handleChange} />
+            </label>
+          </div>
           <button type="submit" className="add_btn">
             Add Purchase
           </button>
