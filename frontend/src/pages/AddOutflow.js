@@ -3,7 +3,7 @@ import Select from 'react-select';
 import './PurchaseFunc.css';
 import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases,apiBaseUrl, setProjects, instOutflow }) => {
+const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects, instOutflow }) => {
 
 
 
@@ -76,6 +76,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           });
 
           setAvailableMaterials(filteredNonZero);
+          console.log(filteredNonZero);
         } catch (error) {
           console.error('Error fetching material data:', error);
         }
@@ -226,7 +227,29 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     fetchData();
   }, [newOutflow.location, newOutflow.materialid, newOutflow.width, newOutflow.quantity, outflows, purchases, showExtras, newOutflow.lotnumber]);
 
+  const handleMaterialIdChange = (selectedOption) => {
+    const selectedMaterialId = selectedOption.value; // Get the selected material id
+    const material = materials.find((m) => m.matid === selectedMaterialId); // Find the material with the selected id
+    const materialName = material ? material.name : ''; // Get the name of the material
+    setShowExtras(material.extras === 1);
 
+    setNewOutflow((prevOutflow) => ({
+      ...prevOutflow,
+      materialid: selectedMaterialId, // Set materialid to the selected id
+      materialname: materialName, // Set materialname to the material name
+    }));
+  };
+
+
+  const handleMaterialNameChange = (selectedOption) => {
+    const material = materials.find(m => m.name === selectedOption.label);
+    setShowExtras(material.extras === 1);
+    setNewOutflow(prevOutflow => ({
+      ...prevOutflow,
+      materialid: material ? material.matid : '',
+      materialname: selectedOption.label,
+    }));
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -236,26 +259,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
         ...prevOutflow,
         [name]: value,
       }));
-    } else if (name === 'materialid') {
-      const selectedMaterial = materials.find(material => material.matid === value);
-
-      if (selectedMaterial) {
-        setNewOutflow((prevOutflow) => ({
-          ...prevOutflow,
-          [name]: value,
-          materialname: selectedMaterial.name,
-        }));
-
-        setShowExtras(selectedMaterial.extras === 1);
-
-        if (selectedMaterial.extras !== 1) {
-          setNewOutflow((prevPurchase) => ({
-            ...prevPurchase,
-            lotnumber: '',
-            width: null,
-          }));
-        }
-      }
     } else {
       setNewOutflow((prevOutflow) => ({
         ...prevOutflow,
@@ -275,232 +278,248 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     }
   };
 
-  
+
   const handleAddProject = useCallback((newProject) => {
     fetchAPI(`${apiBaseUrl}/projectsAPI`, {
       method: 'POST',
       body: JSON.stringify(newProject),
     })
-    .then(() => {
-      // Fetch the updated list of projects after successfully adding a new project
-      return fetchAPI(`${apiBaseUrl}/projectsAPI`);
-    })
-    .then(data => {
-      // Update the projects state with the fetched data
-      setProjects(data);
-      setShowAddProjectForm(false); // Close the form if needed
-    })
-    .catch((error) => {
-      console.error('Error in operation:', error);
-    });
+      .then(() => {
+        // Fetch the updated list of projects after successfully adding a new project
+        return fetchAPI(`${apiBaseUrl}/projectsAPI`);
+      })
+      .then(data => {
+        // Update the projects state with the fetched data
+        setProjects(data);
+        setShowAddProjectForm(false); // Close the form if needed
+      })
+      .catch((error) => {
+        console.error('Error in operation:', error);
+      });
   }, [apiBaseUrl, fetchAPI, setProjects]);
-  
-  
-  
-  
+
+
+
+
 
   return (
     <div className='container'>
-    <form onSubmit={handleSubmit} className="form">
-      <div className='form-row'>
-        <div className='form-group'>
-          <label>Location:</label>
-          <Select
-            name="location"
-            value={newOutflow.location ? { value: newOutflow.location, label: locations.find(loc => loc.id === newOutflow.location)?.locationname } : null}
-            options={locations.map((location) => ({
-              value: location.id,
-              label: location.locationname
-            }))}
-            onChange={(selectedOption) =>
-              handleChange({
-                target: {
-                  name: 'location',
-                  value: selectedOption.value,
-                },
-              })
-            }
-            placeholder="Select a location"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="form">
+        <div className='form-row'>
+          <div className='form-group'>
+            <label>Location:</label>
+            <Select
+              name="location"
+              value={newOutflow.location ? { value: newOutflow.location, label: locations.find(loc => loc.id === newOutflow.location)?.locationname } : null}
+              options={locations.map((location) => ({
+                value: location.id,
+                label: location.locationname
+              }))}
+              onChange={(selectedOption) =>
+                handleChange({
+                  target: {
+                    name: 'location',
+                    value: selectedOption.value,
+                  },
+                })
+              }
+              placeholder="Select a location"
+              required
+            />
+          </div>
 
-        {newOutflow.location && (
-          <div>
+          {newOutflow.location && (
+            <div>
+              <div className='form-group'>
+                <label>Material ID:</label>
+                <Select
+                  classNamePrefix="select-field"
+                  name="materialid"
+                  value={newOutflow.materialid ? { value: newOutflow.materialid, label: newOutflow.materialid } : null}
+                  options={availableMaterials
+                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
+                    .map((material) => ({
+                      value: material.materialid,
+                      label: material.materialid,
+                    }))}
+                  onChange={handleMaterialIdChange}
+                  placeholder="Select a material"
+                  required
+
+                />
+
+              </div>
+              <div className='form-group'>
+                <label>Material Name:</label>
+                <Select
+                  classNamePrefix="select-field"
+                  name="materialname"
+                  value={newOutflow.materialname ? { value: newOutflow.materialname, label: newOutflow.materialname } : null}
+                  options={availableMaterials
+                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
+                    .map((material) => ({
+                      value: material.materialid, // Use materialid as value
+                      label: materials.find((m) => m.matid === material.materialid)?.name || '', // Use materials.name as label
+                    }))
+                  }
+                  onChange={handleMaterialNameChange}
+                  placeholder="Select a material name"
+                  required
+                />
+              </div>
+            </div>
+          )}
+          {showExtras && newOutflow.materialname && (
             <div className='form-group'>
-              <label>Material ID:</label>
+              <label>Width:</label>
               <Select
-                name="materialid"
-                value={newOutflow.materialid ? { value: newOutflow.materialid, label: newOutflow.materialid } : null}
-                options={availableMaterials
-                  .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
-                  .map((material) => ({
-                    value: material.materialid,
-                    label: material.materialid,
-                  }))}
-                onChange={(selectedOption) => handleChange({ target: { name: 'materialid', value: selectedOption.value } })}
-                placeholder="Select a material"
+                name="width"
+                value={newOutflow.width ? { value: newOutflow.width, label: newOutflow.width } : null}
+                options={availableWidths.map((width) => ({
+                  value: width.width,
+                  label: width.width,
+                })).filter((width, index, self) => self.findIndex(w => w.value === width.value) === index)} // Filter unique widths
+                onChange={(selectedOption) => handleChange({ target: { name: 'width', value: selectedOption.value } })}
+                placeholder="Select a width"
                 required // Add the required attribute
               />
-
             </div>
+          )}
+
+          {showExtras && newOutflow.width && (
             <div className='form-group'>
-              <label>Material Name:</label>
-              <input type="text" name="materialname" value={newOutflow.materialname || ''} readOnly required />
+              <label>Quantity:</label>
+              <input type="text" name="quantity" value={newOutflow.quantity || ''} onChange={handleChange} required />
             </div>
-          </div>
-        )}
-        {showExtras && newOutflow.materialname && (
-          <div className='form-group'>
-            <label>Width:</label>
-            <Select
-              name="width"
-              value={newOutflow.width ? { value: newOutflow.width, label: newOutflow.width } : null}
-              options={availableWidths.map((width) => ({
-                value: width.width,
-                label: width.width,
-              })).filter((width, index, self) => self.findIndex(w => w.value === width.value) === index)} // Filter unique widths
-              onChange={(selectedOption) => handleChange({ target: { name: 'width', value: selectedOption.value } })}
-              placeholder="Select a width"
-              required // Add the required attribute
-            />
-          </div>
-        )}
-
-        {showExtras && newOutflow.width && (
-          <div className='form-group'>
-            <label>Quantity:</label>
-            <input type="text" name="quantity" value={newOutflow.quantity || ''} onChange={handleChange} required />
-          </div>
-        )}
-        {showExtras && newOutflow.quantity && (
-          <div className='form-group'>
-            <label>Lot No:</label>
-            <Select
-              name="lotnumber"
-              value={newOutflow.lotnumber ? { value: newOutflow.lotnumber, label: newOutflow.lotnumber } : null}
-              options={availableLots.map((lot) => ({
-                value: lot.lotnumber,
-                label: `${lot.lotnumber} (Available: ${lot.quantity - outflows
-                  .filter((outflow) => outflow.lotnumber === lot.lotnumber)
-                  .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0)})`,
-              }))}
-              onChange={(selectedOption) =>
-                handleChange({ target: { name: 'lotnumber', value: selectedOption.value } })
-              }
-              placeholder="Select a lot #"
-              required
-            />
-          </div>
-        )}
-
-        {showExtras && newOutflow.quantity && (
-          <div className='form-group'>
-            <label>Comments:</label>
-            <textarea
-              name="comments"
-              value={newOutflow.comments}
-              onChange={handleChange}
-            />
-          </div>
-        )}
-
-        {!showExtras && newOutflow.materialid && (
-          <div className='form-group'>
-            <label>Quantity:</label>
-            <input
-              type="number"
-              name="quantity"
-              value={newOutflow.quantity || ''}
-              onChange={handleChange}
-              required
-              max={availableQuantity}
-            />
-            <div>
-              Available Quantity: {availableQuantity}
+          )}
+          {showExtras && newOutflow.quantity && (
+            <div className='form-group'>
+              <label>Lot No:</label>
+              <Select
+                name="lotnumber"
+                value={newOutflow.lotnumber ? { value: newOutflow.lotnumber, label: newOutflow.lotnumber } : null}
+                options={availableLots.map((lot) => ({
+                  value: lot.lotnumber,
+                  label: `${lot.lotnumber} (Available: ${lot.quantity - outflows
+                    .filter((outflow) => outflow.lotnumber === lot.lotnumber)
+                    .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0)})`,
+                }))}
+                onChange={(selectedOption) =>
+                  handleChange({ target: { name: 'lotnumber', value: selectedOption.value } })
+                }
+                placeholder="Select a lot #"
+                required
+              />
             </div>
-          </div>
-        )}
-        {!showExtras && newOutflow.quantity && (
-          <div className='form-group'>
-            <label>Comments:</label>
-            <textarea
-              name="comments"
-              value={newOutflow.comments}
-              onChange={handleChange}
-            />
-          </div>
-        )}
-        {!showExtras && newOutflow.quantity && (
-          <div className='form-group'>
-            <label>Employee:</label>
-            <Select
-              name="employee"
-              value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
-              options={employees.map((employee) => ({
-                value: employee.empid,
-                label: employee.name,
-              }))}
-              onChange={(selectedOption) =>
-                handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
-              }
-              placeholder="Select an Employee"
-              required
-            />
-          </div>
-        )}
-        {showExtras && newOutflow.lotnumber && (
-          <div className='form-group'>
-            <label>Employee:</label>
-            <Select
-              name="employee"
-              value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
-              options={employees.map((employee) => ({
-                value: employee.empid,
-                label: employee.name,
-              }))}
-              onChange={(selectedOption) =>
-                handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
-              }
-              placeholder="Select an Employee"
-              required
-            />
-          </div>
-        )}
-        {newOutflow.employee && (
-          <div className='form-group'>
-            <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
-              +
-            </span></label>
-            <Select
-              name="project"
-              value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
-              options={projects.map((project) => ({
-                value: project.prid,
-                label: project.name,
-              }))}
-              onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
-              placeholder="Select a Project"
-              required
-            />
-          </div>
-        )}
-        <button type="submit" className="add_btn">
-          Add Outflow
-        </button>
-      </div>
+          )}
 
-    </form>
-    {showAddProjectForm && (
-      <div className="overlay">
-        <div className="popup">
-          <span className="close-popup" onClick={() => setShowAddProjectForm(false)}>
-            &times;
-          </span>
-          <AddProject handleAddProject={handleAddProject} />
+          {showExtras && newOutflow.quantity && (
+            <div className='form-group'>
+              <label>Comments:</label>
+              <textarea
+                name="comments"
+                value={newOutflow.comments}
+                onChange={handleChange}
+              />
+            </div>
+          )}
+
+          {!showExtras && newOutflow.materialid && (
+            <div className='form-group'>
+              <label>Quantity:</label>
+              <input
+                type="number"
+                name="quantity"
+                value={newOutflow.quantity || ''}
+                onChange={handleChange}
+                required
+                max={availableQuantity}
+              />
+              <div>
+                Available Quantity: {availableQuantity}
+              </div>
+            </div>
+          )}
+          {!showExtras && newOutflow.quantity && (
+            <div className='form-group'>
+              <label>Comments:</label>
+              <textarea
+                name="comments"
+                value={newOutflow.comments}
+                onChange={handleChange}
+              />
+            </div>
+          )}
+          {!showExtras && newOutflow.quantity && (
+            <div className='form-group'>
+              <label>Employee:</label>
+              <Select
+                name="employee"
+                value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
+                options={employees.map((employee) => ({
+                  value: employee.empid,
+                  label: employee.name,
+                }))}
+                onChange={(selectedOption) =>
+                  handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
+                }
+                placeholder="Select an Employee"
+                required
+              />
+            </div>
+          )}
+          {showExtras && newOutflow.lotnumber && (
+            <div className='form-group'>
+              <label>Employee:</label>
+              <Select
+                name="employee"
+                value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
+                options={employees.map((employee) => ({
+                  value: employee.empid,
+                  label: employee.name,
+                }))}
+                onChange={(selectedOption) =>
+                  handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
+                }
+                placeholder="Select an Employee"
+                required
+              />
+            </div>
+          )}
+          {newOutflow.employee && (
+            <div className='form-group'>
+              <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
+                +
+              </span></label>
+              <Select
+                name="project"
+                value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
+                options={projects.map((project) => ({
+                  value: project.prid,
+                  label: project.name,
+                }))}
+                onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
+                placeholder="Select a Project"
+                required
+              />
+            </div>
+          )}
+          <button type="submit" className="add_btn">
+            Add Outflow
+          </button>
         </div>
-      </div>
-    )}
+
+      </form>
+      {showAddProjectForm && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowAddProjectForm(false)}>
+              &times;
+            </span>
+            <AddProject handleAddProject={handleAddProject} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

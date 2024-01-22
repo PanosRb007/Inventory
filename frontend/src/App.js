@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -44,50 +44,51 @@ function App() {
   }
 
   return (
-    <div
-      className={'App'}>
+    <div className={'App'}>
       <BrowserRouter>
         <nav className="sidebar">
           <ul className="navbar-nav">
             <li className="nav-item">
-              <Link to="/Purchases" className="nav-link">
+              <NavLink to="/Purchases" className="nav-link" activeClassName="active">
+                <i className="fas fa-truck"></i>
                 <span>Inflow</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/Outflow" className="nav-link">
+              <NavLink to="/Outflow" className="nav-link" activeClassName="active">
+                <i className="fas fa-people-carry"></i>
                 <span>Outflow</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/MaterialList" className="nav-link">
+              <NavLink to="/MaterialList" className="nav-link" activeClassName="active">
                 <span>Material List</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/Vendors" className="nav-link">
+              <NavLink to="/Vendors" className="nav-link" activeClassName="active">
                 <span>Vendor List</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/Projects" className="nav-link">
+              <NavLink to="/Projects" className="nav-link" activeClassName="active">
                 <span>Project List</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/Stock" className="nav-link">
+              <NavLink to="/Stock" className="nav-link" activeClassName="active">
                 <span>Stock</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/combine-materials" className="nav-link">
+              <NavLink to="/combine-materials" className="nav-link" activeClassName="active">
                 <span>Combine Materials</span>
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link to="/OrderList" className="nav-link">
+              <NavLink to="/OrderList" className="nav-link" activeClassName="active">
                 <span>Order List</span>
-              </Link>
+              </NavLink>
             </li>
           </ul>
           <button onClick={handleLogout}>Logout</button>
