@@ -15,7 +15,7 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
     materialname: materials.find(mat => mat.matid === outflow.materialid)?.name
   });
   const [showExtras, setShowExtras] = useState(
-    (outflow.width)
+    (outflow.width>0)
   );
   console.log('OUTFLOWMAT', outflow);
   console.log('xtras', showExtras);

@@ -31,8 +31,16 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     try {
       const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
       const outflowsResponse = await fetchAPI(`${apiBaseUrl}/outflowsAPI`);
-      setProjects(projectResponse);
+      // Calculate real material cost for each project
+      const projectsWithCost = projectResponse.map(project => {
+        const projectOutflows = outflowsResponse.filter(outflow => outflow.project === project.prid);
+        const totalCost = projectOutflows.reduce((acc, outflow) => acc + parseFloat(outflow.cost), 0);
+        return { ...project, realmatcostNumeric: totalCost };
+      });
+
+      setProjects(projectsWithCost); // Make sure this line is present
       setOutflows(outflowsResponse);
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -120,8 +128,25 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       { Header: 'Description', accessor: 'description' },
       { Header: 'Projected Material Cost', accessor: 'prmatcost' },
       { Header: 'Projected Labor Cost', accessor: 'prlabcost' },
-      { Header: 'Sale', accessor: 'v' },
-      { Header: 'Real Material Cost', accessor: 'realmatcost' },
+      { Header: 'Sale', accessor: 'sale' },
+      {
+        Header: 'Real Material Cost',
+        accessor: 'realmatcostNumeric', // Use the numeric value for sorting
+        Cell: ({ row }) => {
+          // Check if realmatcostNumeric is defined
+          if (typeof row.original.realmatcostNumeric === 'number') {
+            const formattedCost = `${row.original.realmatcostNumeric.toFixed(2)} €`; // Format for display
+            return formattedCost;
+          }
+          return 'N/A'; // Return 'N/A' or some placeholder if undefined
+        },
+        sortType: 'basic' // Default sorting should work fine now
+      }
+
+
+      ,
+
+
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
       {
@@ -199,7 +224,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
 
     return (
       <div className='container'>
-        
+
         <div className="search">
           <input
             type="text"

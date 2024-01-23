@@ -199,9 +199,11 @@ const OutflowFunc = ({apiBaseUrl}) => {
         },
         body: JSON.stringify(orderData),
       });
+      alert('Order added.');
       // Optionally, handle any actions after successful posting
     } catch (error) {
       console.error('Error creating order:', error.message);
+      alert('Error creating order:', error.message);
     }
   }, [fetchAPI, apiBaseUrl, materialchanges]);
 
