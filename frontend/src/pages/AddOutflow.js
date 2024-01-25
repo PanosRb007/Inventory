@@ -193,7 +193,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
       } else {
         setNewOutflow((prevPurchase) => ({
           ...prevPurchase,
-          width: '',
+          width: null,
         }));
       };
 

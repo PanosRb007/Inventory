@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import './CreateCombinedMaterial.css';
 
 const EditCombinedMaterial = ({
@@ -93,77 +94,77 @@ const EditCombinedMaterial = ({
     };
 
     return (
-        <div className="material-input-form">
-            <h3>Edit Combined Material</h3>
-            {error && <div className="error-message">Error: {error}</div>}
-            <span className="close-popup" onClick={onClose}>&times;</span>
-            <div className="form-row">
-                <div className="form-group">
-                    <label htmlFor="name">Name:</label>
-                    <input
-                        id="name"
-                        name="name"
-                        value={materialData.name}
-                        onChange={handleMaterialChange}
-                        className="form-control"
-                    />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="description">Description:</label>
-                    <textarea
-                        id="description"
-                        name="description"
-                        value={materialData.description}
-                        onChange={handleMaterialChange}
-                        className="form-control"
-                    />
-                </div>
-            </div>
-
-            {submaterials.map((submaterial, index) => (
-                <div key={index} className="material-selection">
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Material</label>
-                            <select
-                                value={submaterial.material_id}
-                                onChange={(e) => handleSubmaterialChange(index, 'material_id', e.target.value)}
-                                className="form-control"
-                            >
-                                <option value="">Select Material</option>
-                                {allMaterials.map(material => (
-                                    <option key={material.matid} value={material.matid}>{material.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>Multiplier</label>
-                            <input
-                                type="number"
-                                value={submaterial.multiplier}
-                                onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
-                                className="form-control"
-                            />
-                        </div>
-                        <div className="price-remove-container">
-                            {submaterials.length > 1 && (
-                                <button
-                                    className="remove-btn"
-                                    onClick={() => removeSubmaterial(index)}
-                                >
-                                    Remove
-                                </button>
-                            )}
-                        </div>
+        <div className="material-input-form-container">
+            <div className="material-input-form">
+                <h3>Edit Combined Material</h3>
+                {error && <div className="error-message">Error: {error}</div>}
+                <span className="close-popup" onClick={onClose}>&times;</span>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="name">Name:</label>
+                        <input
+                            id="name"
+                            name="name"
+                            value={materialData.name}
+                            onChange={handleMaterialChange}
+                            className="form-control"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="description">Description:</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            value={materialData.description}
+                            onChange={handleMaterialChange}
+                            className="form-control"
+                        />
                     </div>
                 </div>
-            ))}
 
-            <button
-                className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
-            <div>
-                <button className="btn btn-success save-btn" onClick={saveChanges}>Save Changes</button>
-                <button className="remove-btn" onClick={onClose}>Cancel</button>
+                {submaterials.map((submaterial, index) => (
+                    <div key={index} className="material-selection">
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Material</label>
+                                <Select
+                                    className="form-control"
+                                    value={submaterial.material_id ? { value: submaterial.material_id, label: allMaterials.find(m => m.matid === submaterial.material_id)?.name } : null}
+                                    onChange={(selectedOption) => handleSubmaterialChange(index, 'material_id', selectedOption.value)}
+                                    options={allMaterials.map(material => ({ value: material.matid, label: material.name }))}
+                                    placeholder="Select Material"
+                                    isSearchable={true}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Multiplier</label>
+                                <input
+                                    type="number"
+                                    value={submaterial.multiplier}
+                                    onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
+                                    className="form-control"
+                                />
+                            </div>
+                            <div className="price-remove-container">
+                                {submaterials.length > 1 && (
+                                    <button
+                                        className="remove-btn"
+                                        onClick={() => removeSubmaterial(index)}
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                <button
+                    className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
+                <div>
+                    <button className="btn btn-success save-btn" onClick={saveChanges}>Save Changes</button>
+                    <button className="remove-btn" onClick={onClose}>Cancel</button>
+                </div>
             </div>
         </div>
     );

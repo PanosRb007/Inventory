@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Select from 'react-select';
+
 import './CreateCombinedMaterial.css';
 
 const CombinedMaterialInputForm = ({
@@ -116,6 +118,7 @@ const CombinedMaterialInputForm = ({
     if (error) return <div>Error: {error}</div>;
 
     return (
+        <div className="material-input-form-container">
         <div className="material-input-form">
             <h3>Combine Materials</h3>
             <span className="close-popup" onClick={onClose}>&times;</span>
@@ -150,16 +153,14 @@ const CombinedMaterialInputForm = ({
                     <div className="form-row">
                         <div className="form-group">
                             <label>Material</label>
-                            <select
-                                value={selection.materialId}
-                                onChange={(e) => handleSubmaterialChange(index, 'materialId', e.target.value)}
+                            <Select
                                 className="form-control"
-                            >
-                                <option value="">Select Material</option>
-                                {materials.map(material => (
-                                    <option key={material.matid} value={material.matid}>{material.name}</option>
-                                ))}
-                            </select>
+                                value={selection.materialId ? { value: selection.materialId, label: materials.find(m => m.matid === selection.materialId)?.name } : null}
+                                onChange={(selectedOption) => handleSubmaterialChange(index, 'materialId', selectedOption.value)}
+                                options={materials.map(material => ({ value: material.matid, label: material.name }))}
+                                placeholder="Select Material"
+                                isSearchable={true}
+                            />
                         </div>
                         <div className="form-group">
                             <label>Multiplier</label>
@@ -186,7 +187,9 @@ const CombinedMaterialInputForm = ({
             <button className="btn btn-primary add-btn" onClick={addMaterial}>Add Material</button>
             <button className="btn btn-success save-btn" onClick={saveCombinedMaterial}>Save Combined Material</button>
         </div>
+        </div>
     );
+    
 };
 
 export default CombinedMaterialInputForm;
