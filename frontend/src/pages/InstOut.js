@@ -168,7 +168,7 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
             result = totalPurchasedQuantity - totalOutflowQuantity;
         } else {
             const totalPurchasedQuantity = purchases
-                .filter(p => p.materialid === newOutflow.materialid)
+                .filter(p => p.materialid === newOutflow.materialid && p.location === newOutflow.location)
                 .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
 
             // Calculate total outflow quantity for a specific material and lot number

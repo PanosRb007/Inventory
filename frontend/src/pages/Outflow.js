@@ -276,12 +276,55 @@ const OutflowFunc = ({apiBaseUrl}) => {
         }
       },
       {
-        Header: 'Cost',
-        accessor: 'cost',
-        Cell: ({ value }) => {
-          return value ? `${value} €` : '';
-        },
-      },
+  Header: 'Cost',
+  accessor: (row) => {
+    let totalCost = 0;
+
+    if (!row.width) {
+      const filteredPurchases = purchases.filter(pur =>
+        pur.location === row.location &&
+        pur.materialid === row.materialid
+      );
+
+      // Filter outflows up to but not including the current row's outflowid
+      const filteredOutflows = outflows.filter(out =>
+        out.location === row.location &&
+        out.materialid === row.materialid &&
+        out.outflowid < row.outflowid // Assuming outflowid is a sequential identifier
+      );
+
+      const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
+
+      let sumOfQuantities = 0;
+      let remainingOutflowQuantity = row.quantity;
+
+      for (const purchase of filteredPurchases) {
+        const purchaseQuantity = parseFloat(purchase.quantity);
+        const purchasePrice = parseFloat(purchase.price);
+        sumOfQuantities += purchaseQuantity;
+        const remQuant = sumOfQuantities - totalPreviousOutflows;
+
+        if (sumOfQuantities >= totalPreviousOutflows) {
+          if (remainingOutflowQuantity <= remQuant) {
+            totalCost += remainingOutflowQuantity * purchasePrice;
+            break;
+          } else {
+            totalCost += remQuant * purchasePrice;
+            remainingOutflowQuantity -= remQuant;
+          }
+        }
+      }
+    } else if (row.lotnumber) {
+      const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
+      const pricePerUnit = purchase ? purchase.price : 0;
+      totalCost = row.quantity * pricePerUnit * (row.width || 1);
+    }
+
+    return totalCost.toFixed(2); // Format to 2 decimal places
+  },
+  Cell: ({ value }) => `${value} €`,
+}
+,
       
       {
         Header: 'Employee',

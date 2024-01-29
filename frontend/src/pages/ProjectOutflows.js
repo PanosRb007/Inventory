@@ -11,6 +11,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   const [isLoading, setIsLoading] = useState(true); // New state to track loading status
   const [employees, setEmployees] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [purchases, setPurchases] = useState([]);
 
 
   useEffect(() => {
@@ -43,17 +44,19 @@ const ProjectFunc = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [outflowsResponse, projectsResponse, employeesResponse, materialsResponse] = await Promise.all([
+      const [outflowsResponse, projectsResponse, employeesResponse, materialsResponse, purchaseResponse] = await Promise.all([
         fetchAPI(`${apiBaseUrl}/outflowsAPI`),
         fetchAPI(`${apiBaseUrl}/projectsAPI`),
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
         fetchAPI(`${apiBaseUrl}/materiallist`),
+        fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
 
       ]);
       const filtered = outflowsResponse;
       setEmployees(employeesResponse);
       setProjects(projectsResponse);
       setMaterials(materialsResponse);
+      setPurchases(purchaseResponse);
       setOutflows(filtered.filter((res) => res.project === parseInt(projectId)));
       setIsLoading(false);
     } catch (error) {
@@ -69,6 +72,53 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   console.log('outflows', outflows);
   console.log('projectid', projectId);
   console.log('projects', projects);
+
+  const calculateCost = (row, purchases, outflows) => {
+    let totalCost = 0;
+
+    if (!row.width) {
+      const filteredPurchases = purchases.filter(pur =>
+        pur.location === row.location &&
+        pur.materialid === row.materialid
+      );
+
+      // Filter outflows up to but not including the current row's outflowid
+      const filteredOutflows = outflows.filter(out =>
+        out.location === row.location &&
+        out.materialid === row.materialid &&
+        out.outflowid < row.outflowid // Assuming outflowid is a sequential identifier
+      );
+
+      const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
+
+      let sumOfQuantities = 0;
+      let remainingOutflowQuantity = row.quantity;
+
+      for (const purchase of filteredPurchases) {
+        const purchaseQuantity = parseFloat(purchase.quantity);
+        const purchasePrice = parseFloat(purchase.price);
+        sumOfQuantities += purchaseQuantity;
+        const remQuant = sumOfQuantities - totalPreviousOutflows;
+
+        if (sumOfQuantities >= totalPreviousOutflows) {
+          if (remainingOutflowQuantity <= remQuant) {
+            totalCost += remainingOutflowQuantity * purchasePrice;
+            break;
+          } else {
+            totalCost += remQuant * purchasePrice;
+            remainingOutflowQuantity -= remQuant;
+          }
+        }
+      }
+    } else if (row.lotnumber) {
+      const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
+      const pricePerUnit = purchase ? purchase.price : 0;
+      totalCost = row.quantity * pricePerUnit * (row.width || 1);
+    }
+
+    return totalCost.toFixed(2); // Format to 2 decimal places
+  }
+
 
   function formatDateTime(dateTimeString) {
   const options = {
@@ -101,26 +151,32 @@ const ProjectFunc = ({ apiBaseUrl }) => {
           return material ? material.name : 'Material not found';
         },
       },
+      { Header: 'Width', accessor: 'width' },
+      { Header: 'Lot #', accessor: 'lotnumber' },
 
       { Header: 'Quantity', accessor: 'quantity' },
       {
         Header: 'Cost/Unit',
         accessor: (row) => {
-          const cost = parseFloat(row.cost); // Get the cost value
-          const quantity = parseFloat(row.quantity); // Get the quantity value
-
-          // Check if both cost and quantity are valid numbers
-          if (typeof cost === 'number' && typeof quantity === 'number' && quantity !== 0) {
-            // Calculate the cost per unit and format it
-            const costPerUnit = (cost / quantity).toFixed(2); // You can adjust the number of decimal places as needed
-            return `${costPerUnit} €`; // Format the result as desired
+          const cost = parseFloat(calculateCost(row, purchases, outflows));
+          const quantity = parseFloat(row.quantity);
+      
+          if (quantity !== 0) {
+            const costPerUnit = (cost / quantity).toFixed(2);
+            return `${costPerUnit} €`;
           } else {
-            return 'N/A'; // Handle cases where cost or quantity is not a valid number or quantity is zero
+            return 'N/A';
           }
         },
       },
+      
 
-      { Header: 'Cost', accessor: 'cost' },
+      {
+        Header: 'Cost',
+        accessor: (row) => calculateCost(row, purchases, outflows),
+        Cell: ({ value }) => `${value} €`,
+      }
+,
 
       {
         Header: 'Employee',
@@ -131,7 +187,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       },
 
     ],
-    [employees, materials]
+    [employees, materials, outflows, purchases]
   );
 
   const {

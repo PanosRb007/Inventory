@@ -207,15 +207,16 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       method: 'POST',
       body: JSON.stringify(newOutflow),
     })
-      .then((data) => {
-        setOutflows(data);
-        setShowAddInstOutflowForm(false);
-        console.log('Outflow added successfully', data);
-      })
+    .then((data) => {
+   
+      setShowAddInstOutflowForm(false);
+      console.log('Outflow added successfully', data);
+    })
+    
       .catch((error) => {
         console.error('Error adding outflow:', error.message);
       });
-  }, [setOutflows, apiBaseUrl, fetchAPI,setShowAddInstOutflowForm]);
+  }, [ apiBaseUrl, fetchAPI,setShowAddInstOutflowForm]);
   
 
   const columns = React.useMemo(
@@ -252,6 +253,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
             purchase.lotnumber === lotNumber &&
             purchase.location === location
           );
+          console.log('Outflows:', outflows);
 
           const filteredOutflows = outflows.filter(outflow =>
             outflow.materialid === materialId &&
@@ -335,7 +337,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Header: 'Verification Date', accessor: 'verification', Cell: ({ value }) => formatDateTime(value),
       },
     ],
-    [handleEdit, handleDelete, handleVerification, outflows, purchases, locations, materials, vendors, materialchanges,openAddOutflowForm, handleOrder]
+    [handleEdit, handleDelete, handleVerification , outflows, purchases, locations, materials, vendors, materialchanges,openAddOutflowForm, handleOrder]
   );
 
   function formatDateTime(dateTimeString) {
