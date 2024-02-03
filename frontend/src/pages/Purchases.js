@@ -264,8 +264,11 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           // Calculate total quantity (sum of purchases - sum of outflows)
           const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
           const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+          const remainingQuantity = (totalPurchases - totalOutflows).toFixed(2);
 
-          return totalPurchases - totalOutflows;
+          return (
+            <span style={{ color: 'red' }}>{remainingQuantity}</span>
+          );
         }
       },
       {

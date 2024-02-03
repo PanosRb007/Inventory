@@ -38,24 +38,31 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
 
       const calculateTotalCost = (combinedMaterialId, submaterialsData, materialChangesData) => {
         const relevantSubmaterials = submaterialsData.filter(submat => submat.combined_material_id === combinedMaterialId);
-      
+        
         const totalCost = relevantSubmaterials.reduce((acc, submat) => {
           // Filter to find all changes for this material
           const changesForMaterial = materialChangesData.filter(mc => mc.material_id === submat.material_id);
-      
+          
           // Find the change with the largest change_id
           const latestChange = changesForMaterial.reduce((latest, current) => {
             return (latest.change_id > current.change_id) ? latest : current;
           }, { change_id: -1, price: 0 });
-      
+          
           // Use the price from the latest change
           const latestPrice = parseFloat(latestChange.price);
-      
-          return acc + (latestPrice * submat.multiplier);
+          
+          const costForSubmaterial = latestPrice * submat.multiplier;
+          
+          console.log(`Submaterial: ${submat.material_id}, Latest Change Price: ${latestPrice}, Multiplier: ${submat.multiplier}, Cost for Submaterial: ${costForSubmaterial}`);
+          
+          return acc + costForSubmaterial;
         }, 0);
-      
+        
+        console.log(`Total Cost for Combined Material ${combinedMaterialId}: ${totalCost}`);
+        
         return totalCost;
       };
+      
       
       
 

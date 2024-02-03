@@ -247,7 +247,12 @@ const OutflowFunc = ({apiBaseUrl}) => {
       },
       { Header: 'Width', accessor: 'width' },
       { Header: 'Lot No', accessor: 'lotnumber' },
-      { Header: 'Quantity', accessor: 'quantity' },
+      {
+        Header: 'Quantity',
+        accessor: 'quantity',
+        Cell: ({ value }) => parseFloat(value).toFixed(2), // Format to 2 decimal places
+      },
+      
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
@@ -271,8 +276,11 @@ const OutflowFunc = ({apiBaseUrl}) => {
           // Calculate total quantity (sum of purchases - sum of outflows)
           const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
           const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+          const remainingQuantity = (totalPurchases - totalOutflows).toFixed(2);
 
-          return totalPurchases - totalOutflows;
+          return (
+            <span style={{ color: 'red' }}>{remainingQuantity}</span>
+          );
         }
       },
       {
@@ -330,7 +338,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         Header: 'Employee',
         accessor: (value) => {
           const employee = employees.find((emp) => emp.empid === value.employee);
-          return employee ? `${employee.name} ${employee.surname}` : 'Employee not found';
+          return employee ? `${employee.name}` : 'Employee not found';
         },
       },
       // Update the column definition for the "Project" column
@@ -340,7 +348,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
           const project = projects.find((prj) => prj.prid === value.project);
           return project ? project.name : 'Project not found';
         },
-        filter: 'text', // Enable global filter for the "Project" column
+        filter: 'text',
         Cell: ({ row }) => {
           const project = projects.find((prj) => prj.prid === row.original.project);
       
@@ -350,9 +358,16 @@ const OutflowFunc = ({apiBaseUrl}) => {
       
           const projectOutflows = outflows.filter((outflow) => outflow.project === project.prid);
       
+          // Create an array of strings that include Material ID, Material Name, and Quantity
+          const outflowDetails = projectOutflows.map((outflow) => {
+            const material = materials.find((material) => material.matid === outflow.materialid);
+            const materialName = material ? material.name : 'Material not found';
+            return `Material: ${materialName}, Quantity: ${outflow.quantity}`;
+          });
+      
           return (
             <span
-              title={projectOutflows.length > 0 ? projectOutflows.map((outflow) => `Outflow ID: ${outflow.outflowid} Material ID:${outflow.materialid} Quantity: ${outflow.quantity}`).join('\n') : 'No outflows for this project'}
+              title={projectOutflows.length > 0 ? outflowDetails.join('\n') : 'No outflows for this project'}
               style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
               onClick={() => openProjectOutflowTable(project.prid)}
             >
@@ -360,7 +375,8 @@ const OutflowFunc = ({apiBaseUrl}) => {
             </span>
           );
         },
-      }, 
+      },
+      
       { Header: 'Comments', accessor: 'comments' },       
       { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
       },

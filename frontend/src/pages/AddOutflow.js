@@ -494,10 +494,12 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
               <Select
                 name="project"
                 value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
-                options={projects.map((project) => ({
-                  value: project.prid,
-                  label: project.name,
-                }))}
+                options={projects
+                  .filter(project => project.status.data[0] === 0) // Filter projects where status.data[0] is 1
+                  .map((project) => ({
+                    value: project.prid,
+                    label: project.name,
+                  }))}
                 onChange={(selectedOption) => handleChange({ target: { name: 'project', value: selectedOption.value } })}
                 placeholder="Select a Project"
                 required

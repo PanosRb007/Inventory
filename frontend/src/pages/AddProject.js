@@ -5,12 +5,12 @@ const AddProject = ({ handleAddProject }) => {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    prmatcost: '',
-    prlabcost: '',
-    sale: '',
-    realmatcost: '',
-    reallabcost: '',
-    totalcost: '',
+    prmatcost: null,
+      prlabcost: null,
+      sale: null,
+      realmatcost: null,
+      reallabcost: null,
+      totalcost: null,
   });
 
   const handleInputChange = (event) => {
@@ -31,12 +31,12 @@ const AddProject = ({ handleAddProject }) => {
     setNewProject({
       name: '',
       description: '',
-      prmatcost: '',
-      prlabcost: '',
-      sale: '',
-      realmatcost: '',
-      reallabcost: '',
-      totalcost: '',
+      prmatcost: null,
+      prlabcost: null,
+      sale: null,
+      realmatcost: null,
+      reallabcost: null,
+      totalcost: null,
     });
   };
 

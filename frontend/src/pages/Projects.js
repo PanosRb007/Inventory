@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, useCallback } from 'react';
-import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import AddProject from './AddProject.js'; // Adjust the import path as needed
 import EditProject from './EditProject.js'; // Adjust the import path as needed
 import './PurchaseFunc.css';
@@ -9,6 +9,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   const [projects, setProjects] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [globalFilter, setGlobalFilter] = useState(''); // Global filter state
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -38,7 +39,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         return { ...project, realmatcostNumeric: totalCost };
       });
 
-      setProjects(projectsWithCost); // Make sure this line is present
+      setProjects(projectsWithCost);
       setOutflows(outflowsResponse);
 
     } catch (error) {
@@ -131,22 +132,16 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       { Header: 'Sale', accessor: 'sale' },
       {
         Header: 'Real Material Cost',
-        accessor: 'realmatcostNumeric', // Use the numeric value for sorting
+        accessor: 'realmatcostNumeric',
         Cell: ({ row }) => {
-          // Check if realmatcostNumeric is defined
           if (typeof row.original.realmatcostNumeric === 'number') {
-            const formattedCost = `${row.original.realmatcostNumeric.toFixed(2)} €`; // Format for display
+            const formattedCost = `${row.original.realmatcostNumeric.toFixed(2)} €`;
             return formattedCost;
           }
-          return 'N/A'; // Return 'N/A' or some placeholder if undefined
+          return 'N/A';
         },
-        sortType: 'basic' // Default sorting should work fine now
-      }
-
-
-      ,
-
-
+        sortType: 'basic'
+      },
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
       {
@@ -179,17 +174,28 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     ],
     [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable]
   );
-
   const projectsStatus0 = useMemo(() => projects.filter(p => p.status.data[0] === 0), [projects]);
   const projectsStatus1 = useMemo(() => projects.filter(p => p.status.data[0] === 1), [projects]);
+
+
+  const filteredProjectsStatus0 = useMemo(() => {
+    return projectsStatus0.filter((project) =>
+      project.name.toLowerCase().includes(globalFilter.toLowerCase())
+    );
+  }, [projectsStatus0, globalFilter]);
+
+  const filteredProjectsStatus1 = useMemo(() => {
+    return projectsStatus1.filter((project) =>
+      project.name.toLowerCase().includes(globalFilter.toLowerCase())
+    );
+  }, [projectsStatus1, globalFilter]);
 
   const tableInstance0 = useTable(
     {
       columns,
-      data: projectsStatus0,
-      initialState: { pageIndex: 0 }
+      data: filteredProjectsStatus0,
+      initialState: { pageIndex: 0 },
     },
-    useGlobalFilter,
     useSortBy,
     usePagination
   );
@@ -197,13 +203,13 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   const tableInstance1 = useTable(
     {
       columns,
-      data: projectsStatus1,
-      initialState: { pageIndex: 0 }
+      data: filteredProjectsStatus1,
+      initialState: { pageIndex: 0 },
     },
-    useGlobalFilter,
     useSortBy,
     usePagination
   );
+
 
   const renderTable = (tableInstance, status) => {
     const {
@@ -212,27 +218,17 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       headerGroups,
       page,
       prepareRow,
-      state: { pageIndex, pageSize, globalFilter },
+      state: { pageIndex, pageSize }, // Remove globalFilter from state
       gotoPage,
       nextPage,
       previousPage,
       canNextPage,
       canPreviousPage,
       setPageSize,
-      setGlobalFilter,
     } = tableInstance;
 
     return (
       <div className='container'>
-
-        <div className="search">
-          <input
-            type="text"
-            value={globalFilter || ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Search..."
-          />
-        </div>
         <table {...getTableProps()} className="table">
           <thead>
             {headerGroups.map((headerGroup) => (
@@ -310,6 +306,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     );
   };
 
+  
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -317,6 +314,14 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   return (
     <div className='container'>
       <AddProject handleAddProject={handleAddProject} />
+      <div className="search">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+        />
+      </div>
       <h2 className='heading'>Projects In Progress</h2>
       {renderTable(tableInstance0, 0)}
       <h2 className='heading'>Projects Completed</h2>
@@ -326,3 +331,9 @@ const ProjectFunc = ({ apiBaseUrl }) => {
 };
 
 export default ProjectFunc;
+
+
+
+
+
+
