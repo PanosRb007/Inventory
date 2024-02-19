@@ -10,6 +10,7 @@ import Stock from './pages/Stock.js';
 import Login from './pages/Login.js';
 import MaterialCombiner from './pages/MaterialCombiner.js';
 import OrderList from './pages/Order_List.js';
+import OutMatQuery from './pages/OutMatQuery.js';
 
 
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
@@ -108,6 +109,7 @@ function App() {
             <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} />} />
             <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} />} />
             <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} />} />
+            <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} />} />
 
           </Routes>
 

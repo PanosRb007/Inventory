@@ -1,10 +1,13 @@
-import React, {useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import EditOutflow from './EditOutflow.js';
 import './PurchaseFunc.css';
 import AddOutflow from './AddOutflow.js';
+import OutMatQuery from './OutMatQuery.js';
 
-const OutflowFunc = ({apiBaseUrl}) => {
+
+
+const OutflowFunc = ({ apiBaseUrl }) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -16,10 +19,16 @@ const OutflowFunc = ({apiBaseUrl}) => {
   const [editingOutflow, setEditingOutflow] = useState(null);
   const [globalFilterOne, setGlobalFilterOne] = useState('');
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
+  const [showOutMatQuery, setShowOutMatQuery] = useState(false);
+  const [rowdata, setRowdata] = useState([]);
 
-  const openProjectOutflowTable = (projectId) => {
-    // Append projectId as a query parameter to the URL
+  const openProjectOutflowTable = useCallback((projectId) => {
     window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
+  }, []);
+
+  const openOutMatQuery = (rowd) => {
+    setShowOutMatQuery(true);
+    setRowdata(rowd);
   };
 
   const fetchAPI = useCallback(async (url, options = {}) => {
@@ -38,12 +47,12 @@ const OutflowFunc = ({apiBaseUrl}) => {
     }
     return response.json();
   }, []);
-  
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse,materialchangesData] = await Promise.all([
+        const [materialResponse, purchaseResponse, locationResponse, projectResponse, employeesResponse, outflowsResponse, materialchangesData] = await Promise.all([
           fetchAPI(`${apiBaseUrl}/materiallist`),
           fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
           fetchAPI(`${apiBaseUrl}/LocationsAPI`),
@@ -52,7 +61,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
           fetchAPI(`${apiBaseUrl}/outflowsAPI`),
           fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
         ]);
-  
+
         setMaterials(materialResponse);
         setPurchases(purchaseResponse);
         setLocations(locationResponse);
@@ -64,11 +73,11 @@ const OutflowFunc = ({apiBaseUrl}) => {
         console.log('Error fetching data:', error);
       }
     };
-  
+
     fetchData(); // Call the fetchData function inside useEffect
-  
+
     // Rest of your code
-  }, [apiBaseUrl,fetchAPI]);
+  }, [apiBaseUrl, fetchAPI]);
 
   const filteredData = useMemo(() => {
     return outflows.filter(row => {
@@ -110,12 +119,12 @@ const OutflowFunc = ({apiBaseUrl}) => {
         console.error('Error adding outflow:', error.message);
       });
   }, [setOutflows, apiBaseUrl, fetchAPI]);
-  
-  
+
+
 
   const handleDelete = useCallback((deletedOutflow) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this outflow?');
-  
+
     if (isConfirmed) {
       fetchAPI(`${apiBaseUrl}/outflowsAPI/${deletedOutflow.outflowid}`, {
         method: 'DELETE',
@@ -128,20 +137,20 @@ const OutflowFunc = ({apiBaseUrl}) => {
           console.log('Error deleting outflow:', error);
         });
     }
-  }, [outflows, setOutflows, apiBaseUrl,fetchAPI]);
+  }, [outflows, setOutflows, apiBaseUrl, fetchAPI]);
 
   const handleEdit = useCallback((outflow) => {
     if (editingOutflow && editingOutflow.outflowid === outflow.outflowid) {
       alert('Outflow is already being edited.');
       return;
     }
-  
+
     // Add a console.log statement here to see the original row data
     console.log('Original Row Data:', outflow);
-  
+
     setEditingOutflow(outflow);
   }, [editingOutflow, setEditingOutflow]);
-  
+
 
   const handleUpdate = useCallback((updatedOutflow) => {
     fetchAPI(`${apiBaseUrl}/outflowsAPI/${updatedOutflow.outflowid}`, {
@@ -160,7 +169,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         console.error('Error updating the outflow:', error.message);
       });
   }, [setOutflows, setEditingOutflow, apiBaseUrl, fetchAPI]);
-  
+
 
   const handleCancel = () => {
     setEditingOutflow(null);
@@ -176,20 +185,20 @@ const OutflowFunc = ({apiBaseUrl}) => {
         const filteredMaterialChanges = materialchanges.filter(
           (materialChange) => materialChange.material_id === row.materialid
         );
-  
+
         // Sort filtered materialchanges by date in descending order to get the latest record
         const latestMaterialChange = filteredMaterialChanges.reduce((latest, current) => {
           return (latest.change_id > current.change_id) ? latest : current;
         }, { change_id: -1, vendor: 0 });
-    
-  
+
+
         // Extract the vendor_id from the latest material change record
         return latestMaterialChange ? latestMaterialChange.vendor : '';
       })(),
       // Add any other fields that are required for the order
     };
-  
-  
+
+
     try {
       // Make a POST request to the order_list API
       await fetchAPI(`${apiBaseUrl}/order_listAPI`, {
@@ -207,7 +216,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
     }
   }, [fetchAPI, apiBaseUrl, materialchanges]);
 
-  function formatDateTime(dateTimeString) {
+  const formatDateTime = useCallback((dateTimeString) => {
     const options = {
       day: '2-digit',
       month: '2-digit',
@@ -217,27 +226,37 @@ const OutflowFunc = ({apiBaseUrl}) => {
       second: '2-digit',
       timeZone: 'Europe/Athens', // Set to Athens time zone for Greece
     };
-  
+
     const dateTime = new Date(dateTimeString);
     const formattedDateTime = dateTime.toLocaleString('el-GR', options);
     return formattedDateTime;
-  }
-  
+  }, []);
 
-  
-  
+
+
   const columns = React.useMemo(
     () => [
-      
+
       { Header: 'ID', accessor: 'outflowid' },
       {
         Header: 'Location',
         accessor: (value) => {
-          const locationnm  = locations.find((loc) => loc.id ===  value.location);
+          const locationnm = locations.find((loc) => loc.id === value.location);
           return locationnm ? locationnm.locationname : 'location not found';
         },
       },
-      { Header: 'Material ID', accessor: 'materialid' },
+      {
+        Header: 'Material ID',
+        accessor: 'materialid',
+        Cell: ({ row }) => (
+          <span style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openOutMatQuery(row.original)}>
+            {row.original.materialid} {/* Display the actual materialid value */}
+          </span>
+        )
+      },
+
+
+
       {
         Header: 'Material Name',
         accessor: (row) => {
@@ -252,7 +271,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
         accessor: 'quantity',
         Cell: ({ value }) => parseFloat(value).toFixed(2), // Format to 2 decimal places
       },
-      
+
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
@@ -284,56 +303,56 @@ const OutflowFunc = ({apiBaseUrl}) => {
         }
       },
       {
-  Header: 'Cost',
-  accessor: (row) => {
-    let totalCost = 0;
+        Header: 'Cost',
+        accessor: (row) => {
+          let totalCost = 0;
 
-    if (!row.width) {
-      const filteredPurchases = purchases.filter(pur =>
-        pur.location === row.location &&
-        pur.materialid === row.materialid
-      );
+          if (!row.width) {
+            const filteredPurchases = purchases.filter(pur =>
+              pur.location === row.location &&
+              pur.materialid === row.materialid
+            );
 
-      // Filter outflows up to but not including the current row's outflowid
-      const filteredOutflows = outflows.filter(out =>
-        out.location === row.location &&
-        out.materialid === row.materialid &&
-        out.outflowid < row.outflowid // Assuming outflowid is a sequential identifier
-      );
+            // Filter outflows up to but not including the current row's outflowid
+            const filteredOutflows = outflows.filter(out =>
+              out.location === row.location &&
+              out.materialid === row.materialid &&
+              out.outflowid < row.outflowid // Assuming outflowid is a sequential identifier
+            );
 
-      const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
+            const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
 
-      let sumOfQuantities = 0;
-      let remainingOutflowQuantity = row.quantity;
+            let sumOfQuantities = 0;
+            let remainingOutflowQuantity = row.quantity;
 
-      for (const purchase of filteredPurchases) {
-        const purchaseQuantity = parseFloat(purchase.quantity);
-        const purchasePrice = parseFloat(purchase.price);
-        sumOfQuantities += purchaseQuantity;
-        const remQuant = sumOfQuantities - totalPreviousOutflows;
+            for (const purchase of filteredPurchases) {
+              const purchaseQuantity = parseFloat(purchase.quantity);
+              const purchasePrice = parseFloat(purchase.price);
+              sumOfQuantities += purchaseQuantity;
+              const remQuant = sumOfQuantities - totalPreviousOutflows;
 
-        if (sumOfQuantities >= totalPreviousOutflows) {
-          if (remainingOutflowQuantity <= remQuant) {
-            totalCost += remainingOutflowQuantity * purchasePrice;
-            break;
-          } else {
-            totalCost += remQuant * purchasePrice;
-            remainingOutflowQuantity -= remQuant;
+              if (sumOfQuantities >= totalPreviousOutflows) {
+                if (remainingOutflowQuantity <= remQuant) {
+                  totalCost += remainingOutflowQuantity * purchasePrice;
+                  break;
+                } else {
+                  totalCost += remQuant * purchasePrice;
+                  remainingOutflowQuantity -= remQuant;
+                }
+              }
+            }
+          } else if (row.lotnumber) {
+            const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
+            const pricePerUnit = purchase ? purchase.price : 0;
+            totalCost = row.quantity * pricePerUnit * (row.width || 1);
           }
-        }
-      }
-    } else if (row.lotnumber) {
-      const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
-      const pricePerUnit = purchase ? purchase.price : 0;
-      totalCost = row.quantity * pricePerUnit * (row.width || 1);
-    }
 
-    return totalCost.toFixed(2); // Format to 2 decimal places
-  },
-  Cell: ({ value }) => `${value} €`,
-}
-,
-      
+          return totalCost.toFixed(2); // Format to 2 decimal places
+        },
+        Cell: ({ value }) => `${value} €`,
+      }
+      ,
+
       {
         Header: 'Employee',
         accessor: (value) => {
@@ -351,20 +370,20 @@ const OutflowFunc = ({apiBaseUrl}) => {
         filter: 'text',
         Cell: ({ row }) => {
           const project = projects.find((prj) => prj.prid === row.original.project);
-      
+
           if (!project) {
             return 'Project not found';
           }
-      
+
           const projectOutflows = outflows.filter((outflow) => outflow.project === project.prid);
-      
+
           // Create an array of strings that include Material ID, Material Name, and Quantity
           const outflowDetails = projectOutflows.map((outflow) => {
             const material = materials.find((material) => material.matid === outflow.materialid);
             const materialName = material ? material.name : 'Material not found';
             return `Material: ${materialName}, Quantity: ${outflow.quantity}`;
           });
-      
+
           return (
             <span
               title={projectOutflows.length > 0 ? outflowDetails.join('\n') : 'No outflows for this project'}
@@ -376,11 +395,13 @@ const OutflowFunc = ({apiBaseUrl}) => {
           );
         },
       },
-      
-      { Header: 'Comments', accessor: 'comments' },       
-      { Header: 'Date', accessor: 'date' ,Cell: ({ value }) => formatDateTime(value), 
+
+      { Header: 'Comments', accessor: 'comments' },
+      {
+        Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
       },
-      { Header: 'Actions', accessor: 'actions',
+      {
+        Header: 'Actions', accessor: 'actions',
         Cell: ({ row }) => (
           <div>
             <button onClick={() => handleEdit(row.original)}>Edit</button>
@@ -390,9 +411,9 @@ const OutflowFunc = ({apiBaseUrl}) => {
         ),
       },
     ],
-    [handleEdit,handleOrder, handleDelete, materials, locations, employees, projects, outflows, purchases]
+    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, purchases, formatDateTime, openProjectOutflowTable]
   );
- 
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -406,7 +427,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
     canNextPage,
     canPreviousPage,
     setPageSize,
-  
+
   } = useTable(
     {
       columns,
@@ -434,14 +455,14 @@ const OutflowFunc = ({apiBaseUrl}) => {
 
   return (
     <div className='container'>
-      <AddOutflow 
-        handleAdd={handleAdd} 
-        locations={locations} 
-        materials={materials} 
-        employees={employees} 
-        projects={projects} 
-        outflows={outflows} 
-        setOutflows={setOutflows} 
+      <AddOutflow
+        handleAdd={handleAdd}
+        locations={locations}
+        materials={materials}
+        employees={employees}
+        projects={projects}
+        outflows={outflows}
+        setOutflows={setOutflows}
         purchases={purchases}
         fetchAPI={fetchAPI}
         apiBaseUrl={apiBaseUrl}
@@ -450,7 +471,7 @@ const OutflowFunc = ({apiBaseUrl}) => {
       />
 
       <div className="search">
-      <input
+        <input
           value={globalFilterOne}
           onChange={e => setGlobalFilterOne(e.target.value)}
           placeholder="Global Filter 1"
@@ -476,39 +497,39 @@ const OutflowFunc = ({apiBaseUrl}) => {
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-        {page.map((row) => {
-        prepareRow(row);
-        return (
-          <React.Fragment key={row.getRowProps().key}>
-            <tr {...row.getRowProps()}>
-              {row.cells.map((cell) => (
-                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-              ))}
-            </tr>
-            {editingOutflow && editingOutflow.outflowid === row.original.outflowid && (
-              <tr>
-                <td colSpan={columns.length}>
-                  <EditOutflow outflow={editingOutflow} 
-                               handleUpdate={handleUpdate} 
-                               locations={locations} 
-                               materials={materials} 
-                               employees={employees} 
-                               projects={projects} 
-                               purchases={purchases} 
-                               outflows={outflows}
-                               setPurchases={setPurchases} 
-                               handleCancel={handleCancel}/>
-                </td>
-              </tr>
-            )}
-          </React.Fragment>
-        );
-      })}
+          {page.map((row) => {
+            prepareRow(row);
+            return (
+              <React.Fragment key={row.getRowProps().key}>
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+                {editingOutflow && editingOutflow.outflowid === row.original.outflowid && (
+                  <tr>
+                    <td colSpan={columns.length}>
+                      <EditOutflow outflow={editingOutflow}
+                        handleUpdate={handleUpdate}
+                        locations={locations}
+                        materials={materials}
+                        employees={employees}
+                        projects={projects}
+                        purchases={purchases}
+                        outflows={outflows}
+                        setPurchases={setPurchases}
+                        handleCancel={handleCancel} />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })}
 
         </tbody>
       </table>
 
-      <div className = 'pagination'>
+      <div className='pagination'>
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           Previous
         </button>
@@ -550,6 +571,30 @@ const OutflowFunc = ({apiBaseUrl}) => {
           ))}
         </select>
       </div>
+
+      {showOutMatQuery && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowOutMatQuery(false)}>
+              &times;
+            </span>
+            <OutMatQuery
+              rowdata={rowdata}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              handleCancel={handleCancel}
+              materials={materials}
+              locations={locations}
+              employees={employees}
+              projects={projects}
+              outflows={outflows}
+              purchases={purchases}
+              handleOrder={handleOrder}
+              openProjectOutflowTable={openProjectOutflowTable}
+              formatDateTime={formatDateTime} />
+          </div>
+        </div>
+      )}
 
 
     </div>

@@ -5,6 +5,8 @@ import PurchaseVerification from './PurchaseVerification.js';
 import './PurchaseFunc.css';
 import AddPurchase from './AddPurchase.js';
 import InstOut from './InstOut.js';
+import VendPurc from './VendPurc.js';
+
 
 const PurchaseFunc = ({ apiBaseUrl }) => {
   const [purchases, setPurchases] = useState([]);
@@ -23,11 +25,18 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   const [globalFilterOne, setGlobalFilterOne] = useState('');
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
   const [showAddInstOutflowForm, setShowAddInstOutflowForm] = useState(false);
+  const [showVendPurc, setShowVendPurc] = useState(false);
+  const [rowdata, setRowdata] = useState([]);
 
   const openAddOutflowForm = useCallback((row) => {
     setSelectedOutflowRow(row);
     setShowAddInstOutflowForm(true);
   }, []);
+
+  const openVendPurc = (rowd) => {
+    setShowVendPurc(true);
+    setRowdata(rowd);
+  };
   
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -303,14 +312,18 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           if (vendor) {
             const tooltipContent = `Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}`;
             return (
-              <span title={tooltipContent}>
-                {value}
-              </span>
+              <div>
+                <span title={tooltipContent} 
+                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openVendPurc(row.original)}>
+                  {value}
+                </span>
+              </div>
             );
           }
           return 'Vendor not found';
         },
       },
+      
 
       {
         Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
@@ -522,6 +535,28 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     </div>
   </div>
 )}
+{showVendPurc && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowVendPurc(false)}>
+              &times;
+            </span>
+            <VendPurc
+              rowdata={rowdata}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              handleCancel={handleCancel}
+              materials={materials}
+              locations={locations}
+              employees={employees}
+              projects={projects}
+              outflows={outflows}
+              purchases={purchases}
+              handleOrder={handleOrder}
+              formatDateTime={formatDateTime} />
+          </div>
+        </div>
+      )}
 
 
 
