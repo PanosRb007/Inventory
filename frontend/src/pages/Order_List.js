@@ -1,6 +1,7 @@
-// OrderList.js
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
+import EditOrder from './EditOrder';
+import AddPurchase from './AddPurchase';
 
 const OrderList = ({ apiBaseUrl }) => {
   const [orders, setOrders] = useState([]);
@@ -10,6 +11,10 @@ const OrderList = ({ apiBaseUrl }) => {
   const [outflows, setOutflows] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [editedOrder, setEditedOrder] = useState([]);
+  const [latestdata, setLatestdata] = useState([]);
+  const [orderInflow, setOrderInflow] = useState(null);
+  const [showAddInflowForm, setShowAddInflowForm] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -30,10 +35,6 @@ const OrderList = ({ apiBaseUrl }) => {
     return response.json();
   }, []);
 
-  console.log(locations);
-
-
-
   const fetchData = useCallback(async () => {
     try {
       const orderlistr = await fetchAPI(`${apiBaseUrl}/order_listAPI`);
@@ -42,12 +43,14 @@ const OrderList = ({ apiBaseUrl }) => {
       const locr = await fetchAPI(`${apiBaseUrl}/LocationsAPI`);
       const outr = await fetchAPI(`${apiBaseUrl}/outflowsAPI`);
       const purr = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
+      const latestdata = await fetchAPI(`${apiBaseUrl}/materialchangesAPI`);
       setOrders(orderlistr);
       setMaterials(materialsr);
       setVendors(vendorsr);
       setLocations(locr);
       setOutflows(outr);
       setPurchases(purr);
+      setLatestdata(latestdata);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -56,11 +59,8 @@ const OrderList = ({ apiBaseUrl }) => {
   }, [apiBaseUrl, fetchAPI]);
 
   useEffect(() => {
-
     fetchData();
   }, [fetchData]);
-
-  console.log(orders);
 
   const handleDelete = useCallback((deletedOrder) => {
     const isConfirmed = window.confirm('Are you sure you want to delete this order?');
@@ -83,6 +83,10 @@ const OrderList = ({ apiBaseUrl }) => {
     setEditedOrder(order);
   }, []);
 
+  const handleCancel = useCallback(() => {
+    setEditedOrder(null);
+  }, []);
+
   const handleUpdate = useCallback(async (updatedOrder, updatedStatus) => {
     try {
       await fetchAPI(`${apiBaseUrl}/order_listAPI/${updatedOrder.order_list_id}`, {
@@ -100,7 +104,12 @@ const OrderList = ({ apiBaseUrl }) => {
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
 
-  const columns = React.useMemo(
+  const handleAddInflow = useCallback((order) => {
+    setOrderInflow(order);
+    setShowAddInflowForm(true);
+  }, []);
+
+  const columns = useMemo(
     () => [
       { Header: 'Order ID', accessor: 'order_list_id' },
       {
@@ -120,30 +129,42 @@ const OrderList = ({ apiBaseUrl }) => {
       },
       { Header: 'Order Quantity', accessor: 'quantity' },
       {
+        Header: 'Unit of Measure',
+        accessor: (row) => {
+          const material = materials.find((m) => m.matid === row.material_id);
+          return material ? material.unit_of_measure : 'Unit not found';
+        },
+      },
+      {
+        Header: 'Price / UoM',
+        accessor: (row) => {
+          if (row.unitprice > 0) {
+            return row.unitprice;
+          } else {
+            const latestRecord = latestdata.filter((l) => l.material_id === row.material_id)
+              .reduce((prev, current) => (prev.change_id > current.change_id) ? prev : current, {});
+            return latestRecord ? latestRecord.price : 'Price not found';
+          }
+        },
+      },
+      {
         Header: 'Remaining Quantity',
         accessor: (row) => {
           const materialId = row.material_id;
           const location = row.location_id;
-
-          // Filter purchases and outflows for the current row's material ID, lot number, and location
           const filteredPurchases = purchases.filter(purchase =>
             purchase.materialid === materialId &&
             purchase.location === location
           );
-
           const filteredOutflows = outflows.filter(outflow =>
             outflow.materialid === materialId &&
             outflow.location === location
           );
-
-          // Calculate total quantity (sum of purchases - sum of outflows)
           const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
           const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
-
           return totalPurchases - totalOutflows;
         }
       },
-
       {
         Header: 'Vendor',
         accessor: (row) => {
@@ -185,13 +206,14 @@ const OrderList = ({ apiBaseUrl }) => {
         Header: 'Actions',
         Cell: ({ row }) => (
           <div>
-            <button onClick={() => handleEdit(row.original)}>Edit</button>
-            <button onClick={() => handleDelete(row.original)}> Delete </button>
+            <button onClick={() => { handleEdit(row.original); console.log(row.original); }}>Edit</button>
+            <button onClick={() => handleDelete(row.original)}>Delete</button>
+            {row.original.status.data[0] === 1 && <button onClick={() => handleAddInflow(row.original)}>Add Inflow</button>}
           </div>
         ),
       },
     ],
-    [locations, materials, vendors, outflows, purchases, handleEdit, handleUpdate, handleDelete]
+    [locations, materials, latestdata, vendors, outflows, purchases, handleEdit, handleUpdate, handleDelete, handleAddInflow]
   );
 
   const orderStatus0 = useMemo(() => orders.filter(o => o.status.data[0] === 0), [orders]);
@@ -219,7 +241,7 @@ const OrderList = ({ apiBaseUrl }) => {
     usePagination
   );
 
-  const renderTable = (tableInstance, status) => {
+  const renderTable = (tableInstance) => {
     const {
       getTableProps,
       getTableBodyProps,
@@ -271,7 +293,20 @@ const OrderList = ({ apiBaseUrl }) => {
                       <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                     ))}
                   </tr>
-
+                  {editedOrder && editedOrder.order_list_id === row.original.order_list_id && (
+                    <tr>
+                      <td colSpan={columns.length}>
+                        <EditOrder
+                          order={editedOrder}
+                          handleUpdate={handleUpdate}
+                          handleCancel={handleCancel}
+                          vendors={vendors}
+                          locations={locations}
+                          materials={materials} // Pass the materials prop here
+                        />
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               );
             })}
@@ -315,7 +350,6 @@ const OrderList = ({ apiBaseUrl }) => {
             ))}
           </select>
         </div>
-
       </div>
     );
   };
@@ -330,12 +364,27 @@ const OrderList = ({ apiBaseUrl }) => {
   return (
     <div className='container'>
       <h2 className='heading'>Pending Orders</h2>
-      {renderTable(tableInstance0, 0)}
+      {renderTable(tableInstance0)}
       <h2 className='heading'>Completed Orders</h2>
-      {renderTable(tableInstance1, 1)}
+      {renderTable(tableInstance1)}
+      {showAddInflowForm && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowAddInflowForm(false)}>
+              &times;
+            </span>
+            <AddPurchase
+              order={orderInflow}
+              handleClose={() => setShowAddInflowForm(false)}
+              materials={materials}
+              locations={locations}
+              vendors={vendors}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 
 export default OrderList;

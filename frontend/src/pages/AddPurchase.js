@@ -4,7 +4,7 @@ import './PurchaseFunc.css';
 import AddMaterial from './AddMaterial.js';
 import AddVendor from './AddVendor.js';
 
-const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, setVendors, apiBaseUrl }) => {
+const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, setVendors, apiBaseUrl, order }) => {
   const [showAddMaterialForm, setShowAddMaterialForm] = useState(false);
   const [showAddVendorForm, setShowAddVendorForm] = useState(false);
 
@@ -16,7 +16,19 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     setShowAddVendorForm(true);
   };
 
-  const initialPurchaseState = {
+  const initialPurchaseState = order ? {
+    location: order.location_id || '',
+    materialid: order.material_id || '',
+    materialname: order.materialname || '',
+    quantity: order.quantity || '',
+    price: order.unitprice || '',
+    vendor: order.vendor_id || '',
+    vendorname: order.vendorname || '',
+    width: order.width || null,
+    lotnumber: order.lotnumber || '',
+    comments: order.comments || '',
+    invdate: order.invdate || '',
+  } : {
     location: '',
     materialid: '',
     materialname: '',
@@ -29,6 +41,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     comments: '',
     invdate: '',
   };
+  
 
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
   const [showExtras, setShowExtras] = useState(false);

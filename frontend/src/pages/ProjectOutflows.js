@@ -12,6 +12,8 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   const [employees, setEmployees] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [filteredoutflows, setFilteredOutflows] = useState([]);
+
 
 
   useEffect(() => {
@@ -50,20 +52,27 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
         fetchAPI(`${apiBaseUrl}/materiallist`),
         fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
-
       ]);
-      const filtered = outflowsResponse;
+  
+      // Filter outflows based on projectId
+      const filteredOutflows = outflowsResponse.filter((res) => res.project === parseInt(projectId));
+  
+      // Update state with filteredOutflows
+      setFilteredOutflows(filteredOutflows);
+  
+      // Set other state values
       setEmployees(employeesResponse);
       setProjects(projectsResponse);
       setMaterials(materialsResponse);
       setPurchases(purchaseResponse);
-      setOutflows(filtered.filter((res) => res.project === parseInt(projectId)));
+      setOutflows(outflowsResponse);
       setIsLoading(false);
     } catch (error) {
       console.log('Error fetching data:', error);
       setIsLoading(false);
     }
   }, [projectId, apiBaseUrl, fetchAPI]);
+  
 
   useEffect(() => {
     fetchData();
@@ -154,8 +163,12 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       { Header: 'Width', accessor: 'width' },
       { Header: 'Lot #', accessor: 'lotnumber' },
 
-      { Header: 'Quantity', accessor: 'quantity' },
       {
+        Header: 'Quantity',
+        accessor: 'quantity',
+        Cell: ({ value }) => parseFloat(value).toFixed(2),
+      },
+            {
         Header: 'Cost/Unit',
         accessor: (row) => {
           const cost = parseFloat(calculateCost(row, purchases, outflows));
@@ -182,7 +195,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         Header: 'Employee',
         accessor: (value) => {
           const employee = employees.find((emp) => emp.empid === value.employee);
-          return employee ? `${employee.name} ${employee.surname}` : 'Employee not found';
+          return employee ? `${employee.name}` : 'Employee not found';
         },
       },
 
@@ -207,7 +220,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
   } = useTable(
     {
       columns,
-      data: outflows,
+      data: filteredoutflows,
       employees,
       initialState: {
         pageIndex: 0,
@@ -297,7 +310,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
             setPageSize(Number(e.target.value));
           }}
         >
-          {[10, 25, 50].map((pageSize) => (
+          {[10, 25, 50, 100].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
               Show {pageSize}
             </option>
@@ -305,9 +318,22 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         </select>
 
       </div>
-      <div className="total-cost">
-        <strong>Total Cost:</strong> {outflows.reduce((acc, row) => acc + parseFloat(row.cost), 0).toFixed(2)} €
-      </div>
+      {filteredoutflows.length > 0 && (
+  <div className="total-cost">
+    <strong>Total Cost:</strong> {(() => { // Wrap the JavaScript code in an arrow function
+      let totalCost = 0; // Initialize totalCost variable
+      totalCost = filteredoutflows.reduce((acc, outflow) => {
+        // Calculate the cost for each outflow and accumulate
+        return acc + parseFloat(calculateCost(outflow, purchases, outflows));
+      }, 0);
+      return totalCost; // Return the calculated totalCost
+    })()} {/* Immediately invoke the arrow function to compute the total cost */}
+    € {/* Currency symbol */}
+  </div>
+)}
+
+
+
 
     </div>
   );

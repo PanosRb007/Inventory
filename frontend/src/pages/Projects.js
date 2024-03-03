@@ -6,6 +6,7 @@ import './PurchaseFunc.css';
 
 const ProjectFunc = ({ apiBaseUrl }) => {
   const [editingProject, setEditingProject] = useState(null);
+  const [purchases, setPurchases] = useState([]);
   const [projects, setProjects] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,15 +33,12 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     try {
       const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
       const outflowsResponse = await fetchAPI(`${apiBaseUrl}/outflowsAPI`);
-      // Calculate real material cost for each project
-      const projectsWithCost = projectResponse.map(project => {
-        const projectOutflows = outflowsResponse.filter(outflow => outflow.project === project.prid);
-        const totalCost = projectOutflows.reduce((acc, outflow) => acc + parseFloat(outflow.cost), 0);
-        return { ...project, realmatcostNumeric: totalCost };
-      });
+      const purchasesResponse = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
 
-      setProjects(projectsWithCost);
+
+      setProjects(projectResponse);
       setOutflows(outflowsResponse);
+      setPurchases(purchasesResponse);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -53,6 +51,69 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     fetchData();
   }, [fetchData]);
 
+  const calculateCost = (row, purchases, outflows) => {
+    let totalCost = 0;
+  
+    if (!row.width) {
+      const filteredPurchases = purchases.filter(purchase =>
+        purchase.location === row.location &&
+        purchase.materialid === row.materialid
+      );
+  
+      const filteredOutflows = outflows.filter(outflow =>
+        outflow.location === row.location &&
+        outflow.materialid === row.materialid &&
+        outflow.outflowid < row.outflowid
+      );
+  
+      console.log(`Filtered Purchases for Outflow ID ${row.outflowid}:`, filteredPurchases);
+      console.log(`Filtered Outflows for Outflow ID ${row.outflowid}:`, filteredOutflows);
+  
+      const totalPreviousOutflows = filteredOutflows.reduce((sum, outflow) => {
+        return sum + parseFloat(outflow.quantity);
+      }, 0);
+  
+      console.log(`Total Previous Outflows for Outflow ID ${row.outflowid}:`, totalPreviousOutflows);
+  
+      let sumOfQuantities = 0;
+      let remainingOutflowQuantity = row.quantity;
+  
+      for (const purchase of filteredPurchases) {
+        const purchaseQuantity = parseFloat(purchase.quantity);
+        const purchasePrice = parseFloat(purchase.price);
+        sumOfQuantities += purchaseQuantity;
+  
+        if (sumOfQuantities >= totalPreviousOutflows) {
+          const remQuant = sumOfQuantities - totalPreviousOutflows;
+          console.log(`Calculating Cost for Outflow ID ${row.outflowid}: Remaining Quantity: ${remainingOutflowQuantity}, Remaining Quantity in Purchase: ${remQuant}, Purchase Price: ${purchasePrice}`);
+  
+          if (remainingOutflowQuantity <= remQuant) {
+            totalCost += remainingOutflowQuantity * purchasePrice;
+            console.log(`Partial Cost for Outflow ID ${row.outflowid}:`, totalCost);
+            break;
+          } else {
+            totalCost += remQuant * purchasePrice;
+            remainingOutflowQuantity -= remQuant;
+            console.log(`Accumulated Cost for Outflow ID ${row.outflowid}:`, totalCost);
+          }
+        }
+      }
+    } else if (row.lotnumber) {
+      const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
+      if (purchase) {
+        const pricePerUnit = parseFloat(purchase.price);
+        totalCost = row.quantity * pricePerUnit * (row.width || 1);
+        console.log(`Cost for Outflow ID ${row.outflowid} with Lot Number: Price Per Unit: ${pricePerUnit}, Width: ${row.width}, Total Cost:`, totalCost);
+      } else {
+        console.log(`No matching purchase found for Outflow ID ${row.outflowid} with Lot Number`);
+      }
+    }
+  
+    console.log(`Final Cost for Outflow ID ${row.outflowid}:`, totalCost.toFixed(2));
+    return parseFloat(totalCost.toFixed(2)); // Ensure the result is a number with 2 decimal places
+  };
+  
+  
   const handleAddProject = useCallback(async (newProject) => {
     try {
       await fetchAPI(`${apiBaseUrl}/projectsAPI`, {
@@ -134,14 +195,26 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         Header: 'Real Material Cost',
         accessor: 'realmatcostNumeric',
         Cell: ({ row }) => {
-          if (typeof row.original.realmatcostNumeric === 'number') {
-            const formattedCost = `${row.original.realmatcostNumeric.toFixed(2)} €`;
-            return formattedCost;
+          const filteredOutflows = outflows.filter(outflow => outflow.project === row.original.prid);
+          
+          let totalCost = 0;
+          if (filteredOutflows.length > 0) {
+            totalCost = filteredOutflows.reduce((acc, outflow) => {
+              // Calculate the cost for each outflow and accumulate
+              return acc + parseFloat(calculateCost(outflow, purchases, outflows));
+            }, 0);
           }
-          return 'N/A';
+          
+          // Log the calculated total cost for debugging
+          console.log(`Total Real Material Cost for Project ID ${row.original.prid}:`, totalCost.toFixed(2));
+      
+          return `${totalCost.toFixed(2)} €`;
         },
         sortType: 'basic'
       },
+      
+      
+      
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
       {
@@ -172,7 +245,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         ),
       },
     ],
-    [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable]
+    [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable, purchases]
   );
   const projectsStatus0 = useMemo(() => projects.filter(p => p.status.data[0] === 0), [projects]);
   const projectsStatus1 = useMemo(() => projects.filter(p => p.status.data[0] === 1), [projects]);

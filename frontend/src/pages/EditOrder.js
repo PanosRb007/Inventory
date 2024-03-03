@@ -1,25 +1,31 @@
 import React, { useState } from 'react';
+import Select from 'react-select';
 
-const EditProject = ({ project, handleUpdate, handleCancel }) => {
-  const [editedProject, setEditedProject] = useState({ ...project });
+const EditOrder = ({ order, handleUpdate, handleCancel, vendors, locations, materials }) => {
+  const [editedOrder, setEditedOrder] = useState({ ...order });
+
+  console.log(editedOrder);
+  console.log(locations);
+  console.log(materials);
+
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setEditedProject((prevProject) => ({
-      ...prevProject,
+    setEditedOrder((prevorder) => ({
+      ...prevorder,
       [name]: value,
     }));
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    handleUpdate(editedProject);
+    handleUpdate(editedOrder);
     resetForm();
   };
 
   const resetForm = () => {
-    setEditedProject({
-      // Reset the fields as needed for the project
+    setEditedOrder({
+      // Reset the fields as needed for the order
       // Example:
       name: '',
       description: '',
@@ -33,103 +39,100 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
     });
   };
 
+  const findUnitOfMeasure = () => {
+    const material = materials.find((mat) => mat.matid === editedOrder.material_id);
+    return material ? material.unit_of_measure : '';
+  };
+
   return (
     <div className="container">
-      <h2 className="heading">Edit Project</h2>
+      <h2 className="heading">Edit order</h2>
       <form className="form" onSubmit={handleSubmit}>
         <div className='form-row'>
           <div className='form-group'>
             <label>
-              Project Name:
+              Location:
+              <select name="location_id" value={editedOrder.location_id} onChange={handleInputChange} required>
+                <option value="">Select a location</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.locationname}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className='form-group'>
+            <label>
+              Material Id:
               <input
                 type="text"
-                name="name"
-                value={editedProject.name}
+                name="material_id"
+                defaultValue={editedOrder.material_id} // Use defaultValue instead of value
+                readOnly // Make the field read-only
+              />
+            </label>
+          </div>
+
+
+
+          <div className='form-group'>
+            <label>Material Name:</label>
+            <input type="text" name="materialname" value={materials.find(mat => mat.matid === editedOrder.material_id)?.name} readOnly required />
+          </div>
+          <div className='form-group'>
+            <label>
+              Order Quantity:
+              <input
+                type="number"
+                name="quantity"
+                value={editedOrder.quantity}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+
+
+          <div className='form-group'>
+            <label>
+              Unit Price:
+              <input
+                type="number"
+                name="unitprice"
+                value={editedOrder.unitprice}
                 onChange={handleInputChange}
               />
             </label>
           </div>
           <div className='form-group'>
             <label>
-              Description:
+              Unit of Measure:
               <input
                 type="text"
-                name="description"
-                value={editedProject.description}
-                onChange={handleInputChange}
+                name="unit_of_measure"
+                value={findUnitOfMeasure()}
+                readOnly
               />
             </label>
           </div>
           <div className='form-group'>
             <label>
-              Projected Material Cost:
-              <input
-                type="number"
-                name="prmatcost"
-                value={editedProject.prmatcost}
-                onChange={handleInputChange}
+              Vendor:
+              <Select
+                value={editedOrder.vendor_id ? { value: editedOrder.vendor_id, label: vendors.find(v => v.vendorid === editedOrder.vendor_id)?.name } : null}
+                onChange={(selectedOption) => handleInputChange(selectedOption.value)}
+                options={vendors.map(vendor => ({ value: vendor.vendorid, label: vendor.name }))}
+                placeholder="Select Vendor"
+                isSearchable={true}
               />
             </label>
           </div>
-          <div className='form-group'>
-            <label>
-              Projected Labor Cost:
-              <input
-                type="number"
-                name="prlabcost"
-                value={editedProject.prlabcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Sale:
-              <input
-                type="number"
-                name="sale"
-                value={editedProject.sale}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Real Material Cost:
-              <input
-                type="number"
-                name="realmatcost"
-                value={editedProject.realmatcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Real Labor Cost:
-              <input
-                type="number"
-                name="reallabcost"
-                value={editedProject.reallabcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Totalcost:
-              <input
-                type="number"
-                name="totalcost"
-                value={editedProject.totalcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <button type="submit">Edit project</button>
+
+          <button type="submit">Edit order</button>
           <button type="button" className="add_btn" onClick={handleCancel}>
             Cancel
           </button>
+
         </div>
       </form>
 
@@ -137,4 +140,4 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
   );
 };
 
-export default EditProject;
+export default EditOrder;
