@@ -52,6 +52,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
 
   useEffect(() => {
     const fetchData = async () => {
+      // filters all materials in respect of locations and creates filteredNonZero where there are all the nonzero materials in that location
       if (newOutflow.location) {
         try {
 
@@ -61,7 +62,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           const filteredOutflows = outflows.filter((out) =>
             out.location === newOutflow.location
           );
-
+          console.log('filteredMaterials', filteredMaterials);
           const filteredNonZero = filteredMaterials.filter((mat) => {
             const sumOfOutflows = filteredOutflows
               .filter((outflow) => outflow.materialid === mat.materialid)
@@ -76,13 +77,14 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           });
 
           setAvailableMaterials(filteredNonZero);
-          console.log(filteredNonZero);
+          console.log('nonzero',filteredNonZero);
         } catch (error) {
           console.error('Error fetching material data:', error);
         }
       }
 
       if (newOutflow.materialid) {
+        // calculates the remaining quantity of the selected material
         try {
 
           const filteredMats = purchases.filter((mat) =>
@@ -91,11 +93,12 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           );
           const filteredWidthNonZero = filteredMats.filter((mat) => {
             const sumOfOutflows = outflows
-              .filter((outflow) => outflow.lotnumber === mat.lotnumber)
+              .filter((outflow) =>outflow.location === mat.location && outflow.lotnumber === mat.lotnumber)
               .reduce((total, outflow) => total + parseInt(outflow.quantity), 0);
             return mat.quantity - sumOfOutflows > 0;
           });
           setAvailableWidths(filteredWidthNonZero);
+          console.log('widthnonzero',filteredWidthNonZero);
 
           const remainingQuantity = () =>
             purchases
@@ -207,12 +210,13 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
 
           const filteredLotsWithQuantityCondition = filteredLots.filter((lot) => {
             const sumOfOutflows = outflows
-              .filter((outflow) => outflow.lotnumber === lot.lotnumber)
+              .filter((outflow) => outflow.location === lot.location && outflow.lotnumber === lot.lotnumber)
               .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0);
             return lot.quantity - sumOfOutflows >= parseFloat(newOutflow.quantity);
           });
 
           setAvailableLots(filteredLotsWithQuantityCondition);
+          console.log('filteredLotsWithQuantityCondition',filteredLotsWithQuantityCondition);
         } catch (error) {
           console.error('Error fetching material data:', error);
         }
@@ -401,7 +405,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                 options={availableLots.map((lot) => ({
                   value: lot.lotnumber,
                   label: `${lot.lotnumber} (Available: ${lot.quantity - outflows
-                    .filter((outflow) => outflow.lotnumber === lot.lotnumber)
+                    .filter((outflow) => outflow.location === lot.location && outflow.lotnumber === lot.lotnumber)
                     .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0)})`,
                 }))}
                 onChange={(selectedOption) =>

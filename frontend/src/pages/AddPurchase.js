@@ -19,7 +19,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   const initialPurchaseState = order ? {
     location: order.location_id || '',
     materialid: order.material_id || '',
-    materialname: order.materialname || '',
+    materialname: materials.find(m => order.material_id === m.matid)?.name || '',
     quantity: order.quantity || '',
     price: order.unitprice || '',
     vendor: order.vendor_id || '',
