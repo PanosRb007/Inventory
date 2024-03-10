@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useCallback} from 'react';
 import Select from 'react-select';
 import './CreateCombinedMaterial.css';
 
@@ -16,6 +16,26 @@ const EditCombinedMaterial = ({
     const [error, setError] = useState(null);
     const [totalCost, setTotalCost] = useState(0);
 
+    const calculateTotalCost = useCallback((submaterials) => {
+        if (!materialchanges) {
+            setTotalCost(0);
+            return;
+        }
+    
+        const total = submaterials.reduce((acc, submaterial) => {
+            const filteredMaterialChanges = materialchanges.filter(p => p.material_id === submaterial.material_id);
+            const latestMaterialChange = filteredMaterialChanges.reduce((prev, current) => {
+                return prev.change_id > current.change_id ? prev : current;
+            }, {});
+            const price = latestMaterialChange.price || 0;
+            const sum = price * submaterial.multiplier; // Calculate the sum correctly
+            return acc + sum;
+        }, 0);
+        setTotalCost(total.toFixed(2));
+    }, [materialchanges]);
+    
+    
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -31,7 +51,7 @@ const EditCombinedMaterial = ({
             }
         };
         fetchData();
-    }, [materialId, fetchAPI, apiBaseUrl]);
+    }, [materialId, fetchAPI, apiBaseUrl,calculateTotalCost]);
 
     const handleMaterialChange = (e) => {
         const { name, value } = e.target;
@@ -96,13 +116,8 @@ const EditCombinedMaterial = ({
         }
     };
 
-    const calculateTotalCost = (submaterials) => {
-        const total = submaterials.reduce((acc, submaterial) => {
-            const sum = (materialchanges.find(p => p.material_id === submaterial.material_id)?.price || 0) * submaterial.multiplier;
-            return acc + sum;
-        }, 0);
-        setTotalCost(total.toFixed(2));
-    };
+    
+
 
     return (
         <div className="material-input-form-container">
@@ -173,14 +188,22 @@ const EditCombinedMaterial = ({
                             </div>
 
                             <div className="form-group">
-                                <label>Sum</label>
-                                <input
-                                    type="number"
-                                    value={((materialchanges.find(p => p.material_id === submaterial.material_id)?.price || 0) * submaterial.multiplier).toFixed(2)}
-                                    readOnly
-                                    className="form-control"
-                                />
-                            </div>
+    <label>Sum</label>
+    <input
+        type="number"
+        value={(() => {
+            const filteredMaterialChanges = materialchanges.filter(p => p.material_id === submaterial.material_id);
+            const latestMaterialChange = filteredMaterialChanges.reduce((prev, current) => {
+                return prev.change_id > current.change_id ? prev : current;
+            }, {});
+            const price = latestMaterialChange.price || 0;
+            return (price * submaterial.multiplier).toFixed(2);
+        })()}
+        readOnly
+        className="form-control"
+    />
+</div>
+
 
                             <div className="form-group">
                                 <label>Comments</label>

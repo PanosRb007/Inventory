@@ -58,13 +58,16 @@ const CombinedMaterialInputForm = ({
     const calculateTotalCost = (submaterials) => {
         let total = 0;
         submaterials.forEach((submaterial) => {
-            const materialChange = materialchanges.find(p => p.material_id === submaterial.materialId);
-            if (materialChange) {
-                total += (materialChange.price || 0) * submaterial.multiplier;
-            }
+            const filteredMaterialChanges = materialchanges.filter(p => p.material_id === submaterial.materialId);
+            const latestMaterialChange = filteredMaterialChanges.reduce((prev, current) => {
+                return prev.change_id > current.change_id ? prev : current;
+            }, {});
+            const price = latestMaterialChange.price || 0;
+            total += price * submaterial.multiplier;
         });
         setTotalCost(total.toFixed(2)); // Set total cost and fix to two decimal places
     };
+    
 
     const saveCombinedMaterial = async () => {
         try {
@@ -87,6 +90,7 @@ const CombinedMaterialInputForm = ({
                     combined_material_id: combined_material_id,
                     material_id: submaterial.materialId,
                     multiplier: submaterial.multiplier,
+                    comments: submaterial.comments,
                 }));
 
                 // Send a POST request to add submaterials
@@ -204,7 +208,9 @@ const CombinedMaterialInputForm = ({
                                 <label>Sum</label>
                                 <input
                                     type="number"
-                                    value={(materialchanges.find(p => p.material_id === selection.materialId)?.price || 0) * selection.multiplier}
+                                    value={(materialchanges.filter(p => p.material_id === selection.materialId)
+                                        .sort((a, b) => b.change_id - a.change_id)[0]?.price || 0) * selection.multiplier}
+                             
                                     readOnly
                                     className="form-control"
                                 />
@@ -213,7 +219,9 @@ const CombinedMaterialInputForm = ({
                                 <label>Comments</label>
                                 <textarea
                                     type="text"
+                                    onChange={(e) => handleSubmaterialChange(index, 'comments', e.target.value)}
                                 />
+                                
                             </div>
                             <div className="price-remove-container">
                                 {submaterials.length > 1 && (
