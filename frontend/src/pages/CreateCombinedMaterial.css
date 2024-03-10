@@ -1,7 +1,7 @@
 .material-input-form-container {
     max-height: 80vh; /* Set a maximum height, adjust as needed */
     overflow-y: auto; /* Enable vertical scrolling when content overflows */
-    padding: 20px;
+    padding: 5px;
 }
 
 
@@ -49,9 +49,9 @@
 
 .material-selection {
     border: 1px solid #eee;
-    padding: 15px;
+    padding: 5px;
     border-radius: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     background-color: #fff;
 }
 

@@ -11,6 +11,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
   const [showCreateCombinedMaterial, setShowCreateCombinedMaterial] = useState(false);
   const [showEditCombinedMaterial, setShowEditCombinedMaterial] = useState(false);
   const [editingMaterialId, setEditingMaterialId] = useState(null);
+  const [materialchanges, setMaterialChanges] = useState([]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -72,6 +73,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
       }));
 
       setCombinedMaterials(combinedMaterialsWithCost);
+      setMaterialChanges(materialChangesData);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -195,6 +197,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
               fetchAPI={fetchAPI}
               apiBaseUrl={apiBaseUrl}
               onMaterialAdded={fetchData}
+              materialchanges={materialchanges}
             />
           </div>
         </div>
@@ -208,6 +211,7 @@ const MaterialCombiner = ({ apiBaseUrl }) => {
               apiBaseUrl={apiBaseUrl}
               materialId={editingMaterialId}
               onMaterialEdited={fetchData}
+              materialchanges={materialchanges}
             />
           </div>
         </div>

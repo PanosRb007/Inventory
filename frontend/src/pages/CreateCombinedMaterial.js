@@ -8,6 +8,7 @@ const CombinedMaterialInputForm = ({
     fetchAPI,
     apiBaseUrl,
     onMaterialAdded,
+    materialchanges,
 }) => {
     const initialComboMat = {
         name: '',
@@ -23,6 +24,7 @@ const CombinedMaterialInputForm = ({
     const [error, setError] = useState(null);
     const [materials, setMaterials] = useState([]);
     const [submaterials, setSubmaterials] = useState([initialEmptyMaterial]);
+    const [totalCost, setTotalCost] = useState(0); // State variable for total cost
 
     const fetchData = useCallback(async () => {
         try {
@@ -50,6 +52,18 @@ const CombinedMaterialInputForm = ({
         const updatedSubmaterials = [...submaterials];
         updatedSubmaterials[index][field] = value;
         setSubmaterials(updatedSubmaterials);
+        calculateTotalCost(updatedSubmaterials); // Recalculate total cost on submaterial change
+    };
+
+    const calculateTotalCost = (submaterials) => {
+        let total = 0;
+        submaterials.forEach((submaterial) => {
+            const materialChange = materialchanges.find(p => p.material_id === submaterial.materialId);
+            if (materialChange) {
+                total += (materialChange.price || 0) * submaterial.multiplier;
+            }
+        });
+        setTotalCost(total.toFixed(2)); // Set total cost and fix to two decimal places
     };
 
     const saveCombinedMaterial = async () => {
@@ -63,16 +77,14 @@ const CombinedMaterialInputForm = ({
                 }),
             });
 
-            console.log(combinedMaterialData);
             // Check if the combined material was successfully created
             if (combinedMaterialData.success) {
                 // Extract the ID of the newly created combined material
                 const combined_material_id = combinedMaterialData.id;
-                console.log('combined_material_id', combined_material_id);
 
                 // Prepare submaterials payload
                 const submaterialsPayload = submaterials.map(submaterial => ({
-                    combined_material_id: combined_material_id, // This is the insertId from the combined material creation
+                    combined_material_id: combined_material_id,
                     material_id: submaterial.materialId,
                     multiplier: submaterial.multiplier,
                 }));
@@ -113,83 +125,119 @@ const CombinedMaterialInputForm = ({
 
     const removeMaterial = (index) => {
         setSubmaterials(submaterials.filter((_, i) => i !== index));
+        calculateTotalCost(submaterials.filter((_, i) => i !== index)); // Recalculate total cost on material removal
     };
 
     if (error) return <div>Error: {error}</div>;
 
     return (
         <div className="material-input-form-container">
-        <div className="material-input-form">
-            <h3>Combine Materials</h3>
-            <span className="close-popup" onClick={onClose}>&times;</span>
-            <div className="form-row">
-                <div className="form-group">
-                    <label htmlFor="comboName">Combo Name</label>
-                    <input
-                        id="comboName"
-                        type="text"
-                        name="name"
-                        value={comboMat.name}
-                        onChange={handleChange}
-                        placeholder="Enter combined material name"
-                        className="form-control"
-                    />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="description">Description</label>
-                    <textarea
-                        id="description"
-                        name="description"
-                        value={comboMat.description}
-                        onChange={handleChange}
-                        placeholder="Enter Description"
-                        className="form-control"
-                    />
-                </div>
-            </div>
-
-            {materials.length > 0 && submaterials.map((selection, index) => (
-                <div key={index} className="material-selection">
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Material</label>
-                            <Select
-                                className="form-control"
-                                value={selection.materialId ? { value: selection.materialId, label: materials.find(m => m.matid === selection.materialId)?.name } : null}
-                                onChange={(selectedOption) => handleSubmaterialChange(index, 'materialId', selectedOption.value)}
-                                options={materials.map(material => ({ value: material.matid, label: material.name }))}
-                                placeholder="Select Material"
-                                isSearchable={true}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Multiplier</label>
-                            <input
-                                type="number"
-                                value={selection.multiplier}
-                                onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
-                                className="form-control"
-                            />
-                        </div>
-                        <div className="price-remove-container">
-                            {submaterials.length > 1 && (
-                                <button
-                                    className="remove-btn"
-                                    onClick={() => removeMaterial(index)}
-                                >
-                                    Remove
-                                </button>
-                            )}
-                        </div>
+            <div className="material-input-form">
+                <h3>Combine Materials</h3>
+                <span className="close-popup" onClick={onClose}>&times;</span>
+                <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="comboName">Combo Name</label>
+                        <input
+                            id="comboName"
+                            type="text"
+                            name="name"
+                            value={comboMat.name}
+                            onChange={handleChange}
+                            placeholder="Enter combined material name"
+                            className="form-control"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="description">Description</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            value={comboMat.description}
+                            onChange={handleChange}
+                            placeholder="Enter Description"
+                            className="form-control"
+                        />
                     </div>
                 </div>
-            ))}
-            <button className="btn btn-primary add-btn" onClick={addMaterial}>Add Material</button>
-            <button className="btn btn-success save-btn" onClick={saveCombinedMaterial}>Save Combined Material</button>
-        </div>
+
+                {materials.length > 0 && submaterials.map((selection, index) => (
+                    <div key={index} className="material-selection">
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Material Name:</label>
+                                <Select
+                                    className="form-control"
+                                    value={selection.materialId ? { value: selection.materialId, label: materials.find(m => m.matid === selection.materialId)?.name } : null}
+                                    onChange={(selectedOption) => handleSubmaterialChange(index, 'materialId', selectedOption.value)}
+                                    options={materials.map(material => ({ value: material.matid, label: material.name }))}
+                                    placeholder="Select Material"
+                                    isSearchable={true}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Multiplier</label>
+                                <input
+                                    type="number"
+                                    value={selection.multiplier}
+                                    onChange={(e) => handleSubmaterialChange(index, 'multiplier', e.target.value)}
+                                    className="form-control"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Price</label>
+                                <input
+                                    type="number"
+                                    value={(() => {
+                                        const filteredMaterialChanges = materialchanges.filter(p => p.material_id === selection.materialId);
+                                        const latestMaterialChange = filteredMaterialChanges.reduce((prev, current) => {
+                                            return prev.change_id > current.change_id ? prev : current;
+                                        }, {});
+                                        return latestMaterialChange.price || '';
+                                    })()}
+                                    readOnly
+                                    className="form-control"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Sum</label>
+                                <input
+                                    type="number"
+                                    value={(materialchanges.find(p => p.material_id === selection.materialId)?.price || 0) * selection.multiplier}
+                                    readOnly
+                                    className="form-control"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Comments</label>
+                                <textarea
+                                    type="text"
+                                />
+                            </div>
+                            <div className="price-remove-container">
+                                {submaterials.length > 1 && (
+                                    <button
+                                        className="remove-btn"
+                                        onClick={() => removeMaterial(index)}
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                <div className="total-cost-container">
+                    <span className="total-cost-label">Total Cost:</span>
+                    <span className="total-cost-value">{totalCost}</span>
+                </div>
+                <button className="btn btn-primary add-btn" onClick={addMaterial}>Add Material</button>
+                <button className="btn btn-success save-btn" onClick={saveCombinedMaterial}>Save Combined Material</button>
+            </div>
         </div>
     );
-    
+
 };
 
 export default CombinedMaterialInputForm;

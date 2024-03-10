@@ -8,11 +8,13 @@ const EditCombinedMaterial = ({
     fetchAPI,
     apiBaseUrl,
     onMaterialEdited,
+    materialchanges,
 }) => {
     const [materialData, setMaterialData] = useState({ name: '', description: '', submaterials: [] });
     const [allMaterials, setAllMaterials] = useState([]);
     const [submaterials, setSubmaterials] = useState([]);
     const [error, setError] = useState(null);
+    const [totalCost, setTotalCost] = useState(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -23,6 +25,7 @@ const EditCombinedMaterial = ({
                 setMaterialData(data);
                 const submatdata = await fetchAPI(`${apiBaseUrl}/submaterials/${materialId}`);
                 setSubmaterials(submatdata);
+                calculateTotalCost(submatdata);
             } catch (error) {
                 setError(error.message);
             }
@@ -43,7 +46,7 @@ const EditCombinedMaterial = ({
             i === index ? { ...submat, [field]: value } : submat
         );
         setSubmaterials(updatedSubmaterials);
-        console.log('editsubmat', submaterials);
+        calculateTotalCost(updatedSubmaterials);
     };
 
     const addSubmaterial = () => {
@@ -53,6 +56,7 @@ const EditCombinedMaterial = ({
     const removeSubmaterial = (index) => {
         const filteredSubmaterials = submaterials.filter((_, i) => i !== index);
         setSubmaterials(filteredSubmaterials);
+        calculateTotalCost(filteredSubmaterials);
     };
 
     const saveChanges = async () => {
@@ -76,7 +80,6 @@ const EditCombinedMaterial = ({
                 body: JSON.stringify({ ...materialData }),
             });
 
-
             // Add new submaterials
             await fetchAPI(`${apiBaseUrl}/submaterials`, {
                 method: 'POST',
@@ -91,6 +94,14 @@ const EditCombinedMaterial = ({
         } catch (error) {
             setError(error.message);
         }
+    };
+
+    const calculateTotalCost = (submaterials) => {
+        const total = submaterials.reduce((acc, submaterial) => {
+            const sum = (materialchanges.find(p => p.material_id === submaterial.material_id)?.price || 0) * submaterial.multiplier;
+            return acc + sum;
+        }, 0);
+        setTotalCost(total.toFixed(2));
     };
 
     return (
@@ -145,6 +156,41 @@ const EditCombinedMaterial = ({
                                     className="form-control"
                                 />
                             </div>
+                            <div className="form-group">
+                                <label>Price</label>
+                                <input
+                                    type="number"
+                                    value={(() => {
+                                        const filteredMaterialChanges = materialchanges.filter(p => p.material_id === submaterial.material_id);
+                                        const latestMaterialChange = filteredMaterialChanges.reduce((prev, current) => {
+                                            return prev.change_id > current.change_id ? prev : current;
+                                        }, {});
+                                        return latestMaterialChange.price || '';
+                                    })()}
+                                    readOnly
+                                    className="form-control"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Sum</label>
+                                <input
+                                    type="number"
+                                    value={((materialchanges.find(p => p.material_id === submaterial.material_id)?.price || 0) * submaterial.multiplier).toFixed(2)}
+                                    readOnly
+                                    className="form-control"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Comments</label>
+                                <input
+                                    type="text"
+                                    value={submaterial.comments}
+                                    onChange={(e) => handleSubmaterialChange(index, 'comments', e.target.value)}
+                                    className="form-control"
+                                />
+                            </div>
                             <div className="price-remove-container">
                                 {submaterials.length > 1 && (
                                     <button
@@ -159,9 +205,13 @@ const EditCombinedMaterial = ({
                     </div>
                 ))}
 
-                <button
-                    className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
                 <div>
+                    <div className="total-cost-container">
+                        <span className="total-cost-label">Total Cost:</span>
+                        <span className="total-cost-value">{totalCost}</span>
+                    </div>
+                    <button
+                        className="btn btn-primary add-btn" onClick={addSubmaterial}>Add Submaterial</button>
                     <button className="btn btn-success save-btn" onClick={saveChanges}>Save Changes</button>
                     <button className="remove-btn" onClick={onClose}>Cancel</button>
                 </div>
