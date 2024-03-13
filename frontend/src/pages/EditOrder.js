@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Select from 'react-select';
 
-const EditOrder = ({ order, handleUpdate, handleCancel, vendors, locations, materials }) => {
+const EditOrder = ({latestdata, order, handleUpdate, handleCancel, vendors, locations, materials }) => {
   const [editedOrder, setEditedOrder] = useState({ ...order });
 
   console.log(editedOrder);
@@ -22,6 +22,8 @@ const EditOrder = ({ order, handleUpdate, handleCancel, vendors, locations, mate
     handleUpdate(editedOrder);
     resetForm();
   };
+
+  
 
   const resetForm = () => {
     setEditedOrder({
@@ -119,12 +121,15 @@ const EditOrder = ({ order, handleUpdate, handleCancel, vendors, locations, mate
             <label>
               Vendor:
               <Select
+                name="vendor_id"
                 value={editedOrder.vendor_id ? { value: editedOrder.vendor_id, label: vendors.find(v => v.vendorid === editedOrder.vendor_id)?.name } : null}
-                onChange={(selectedOption) => handleInputChange(selectedOption.value)}
-                options={vendors.map(vendor => ({ value: vendor.vendorid, label: vendor.name }))}
+                onChange={(selectedOption) => handleInputChange({ target: { name: 'vendor_id', value: selectedOption.value }})}
+                options={vendors.map(vendor => ({ value: parseInt(vendor.vendorid), label: vendor.name }))}
                 placeholder="Select Vendor"
                 isSearchable={true}
               />
+
+
             </label>
           </div>
 

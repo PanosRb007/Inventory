@@ -162,9 +162,11 @@ const OrderList = ({ apiBaseUrl }) => {
           );
           const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
           const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
-          return totalPurchases - totalOutflows;
+          const remainingQuantity = totalPurchases - totalOutflows;
+          return remainingQuantity.toFixed(2);
         }
       },
+      
       {
         Header: 'Vendor',
         accessor: (row) => {
@@ -303,6 +305,7 @@ const OrderList = ({ apiBaseUrl }) => {
                           vendors={vendors}
                           locations={locations}
                           materials={materials} // Pass the materials prop here
+                          latestdata={latestdata}
                         />
                       </td>
                     </tr>
