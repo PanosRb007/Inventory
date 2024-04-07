@@ -52,7 +52,7 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
           <div className='form-group'>
             <label>
               Description:
-              <input
+              <textarea
                 type="text"
                 name="description"
                 value={editedProject.description}

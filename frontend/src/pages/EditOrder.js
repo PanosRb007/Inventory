@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import Select from 'react-select';
 
-const EditOrder = ({latestdata, order, handleUpdate, handleCancel, vendors, locations, materials }) => {
+const EditOrder = ({ latestdata, order, handleUpdate, handleCancel, vendors, locations, materials }) => {
   const [editedOrder, setEditedOrder] = useState({ ...order });
 
   console.log(editedOrder);
   console.log(locations);
   console.log(materials);
+  console.log('latestdata', latestdata);
 
 
   const handleInputChange = (event) => {
@@ -19,32 +20,51 @@ const EditOrder = ({latestdata, order, handleUpdate, handleCancel, vendors, loca
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    handleUpdate(editedOrder);
+  
+    // Determine the unit price and set it in the editedOrder before submission
+    const updatedUnitPrice = parseFloat(determineUnitPrice());
+    const updatedOrderWithPrice = { 
+      ...editedOrder, 
+      unitprice: parseFloat(updatedUnitPrice), 
+      };
+  
+    console.log('Submitting Edited Order:', updatedOrderWithPrice);
+    handleUpdate(updatedOrderWithPrice);
     resetForm();
   };
-
   
 
+
+
   const resetForm = () => {
-    setEditedOrder({
-      // Reset the fields as needed for the order
-      // Example:
-      name: '',
-      description: '',
-      prmatcost: '',
-      prlabcost: '',
-      sale: '',
-      realmatcost: '',
-      reallabcost: '',
-      totalcost: '',
-      // Add other fields here
-    });
+    setEditedOrder([]);
   };
 
   const findUnitOfMeasure = () => {
     const material = materials.find((mat) => mat.matid === editedOrder.material_id);
     return material ? material.unit_of_measure : '';
   };
+
+  const findLatestPrice = () => {
+    // Filter the latestdata to find records that match the editedOrder's material_id
+    const relevantRecords = latestdata.filter((record) => record.material_id === editedOrder.material_id);
+  
+    // Use reduce to find the record with the highest change_id among the filtered records
+    const latestRecord = relevantRecords.reduce((prev, current) => {
+      return (prev.change_id > current.change_id) ? prev : current;
+    }, {change_id: -1, price: 0}); // Default to an object with a price of 0 if no records are found
+  
+    // Return the price of the record with the highest change_id, converted to a float
+    return parseFloat(latestRecord.price);
+  };
+  
+  // Function to determine the correct unit price to display
+  const determineUnitPrice = () => {
+    // Check if the edited unit price is not 0, use it; otherwise, find the latest price
+    return parseFloat(editedOrder.unitprice) && parseFloat(editedOrder.unitprice) !== 0 ? editedOrder.unitprice : findLatestPrice();
+  };
+
+  
 
   return (
     <div className="container">
@@ -101,7 +121,7 @@ const EditOrder = ({latestdata, order, handleUpdate, handleCancel, vendors, loca
               <input
                 type="number"
                 name="unitprice"
-                value={editedOrder.unitprice}
+                value={determineUnitPrice()} // Dynamically set the value based on the condition
                 onChange={handleInputChange}
               />
             </label>
@@ -123,13 +143,24 @@ const EditOrder = ({latestdata, order, handleUpdate, handleCancel, vendors, loca
               <Select
                 name="vendor_id"
                 value={editedOrder.vendor_id ? { value: editedOrder.vendor_id, label: vendors.find(v => v.vendorid === editedOrder.vendor_id)?.name } : null}
-                onChange={(selectedOption) => handleInputChange({ target: { name: 'vendor_id', value: selectedOption.value }})}
+                onChange={(selectedOption) => handleInputChange({ target: { name: 'vendor_id', value: selectedOption.value } })}
                 options={vendors.map(vendor => ({ value: parseInt(vendor.vendorid), label: vendor.name }))}
                 placeholder="Select Vendor"
                 isSearchable={true}
               />
 
 
+            </label>
+          </div>
+          <div className='form-group'>
+          <label>
+              Comments:
+              <textarea
+                type="text"
+                name="comments"
+                value= {editedOrder.comments}
+                onChange={handleInputChange}
+              />
             </label>
           </div>
 

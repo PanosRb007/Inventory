@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import EditOrder from './EditOrder';
-import AddPurchase from './AddPurchase';
+import AddPurchase from './AddPurchOrder';
 
 const OrderList = ({ apiBaseUrl }) => {
   const [orders, setOrders] = useState([]);
@@ -108,6 +108,35 @@ const OrderList = ({ apiBaseUrl }) => {
     setOrderInflow(order);
     setShowAddInflowForm(true);
   }, []);
+
+  const handleAdd = useCallback(async (newPurchase) => {
+    console.log('finalpurch',newPurchase);
+    try {
+      // Check if newPurchase includes order_list_id and extract it
+      const { order_list_id, ...purchaseDetails } = newPurchase;
+  
+      console.log('order_list_id:', order_list_id); // Debug to ensure order_list_id is received
+  
+      // Proceed to add the new purchase
+      await fetchAPI(`${apiBaseUrl}/PurchasesAPI`, {
+        method: 'POST',
+        body: JSON.stringify(purchaseDetails),
+      });
+  
+        await fetchAPI(`${apiBaseUrl}/order_listAPI/${order_list_id}`, {
+          method: 'DELETE',
+        });
+        alert('Inflow Added and Order Deleted successfully.');
+  
+      // Fetch updated data and close the AddInflowForm
+      fetchData();
+      setShowAddInflowForm(false);
+    } catch (error) {
+      console.error('Error adding purchase:', error);
+    }
+  }, [fetchData, apiBaseUrl, fetchAPI, setShowAddInflowForm]);
+  
+  
 
   const columns = useMemo(
     () => [
@@ -302,10 +331,15 @@ const OrderList = ({ apiBaseUrl }) => {
                           order={editedOrder}
                           handleUpdate={handleUpdate}
                           handleCancel={handleCancel}
+                          setMaterials={setMaterials}
                           vendors={vendors}
+                          setVendors={setVendors}
                           locations={locations}
                           materials={materials} // Pass the materials prop here
                           latestdata={latestdata}
+                          handleAdd={handleAdd}
+                           apiBaseUrl={apiBaseUrl}
+
                         />
                       </td>
                     </tr>
@@ -382,6 +416,11 @@ const OrderList = ({ apiBaseUrl }) => {
               materials={materials}
               locations={locations}
               vendors={vendors}
+              handleAdd={handleAdd}
+              setMaterials={setMaterials}
+              setVendors={setVendors}
+              apiBaseUrl={apiBaseUrl}
+
             />
           </div>
         </div>

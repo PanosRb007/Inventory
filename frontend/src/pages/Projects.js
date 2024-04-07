@@ -210,7 +210,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       
           return `${totalCost.toFixed(2)} €`;
         },
-        sortType: 'basic'
+        sortType: 'number'
       },
       
       
