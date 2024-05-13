@@ -17,6 +17,8 @@ const loginAPI = require('./loginAPI');
 const saveCombinedMaterial = require('./saveCombinedMaterial');
 const combinedMaterials = require('./combinedMaterials');
 const order_listAPI = require('./order_listAPI');
+const laborhoursAPI = require('./laborhoursAPI');
+
 const jwt = require('jsonwebtoken');
 
 
@@ -86,6 +88,7 @@ app.use('/LocationsAPI', authenticateToken(), locationsAPI(pool));
 app.use('/submaterials', authenticateToken(), saveCombinedMaterial(pool));
 app.use('/combinedMaterials', authenticateToken(), combinedMaterials(pool));
 app.use('/order_listAPI', authenticateToken(), order_listAPI(pool));
+app.use('/laborhoursAPI', authenticateToken(), laborhoursAPI(pool));
 
 
 

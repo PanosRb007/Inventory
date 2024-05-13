@@ -11,6 +11,7 @@ import Login from './pages/Login.js';
 import MaterialCombiner from './pages/MaterialCombiner.js';
 import OrderList from './pages/Order_List.js';
 import OutMatQuery from './pages/OutMatQuery.js';
+import AddLaborHours from './pages/AddLaborHours.js';
 
 
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
@@ -50,45 +51,50 @@ function App() {
         <nav className="sidebar">
           <ul className="navbar-nav">
             <li className="nav-item">
-              <NavLink to="/Purchases" className="nav-link" activeClassName="active">
+              <NavLink to="/Purchases" className="nav-link" activeclassname="active">
                 <i className="fas fa-truck"></i>
                 <span>Inflow</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/Outflow" className="nav-link" activeClassName="active">
+              <NavLink to="/Outflow" className="nav-link" activeclassname="active">
                 <i className="fas fa-people-carry"></i>
                 <span>Outflow</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/MaterialList" className="nav-link" activeClassName="active">
+              <NavLink to="/MaterialList" className="nav-link" activeclassname="active">
                 <span>Material List</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/Vendors" className="nav-link" activeClassName="active">
+              <NavLink to="/Vendors" className="nav-link" activeclassname="active">
                 <span>Vendor List</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/Projects" className="nav-link" activeClassName="active">
+              <NavLink to="/Projects" className="nav-link" activeclassname="active">
                 <span>Project List</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/Stock" className="nav-link" activeClassName="active">
+              <NavLink to="/Stock" className="nav-link" activeclassname="active">
                 <span>Stock</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/combine-materials" className="nav-link" activeClassName="active">
+              <NavLink to="/combine-materials" className="nav-link" activeclassname="active">
                 <span>Combine Materials</span>
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/OrderList" className="nav-link" activeClassName="active">
+              <NavLink to="/OrderList" className="nav-link" activeclassname="active">
                 <span>Order List</span>
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/AddLaborHours" className="nav-link" activeclassname="active">
+                <span>Labor Hours</span>
               </NavLink>
             </li>
           </ul>
@@ -110,11 +116,9 @@ function App() {
             <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} />} />
             <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} />} />
             <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} />} />
-
+            <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} />} />
           </Routes>
-
         </main>
-
       </BrowserRouter>
     </div>
   );
