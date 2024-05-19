@@ -65,6 +65,7 @@ const LaborHours = ({ apiBaseUrl }) => {
     { Header: 'Project', accessor: value => projects.find(proj => proj.prid === value.projectid)?.name || 'Project not found' },
     { Header: 'Start', accessor: 'start' },
     { Header: 'End', accessor: 'end' },
+    { Header: 'Hours Worked', accessor: 'hoursWorked' },
   ], [employees, projects]);
 
   const tableInstance = useTable({ columns, data: laborhours });

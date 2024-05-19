@@ -15,7 +15,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     quantity: '',
     width: null,
     lotnumber: '',
-    cost: '',
     employee: '',
     project: '',
     comments: '',
@@ -123,75 +122,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           console.error('Error fetching material data:', error);
         }
 
-        if (newOutflow.location && newOutflow.materialid && newOutflow.quantity && !showExtras) {
-          try {
-            const filteredPurchases = purchases.filter(pur =>
-              pur.location === newOutflow.location &&
-              pur.materialid === newOutflow.materialid
-            );
-            console.log("Filtered Purchases:", filteredPurchases);
-
-            const filteredOutflows = outflows.filter(out =>
-              out.location === newOutflow.location &&
-              out.materialid === newOutflow.materialid
-            );
-            console.log("Filtered Outflows:", filteredOutflows);
-
-            // Calculate sum of previous outflows
-            const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
-            console.log("Sum of previous outflows:", totalPreviousOutflows);
-
-            let sumOfQuantities = 0;
-            let totalCost = 0;
-            let remainingOutflowQuantity = newOutflow.quantity;
-            let remQuant = 0;
-
-            for (const purchase of filteredPurchases) {
-              const purchaseQuantity = parseFloat(purchase.quantity);
-              const purchasePrice = parseFloat(purchase.price);
-              console.log("purchase:", purchase);
-              console.log("purchaseQuantity:", purchaseQuantity);
-              console.log("purchasePrice:", purchasePrice);
-              sumOfQuantities += purchaseQuantity;
-              remQuant = sumOfQuantities - totalPreviousOutflows;
-              console.log("remQuantfinal:", remQuant);
-
-              if (sumOfQuantities >= totalPreviousOutflows) {
-                if (remainingOutflowQuantity <= remQuant) {
-                  console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                  console.log("remQuant quantity inside k:", remQuant);
-                  totalCost += remainingOutflowQuantity * purchasePrice;
-                  console.log("totalcost:", totalCost);
-                  break;
-                } else {
-                  console.log("outflow quantity inside k:", remainingOutflowQuantity);
-                  console.log("remQuant quantity inside k:", remQuant);
-                  totalCost += remQuant * purchasePrice;
-                  console.log("totalcost:", totalCost);
-                  remainingOutflowQuantity -= remQuant;
-                }
-                continue;
-              }
-
-            }
-            setNewOutflow((prevPurchase) => ({
-              ...prevPurchase,
-              cost: totalCost,
-            }));
-
-            console.log("totalcostfinal:", totalCost);
-
-          } catch (error) {
-            console.error('Error calculating cost:', error);
-          }
-        } else if (newOutflow.lotnumber) {
-          setNewOutflow((prevPurchase) => ({
-            ...prevPurchase,
-            cost: purchases.find((pur) => pur.materialid === newOutflow.materialid && pur.lotnumber === newOutflow.lotnumber).price * newOutflow.width * newOutflow.quantity
-
-          }));
-
-        }
+        
 
       } else {
         setNewOutflow((prevPurchase) => ({

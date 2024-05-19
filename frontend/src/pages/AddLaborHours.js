@@ -141,6 +141,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         { Header: 'Project', accessor: 'projectid', Cell: ({ value }) => projects.find(proj => proj.prid === value)?.name || 'Project not found' },
         { Header: 'Start', accessor: 'start' },
         { Header: 'End', accessor: 'end' },
+        { Header: 'Hours Worked', accessor: 'hoursWorked' },
         {
             Header: 'Actions',
             id: 'actions',
@@ -283,6 +284,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                     className="form-control"
                                 />
                             </div>
+                            
                         </div>
                         <button onClick={saveDayRecord} className="btn btn-success save-btn">Save Day Record</button>
                     </div>
