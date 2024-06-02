@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PurchaseFunc.css';
+
 const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, handleCancel, apiBaseUrl }) => {
 
+  const convertToLocalDate = (dateString) => {
+    const date = new Date(dateString);
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().split('T')[0];
+  };
 
-  const [editedPurchase, setEditedPurchase] = useState({ ...purchase });
+  const [editedPurchase, setEditedPurchase] = useState({
+    ...purchase,
+    verification: purchase.verification ? convertToLocalDate(purchase.verification) : ''
+  });
 
-  console.log('editedpuchase', editedPurchase);
+  useEffect(() => {
+    setEditedPurchase({
+      ...purchase,
+      verification: purchase.verification ? convertToLocalDate(purchase.verification) : ''
+    });
+  }, [purchase]);
+
   console.log('editedPurchase:', editedPurchase);
   console.log('myPurchase:', purchase);
 
@@ -18,7 +34,11 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
   };
 
   const handleSave = () => {
-    handleUpdate(editedPurchase);
+    const adjustedPurchase = {
+      ...editedPurchase,
+      verification: new Date(editedPurchase.verification).toISOString()
+    };
+    handleUpdate(adjustedPurchase);
 
     // Check if vendor or price is changed to post to materialchangesAPI
     if (editedPurchase.vendor !== purchase.vendor || editedPurchase.price !== purchase.price) {
@@ -42,7 +62,6 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
         .then((data) => {
           console.log('Material changes saved:', data);
         })
-
         .catch((error) => {
           console.error('Error saving material changes:', error);
         });
@@ -86,12 +105,7 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
               <div className="form-group">
                 <label>
                   Lot No:
-                  <input
-                    type="text"
-                    name="lotnumber"
-                    value={editedPurchase.lotnumber}
-                    onChange={handleChange}
-                  />
+                  <input type="text" name="lotnumber" value={editedPurchase.lotnumber} onChange={handleChange} />
                 </label>
               </div>
             </>
@@ -127,11 +141,17 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
             </label>
           </div>
           <div className='form-group'>
-          <label>
-            Comments:
-            <textarea type="text" name="comments" value={editedPurchase.comments} onChange={handleChange} />
-          </label>
-        </div>
+            <label>
+              Comments:
+              <textarea type="text" name="comments" value={editedPurchase.comments} onChange={handleChange} />
+            </label>
+          </div>
+          <div className='form-group'>
+            <label>
+              Invoice Date:
+              <input type="date" name="verification" value={editedPurchase.verification} onChange={handleChange} />
+            </label>
+          </div>
         </div>
       </div>
       <div>

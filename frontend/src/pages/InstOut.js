@@ -173,7 +173,7 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
 
             // Calculate total outflow quantity for a specific material and lot number
             const totalOutflowQuantity = outflows
-                .filter(out => out.materialid === newOutflow.materialid)
+                .filter(out => out.materialid === newOutflow.materialid && out.location === newOutflow.location)
                 .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
 
             // Calculate the available quantity

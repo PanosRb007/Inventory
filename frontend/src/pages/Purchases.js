@@ -173,8 +173,10 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       fetchData();
       setEditingPurchase(null);
       setVerPurchase(null);
+      alert('Edit Success.');
     } catch (error) {
       console.error('Error updating the purchase:', error);
+      alert('Edit Error.');
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
 
@@ -220,10 +222,12 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
    
       setShowAddInstOutflowForm(false);
       console.log('Outflow added successfully', data);
+      alert('Outflow added successfully.');
     })
     
       .catch((error) => {
         console.error('Error adding outflow:', error.message);
+        alert('Error adding outflow:');
       });
   }, [ apiBaseUrl, fetchAPI,setShowAddInstOutflowForm]);
   
@@ -350,7 +354,9 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         ),
       },
       {
-        Header: 'Verification Date', accessor: 'verification', Cell: ({ value }) => formatDateTime(value),
+        Header: 'Verification Date',
+        accessor: 'verification',
+        Cell: ({ value }) => (value ? formatDateTime(value) : ''), // Check for empty verification date
       },
     ],
     [handleEdit, handleDelete, handleVerification , outflows, purchases, locations, materials, vendors, materialchanges,openAddOutflowForm, handleOrder]
@@ -361,9 +367,6 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
       timeZone: 'Europe/Athens', // Set to Athens time zone for Greece
     };
   

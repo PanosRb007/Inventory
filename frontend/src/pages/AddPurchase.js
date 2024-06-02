@@ -28,6 +28,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     lotnumber: order.lotnumber || '',
     comments: order.comments || '',
     invdate: order.invdate || '',
+    verification: order.verification || '',
   } : {
     location: '',
     materialid: '',
@@ -40,6 +41,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     lotnumber: '',
     comments: '',
     invdate: '',
+    verification: '',
   };
   
 
@@ -405,6 +407,12 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               <textarea type="text" name="comments" value={newPurchase.comments} onChange={handleChange} />
             </label>
           </div>
+          <div className='form-group'>
+          <label>
+            Invoice Date:
+            <input type="date" name="verification" value={newPurchase.verification} onChange={handleChange} />
+          </label>
+        </div>
           <button type="submit" className="add_btn">
             Add Purchase
           </button>

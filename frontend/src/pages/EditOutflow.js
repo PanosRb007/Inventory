@@ -265,12 +265,12 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
         result = totalPurchasedQuantity - totalOutflowQuantity;
     } else {
         const totalPurchasedQuantity = purchases
-            .filter(p => p.materialid ===editedOutflow.materialid && p.location===editedOutflow.location)
+            .filter(p => p.materialid === editedOutflow.materialid && p.location === editedOutflow.location)
             .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
 
         // Calculate total outflow quantity for a specific material and lot number
         const totalOutflowQuantity = outflows
-            .filter(out => out.materialid ===editedOutflow.materialid)
+            .filter(out => out.materialid === editedOutflow.materialid && out.location === editedOutflow.location)
             .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
 
         // Calculate the available quantity
