@@ -16,6 +16,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         start: '',
         end: '',
         date: getLocalDate(),
+        comments: '',
     });
     const [editedDayRecords, setEditedDayRecords] = useState(null);
 
@@ -126,6 +127,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             { Header: 'Project', accessor: 'projectid', Cell: ({ value }) => projects.find(proj => proj.prid === value)?.name || 'Project not found' },
             { Header: 'Start', accessor: 'start' },
             { Header: 'End', accessor: 'end' },
+            { Header: 'Comments', accessor: 'comments' },
             { Header: 'Hours Worked', accessor: 'hoursWorked' },
             {
                 Header: 'Actions',
@@ -190,6 +192,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             projectid: '',
             start: '',
             end: '',
+            comments: '',
         }));
     };
 
@@ -285,6 +288,16 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                     placeholder="HH:MM"
                                     className="form-control"
                                 />
+                            </div>
+                            <div className='form-group'>
+                                <label>
+                                    Comments:
+                                    <textarea
+                                        name="comments"
+                                        value={dayRecords.comments}
+                                        onChange={e => handleChange('comments', e.target.value)}
+                                    />
+                                </label>
                             </div>
                         </div>
                         <button onClick={saveDayRecord} className="btn btn-success save-btn">

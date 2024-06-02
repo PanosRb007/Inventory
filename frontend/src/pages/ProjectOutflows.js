@@ -215,6 +215,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
             }},
             { Header: 'Start', accessor: 'start' },
             { Header: 'End', accessor: 'end' },
+            { Header: 'Comments', accessor: 'comments' },
             { Header: 'Hours Worked', accessor: 'hoursWorked' },
             { Header: 'Cost of Labor', accessor: 'cost_of_labor', Cell: ({ value }) => `${value} €` },
         ],
