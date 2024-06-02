@@ -12,6 +12,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     const [materials, setMaterials] = useState([]);
     const [purchases, setPurchases] = useState([]);
     const [filteredoutflows, setFilteredOutflows] = useState([]);
+    const [filteredLaborHours, setFilteredLaborHours] = useState([]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -53,12 +54,13 @@ const ProjectFunc = ({ apiBaseUrl }) => {
             const filteredOutflows = outflowsResponse.filter((res) => res.project === parseInt(projectId));
             const filteredLaborHours = laborHoursResponse.filter((res) => res.projectid === parseInt(projectId));
             setFilteredOutflows(filteredOutflows);
-            setLaborHours(filteredLaborHours);
+            setFilteredLaborHours(filteredLaborHours);
             setEmployees(employeesResponse);
             setProjects(projectsResponse);
             setMaterials(materialsResponse);
             setPurchases(purchaseResponse);
             setOutflows(outflowsResponse);
+            setLaborHours(laborHoursResponse);
             setIsLoading(false);
         } catch (error) {
             console.log('Error fetching data:', error);
@@ -261,7 +263,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     } = useTable(
         {
             columns: laborColumns,
-            data: laborHours,
+            data: filteredLaborHours,
             initialState: { pageIndex: 0, pageSize: 10 },
         },
         useGlobalFilter,
@@ -365,9 +367,9 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     <strong>Total Cost:</strong> {(() => {
                         let totalCost = 0;
                         totalCost = filteredoutflows.reduce((acc, outflow) => {
-                            return acc + parseFloat(calculateCost(outflow, purchases, outflows));
+                            return acc + (parseFloat(calculateCost(outflow, purchases, outflows)) || 0);
                         }, 0);
-                        return totalCost;
+                        return totalCost.toFixed(2);
                     })()} €
                 </div>
             )}
@@ -445,6 +447,17 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     ))}
                 </select>
             </div>
+            {filteredLaborHours.length > 0 && (
+                <div className="total-cost">
+                    <strong>Total Labor Cost:</strong> {(() => {
+                        let totalLaborCost = 0;
+                        totalLaborCost = filteredLaborHours.reduce((acc, filteredLaborHour) => {
+                            return acc + (parseFloat(filteredLaborHour.cost_of_labor) || 0);
+                        }, 0);
+                        return totalLaborCost.toFixed(2);
+                    })()} €
+                </div>
+            )}
         </div>
     );
 };
