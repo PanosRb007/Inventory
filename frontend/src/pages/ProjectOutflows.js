@@ -11,7 +11,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     const [employees, setEmployees] = useState([]);
     const [materials, setMaterials] = useState([]);
     const [purchases, setPurchases] = useState([]);
-    const [filteredoutflows, setFilteredOutflows] = useState([]);
+    const [filteredOutflows, setFilteredOutflows] = useState([]);
     const [filteredLaborHours, setFilteredLaborHours] = useState([]);
 
     useEffect(() => {
@@ -41,6 +41,10 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     }, []);
 
     const fetchData = useCallback(async () => {
+        if (!projectId) return;
+
+        setIsLoading(true);
+
         try {
             const [outflowsResponse, projectsResponse, employeesResponse, materialsResponse, purchaseResponse, laborHoursResponse] = await Promise.all([
                 fetchAPI(`${apiBaseUrl}/outflowsAPI`),
@@ -61,9 +65,9 @@ const ProjectFunc = ({ apiBaseUrl }) => {
             setPurchases(purchaseResponse);
             setOutflows(outflowsResponse);
             setLaborHours(laborHoursResponse);
-            setIsLoading(false);
         } catch (error) {
             console.log('Error fetching data:', error);
+        } finally {
             setIsLoading(false);
         }
     }, [projectId, apiBaseUrl, fetchAPI]);
@@ -239,7 +243,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     } = useTable(
         {
             columns: outflowColumns,
-            data: filteredoutflows,
+            data: filteredOutflows,
             initialState: { pageIndex: 0, pageSize: 10 },
         },
         useGlobalFilter,
@@ -337,7 +341,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                 <span>
                     Page{' '}
                     <strong>
-                        {outflowPageIndex + 1} of {Math.ceil(outflows.length / outflowPageSize)}
+                        {outflowPageIndex + 1} of {Math.ceil(filteredOutflows.length / outflowPageSize)}
                     </strong>{' '}
                 </span>
                 <span>
@@ -363,11 +367,11 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     ))}
                 </select>
             </div>
-            {filteredoutflows.length > 0 && (
+            {filteredOutflows.length > 0 && (
                 <div className="total-cost">
                     <strong>Total Cost:</strong> {(() => {
                         let totalCost = 0;
-                        totalCost = filteredoutflows.reduce((acc, outflow) => {
+                        totalCost = filteredOutflows.reduce((acc, outflow) => {
                             return acc + (parseFloat(calculateCost(outflow, purchases, outflows)) || 0);
                         }, 0);
                         return totalCost.toFixed(2);
@@ -422,7 +426,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                 <span>
                     Page{' '}
                     <strong>
-                        {laborPageIndex + 1} of {Math.ceil(laborHours.length / laborPageSize)}
+                        {laborPageIndex + 1} of {Math.ceil(filteredLaborHours.length / laborPageSize)}
                     </strong>{' '}
                 </span>
                 <span>
