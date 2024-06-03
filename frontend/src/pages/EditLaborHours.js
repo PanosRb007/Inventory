@@ -13,6 +13,7 @@ const EditLaborHours = ({ labhour, handleUpdate, handleCancel, projects }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    console.log('Submitting updated lab hour:', editedLabHour); // Log data for debugging
     handleUpdate({
       ...editedLabHour,
       date: new Date(editedLabHour.date).toISOString().split('T')[0] // Ensure date is saved without time
@@ -73,6 +74,16 @@ const EditLaborHours = ({ labhour, handleUpdate, handleCancel, projects }) => {
               className="form-control"
               required
             />
+          </div>
+          <div className='form-group'>
+            <label>
+              Comments:
+              <textarea
+                name="comments"
+                value={editedLabHour.comments}
+                onChange={e => handleInputChange('comments', e.target.value)}
+              />
+            </label>
           </div>
           <button type="submit">Save</button>
           <button type="button" className="add_btn" onClick={handleCancel}>
