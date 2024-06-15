@@ -21,10 +21,10 @@ const usersrouter = (secretKey, pool) => {
       const user = results[0];
   
       // Generate a JWT token
-      const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '8h' });
+      const token = jwt.sign({ userId: user.id, userRole: user.role }, secretKey, { expiresIn: '11h' });
       console.log('token', token);
   
-      res.json({ success: true, token });
+      res.json({ success: true, token, role: user.role });
     } catch (error) {
       console.error('Error retrieving user:', error);
       res.status(500).json({ error: 'Failed to retrieve user' });

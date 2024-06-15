@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import Purchases from './pages/Purchases.js';
 import Vendors from './pages/Vendors.js';
 import Outflow from './pages/Outflow.js';
@@ -13,33 +13,41 @@ import OrderList from './pages/Order_List.js';
 import OutMatQuery from './pages/OutMatQuery.js';
 import AddLaborHours from './pages/AddLaborHours.js';
 
-
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
 
 const API_BASE_URL ='https://api.robbie.gr';  /*'http://localhost:8081';*/
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     // Check if the auth token is present in sessionStorage
     const authToken = sessionStorage.getItem('authToken');
-    if (authToken) {
+    const storedUserRole = sessionStorage.getItem('role');
+    if (authToken && storedUserRole) {
       setIsAuthenticated(true);
+      setUserRole(storedUserRole);
     }
   }, []);
 
-  const handleLogin = (token) => {
-    // Store the auth token in sessionStorage
+  const handleLogin = (token, role) => {
+    // Store the auth token and userRole in sessionStorage
     sessionStorage.setItem('authToken', token);
+    sessionStorage.setItem('role', role);
     setIsAuthenticated(true);
+    setUserRole(role);
   };
 
   const handleLogout = () => {
-    // Remove the auth token from sessionStorage
+    // Remove the auth token and userRole from sessionStorage
     sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('role');
     setIsAuthenticated(false);
+    setUserRole('');
   };
+
+  console.log('role', userRole);
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} apiBaseUrl={API_BASE_URL} />;
@@ -106,17 +114,18 @@ function App() {
             <h1 className="header-title">ROBBIE</h1>
           </header>
           <Routes>
-            <Route path="/Purchases" element={<Purchases apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/Outflow" element={<Outflow apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/Vendors" element={<Vendors apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/MaterialList" element={<MaterialList apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/Projects" element={<Projects apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} />} />
-            <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} />} />
+            <Route path="/" element={<Navigate to="/Purchases" />} />
+            <Route path="/Purchases" element={<Purchases apiBaseUrl={API_BASE_URL} userRole={userRole} />}/>
+            <Route path="/Outflow" element={<Outflow apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/Vendors" element={<Vendors apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/MaterialList" element={<MaterialList apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/Projects" element={<Projects apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
           </Routes>
         </main>
       </BrowserRouter>

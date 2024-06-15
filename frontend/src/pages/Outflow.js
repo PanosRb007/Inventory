@@ -7,7 +7,8 @@ import OutMatQuery from './OutMatQuery.js';
 
 
 
-const OutflowFunc = ({ apiBaseUrl }) => {
+
+const OutflowFunc = ({ apiBaseUrl, userRole }) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -591,7 +592,8 @@ const OutflowFunc = ({ apiBaseUrl }) => {
               purchases={purchases}
               handleOrder={handleOrder}
               openProjectOutflowTable={openProjectOutflowTable}
-              formatDateTime={formatDateTime} />
+              formatDateTime={formatDateTime} 
+              userRole={userRole}/>
           </div>
         </div>
       )}

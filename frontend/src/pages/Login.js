@@ -24,7 +24,8 @@ function Login({ onLogin, apiBaseUrl }) {
       console.log('Data from Server:', data);
 
       if (data.success) {
-        onLogin(data.token); // Use the onLogin prop here
+        console.log('user',data.role); // Corrected console log statement
+        onLogin(data.token, data.role); // Use the onLogin prop here with token and role
       } else {
         setError(data.message || 'Login failed');
       }

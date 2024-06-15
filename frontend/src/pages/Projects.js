@@ -4,7 +4,7 @@ import AddProject from './AddProject.js'; // Adjust the import path as needed
 import EditProject from './EditProject.js'; // Adjust the import path as needed
 import './PurchaseFunc.css';
 
-const ProjectFunc = ({ apiBaseUrl }) => {
+const ProjectFunc = ({ apiBaseUrl, userRole }) => {
   const [editingProject, setEditingProject] = useState(null);
   const [purchases, setPurchases] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -35,11 +35,9 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       const outflowsResponse = await fetchAPI(`${apiBaseUrl}/outflowsAPI`);
       const purchasesResponse = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
 
-
       setProjects(projectResponse);
       setOutflows(outflowsResponse);
       setPurchases(purchasesResponse);
-
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -53,48 +51,40 @@ const ProjectFunc = ({ apiBaseUrl }) => {
 
   const calculateCost = (row, purchases, outflows) => {
     let totalCost = 0;
-  
+
     if (!row.width) {
       const filteredPurchases = purchases.filter(purchase =>
         purchase.location === row.location &&
         purchase.materialid === row.materialid
       );
-  
+
       const filteredOutflows = outflows.filter(outflow =>
         outflow.location === row.location &&
         outflow.materialid === row.materialid &&
         outflow.outflowid < row.outflowid
       );
-  
-      console.log(`Filtered Purchases for Outflow ID ${row.outflowid}:`, filteredPurchases);
-      console.log(`Filtered Outflows for Outflow ID ${row.outflowid}:`, filteredOutflows);
-  
+
       const totalPreviousOutflows = filteredOutflows.reduce((sum, outflow) => {
         return sum + parseFloat(outflow.quantity);
       }, 0);
-  
-      console.log(`Total Previous Outflows for Outflow ID ${row.outflowid}:`, totalPreviousOutflows);
-  
+
       let sumOfQuantities = 0;
       let remainingOutflowQuantity = row.quantity;
-  
+
       for (const purchase of filteredPurchases) {
         const purchaseQuantity = parseFloat(purchase.quantity);
         const purchasePrice = parseFloat(purchase.price);
         sumOfQuantities += purchaseQuantity;
-  
+
         if (sumOfQuantities >= totalPreviousOutflows) {
           const remQuant = sumOfQuantities - totalPreviousOutflows;
-          console.log(`Calculating Cost for Outflow ID ${row.outflowid}: Remaining Quantity: ${remainingOutflowQuantity}, Remaining Quantity in Purchase: ${remQuant}, Purchase Price: ${purchasePrice}`);
-  
+
           if (remainingOutflowQuantity <= remQuant) {
             totalCost += remainingOutflowQuantity * purchasePrice;
-            console.log(`Partial Cost for Outflow ID ${row.outflowid}:`, totalCost);
             break;
           } else {
             totalCost += remQuant * purchasePrice;
             remainingOutflowQuantity -= remQuant;
-            console.log(`Accumulated Cost for Outflow ID ${row.outflowid}:`, totalCost);
           }
         }
       }
@@ -103,17 +93,12 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       if (purchase) {
         const pricePerUnit = parseFloat(purchase.price);
         totalCost = row.quantity * pricePerUnit * (row.width || 1);
-        console.log(`Cost for Outflow ID ${row.outflowid} with Lot Number: Price Per Unit: ${pricePerUnit}, Width: ${row.width}, Total Cost:`, totalCost);
-      } else {
-        console.log(`No matching purchase found for Outflow ID ${row.outflowid} with Lot Number`);
       }
     }
-  
-    console.log(`Final Cost for Outflow ID ${row.outflowid}:`, totalCost.toFixed(2));
+
     return parseFloat(totalCost.toFixed(2)); // Ensure the result is a number with 2 decimal places
   };
-  
-  
+
   const handleAddProject = useCallback(async (newProject) => {
     try {
       await fetchAPI(`${apiBaseUrl}/projectsAPI`, {
@@ -168,7 +153,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
   }, []);
 
-  const columns = useMemo(
+  const allColumns = useMemo(
     () => [
       { Header: 'ID', accessor: 'prid' },
       {
@@ -196,25 +181,18 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         accessor: 'realmatcostNumeric',
         Cell: ({ row }) => {
           const filteredOutflows = outflows.filter(outflow => outflow.project === row.original.prid);
-          
+
           let totalCost = 0;
           if (filteredOutflows.length > 0) {
             totalCost = filteredOutflows.reduce((acc, outflow) => {
-              // Calculate the cost for each outflow and accumulate
               return acc + parseFloat(calculateCost(outflow, purchases, outflows));
             }, 0);
           }
-          
-          // Log the calculated total cost for debugging
-          console.log(`Total Real Material Cost for Project ID ${row.original.prid}:`, totalCost.toFixed(2));
-      
+
           return `${totalCost.toFixed(2)} €`;
         },
         sortType: 'number'
       },
-      
-      
-      
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
       { Header: 'Total Cost', accessor: 'totalcost' },
       {
@@ -247,9 +225,23 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     ],
     [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable, purchases]
   );
+
+  const columns = useMemo(() => {
+    if (userRole === 'Senior') {
+      return allColumns.filter(column => ![
+        'Projected Material Cost',
+        'Projected Labor Cost',
+        'Sale',
+        'Real Material Cost',
+        'Real Labor Cost',
+        'Total Cost'
+      ].includes(column.Header));
+    }
+    return allColumns;
+  }, [allColumns, userRole]);
+
   const projectsStatus0 = useMemo(() => projects.filter(p => p.status.data[0] === 0), [projects]);
   const projectsStatus1 = useMemo(() => projects.filter(p => p.status.data[0] === 1), [projects]);
-
 
   const filteredProjectsStatus0 = useMemo(() => {
     return projectsStatus0.filter((project) =>
@@ -283,7 +275,6 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     usePagination
   );
 
-
   const renderTable = (tableInstance, status) => {
     const {
       getTableProps,
@@ -291,7 +282,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
       headerGroups,
       page,
       prepareRow,
-      state: { pageIndex, pageSize }, // Remove globalFilter from state
+      state: { pageIndex, pageSize },
       gotoPage,
       nextPage,
       previousPage,
@@ -379,7 +370,6 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     );
   };
 
-  
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -404,9 +394,3 @@ const ProjectFunc = ({ apiBaseUrl }) => {
 };
 
 export default ProjectFunc;
-
-
-
-
-
-

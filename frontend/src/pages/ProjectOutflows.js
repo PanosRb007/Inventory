@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
 import './PurchaseFunc.css';
 
-const ProjectFunc = ({ apiBaseUrl }) => {
+const ProjectFunc = ({ apiBaseUrl, userRole }) => {
     const [projectId, setProjectId] = useState(null);
     const [projects, setProjects] = useState([]);
     const [outflows, setOutflows] = useState([]);
@@ -75,6 +75,8 @@ const ProjectFunc = ({ apiBaseUrl }) => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    console.log('user', userRole);
 
     const handleUpdate = useCallback(async (updatedProject, updatedStatus) => {
         try {
@@ -166,8 +168,8 @@ const ProjectFunc = ({ apiBaseUrl }) => {
         return dateTime.toLocaleString('el-GR', options);
     }
 
-    const outflowColumns = React.useMemo(
-        () => [
+    const outflowColumns = React.useMemo(() => {
+        const columns = [
             { Header: 'ID', accessor: 'outflowid' },
             { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value) },
             { Header: 'Material Id', accessor: 'materialid' },
@@ -193,38 +195,55 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     return quantity !== 0 ? `${(cost / quantity).toFixed(2)} €` : 'N/A';
                 },
             },
-            {
+        ];
+
+        if (userRole !== 'Senior') {
+            columns.push({
                 Header: 'Cost',
                 accessor: (row) => calculateCost(row, purchases, outflows),
                 Cell: ({ value }) => `${value} €`,
-            },
-            {
-                Header: 'Employee',
-                accessor: (value) => {
-                    const employee = employees.find((emp) => emp.empid === value.employee);
-                    return employee ? `${employee.name}` : 'Employee not found';
-                },
-            },
-        ],
-        [employees, materials, outflows, purchases]
-    );
+            });
+        }
 
-    const laborColumns = React.useMemo(
-        () => [
+        columns.push({
+            Header: 'Employee',
+            accessor: (value) => {
+                const employee = employees.find((emp) => emp.empid === value.employee);
+                return employee ? `${employee.name}` : 'Employee not found';
+            },
+        });
+
+        return columns;
+    }, [employees, materials, outflows, purchases, userRole]);
+
+    const laborColumns = React.useMemo(() => {
+        const columns = [
             { Header: 'ID', accessor: 'labid' },
             { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value) },
-            { Header: 'Employee', accessor: 'employeeid', Cell: ({ value }) => {
-                const employee = employees.find(emp => emp.empid === value);
-                return employee ? employee.name : 'Employee not found';
-            }},
+            {
+                Header: 'Employee',
+                accessor: 'employeeid',
+                Cell: ({ value }) => {
+                    const employee = employees.find(emp => emp.empid === value);
+                    return employee ? employee.name : 'Employee not found';
+                }
+            },
             { Header: 'Start', accessor: 'start' },
             { Header: 'End', accessor: 'end' },
             { Header: 'Comments', accessor: 'comments' },
             { Header: 'Hours Worked', accessor: 'hoursWorked' },
-            { Header: 'Cost of Labor', accessor: 'cost_of_labor', Cell: ({ value }) => `${value} €` },
-        ],
-        [employees]
-    );
+        ];
+
+        if (userRole !== 'Senior') {
+            columns.push({
+                Header: 'Cost of Labor',
+                accessor: 'cost_of_labor',
+                Cell: ({ value }) => `${value} €`,
+            });
+        }
+
+        return columns;
+    }, [employees, userRole]);
 
     const {
         getTableProps: getOutflowTableProps,
@@ -367,7 +386,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     ))}
                 </select>
             </div>
-            {filteredOutflows.length > 0 && (
+            {userRole !== 'Senior' && filteredOutflows.length > 0 && (
                 <div className="total-cost">
                     <strong>Total Cost:</strong> {(() => {
                         let totalCost = 0;
@@ -452,7 +471,7 @@ const ProjectFunc = ({ apiBaseUrl }) => {
                     ))}
                 </select>
             </div>
-            {filteredLaborHours.length > 0 && (
+            {userRole !== 'Senior' && filteredLaborHours.length > 0 && (
                 <div className="total-cost">
                     <strong>Total Labor Cost:</strong> {(() => {
                         let totalLaborCost = 0;
