@@ -12,6 +12,7 @@ import MaterialCombiner from './pages/MaterialCombiner.js';
 import OrderList from './pages/Order_List.js';
 import OutMatQuery from './pages/OutMatQuery.js';
 import AddLaborHours from './pages/AddLaborHours.js';
+import Employees from './pages/Employees.js';
 
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
 
@@ -105,6 +106,13 @@ function App() {
                 <span>Labor Hours</span>
               </NavLink>
             </li>
+            {userRole !== 'Senior' && (
+              <li className="nav-item">
+                <NavLink to="/Employees" className="nav-link" activeclassname="active">
+                  <span>Employees</span>
+                </NavLink>
+              </li>
+            )}
           </ul>
           <button onClick={handleLogout}>Logout</button>
         </nav>
@@ -126,6 +134,9 @@ function App() {
             <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
             <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
             <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            {userRole !== 'Senior' && (
+              <Route path="/Employees" element={<Employees apiBaseUrl={API_BASE_URL} userRole={userRole}/>} />
+            )}
           </Routes>
         </main>
       </BrowserRouter>
