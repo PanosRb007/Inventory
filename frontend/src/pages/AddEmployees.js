@@ -1,78 +1,121 @@
 import React, { useState } from 'react';
+import './PurchaseFunc.css';
 
-const AddEmployees = ({ apiBaseUrl, onAddEmployee }) => {
-  const [name, setName] = useState('');
-  const [surname, setSurname] = useState('');
-  const [department, setDepartment] = useState('');
-  const [tel, setTel] = useState('');
-  const [mail, setMail] = useState('');
-  const [wage, setWage] = useState('');
-  const [error, setError] = useState('');
+const AddEmployee = ({ handleAddEmployee }) => {
+  const [newEmployee, setNewEmployee] = useState({
+    name: '',
+    surname: '',
+    department: '',
+    tel: '',
+    mail: '',
+    wage: null,
+    active: 1 // Default to active
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`${apiBaseUrl}/employeesAPI`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({ name, surname, department, tel, mail, wage }),
-      });
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setNewEmployee((prevEmployee) => ({
+      ...prevEmployee,
+      [name]: value,
+    }));
+  };
 
-      if (!response.ok) {
-        const errorResponse = await response.json();
-        throw new Error(errorResponse.message || 'Failed to add employee');
-      }
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    handleAddEmployee(newEmployee);
+    resetForm();
+  };
 
-      const newEmployee = await response.json();
-      onAddEmployee(newEmployee);
-      setName('');
-      setSurname('');
-      setDepartment('');
-      setTel('');
-      setMail('');
-      setWage('');
-      setError('');
-    } catch (err) {
-      setError(err.message);
-    }
+  const resetForm = () => {
+    setNewEmployee({
+      name: '',
+      surname: '',
+      department: '',
+      tel: '',
+      mail: '',
+      wage: null,
+      active: 1
+    });
   };
 
   return (
     <div className="container">
-      <h2 className="heading">Add New Employee</h2>
-      {error && <div className="error">{error}</div>}
-      <form onSubmit={handleSubmit} className="form">
-        <div className="form-group">
-          <label>Name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+      <h2 className="heading">Add Employee</h2>
+      <form className="form" onSubmit={handleSubmit}>
+        <div className="form-row">
+          <div className="form-group">
+            <label>
+              Employee Name:
+              <input
+                type="text"
+                name="name"
+                value={newEmployee.name}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Surname:
+              <input
+                type="text"
+                name="surname"
+                value={newEmployee.surname}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Department:
+              <input
+                type="text"
+                name="department"
+                value={newEmployee.department}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Tel:
+              <input
+                type="text"
+                name="tel"
+                value={newEmployee.tel}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Email:
+              <input
+                type="email"
+                name="mail"
+                value={newEmployee.mail}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              Wage:
+              <input
+                type="number"
+                name="wage"
+                value={newEmployee.wage}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
         </div>
-        <div className="form-group">
-          <label>Surname:</label>
-          <input type="text" value={surname} onChange={(e) => setSurname(e.target.value)} required />
+        <div>
+          <button className='add_btn' type="submit">Add Employee</button>
         </div>
-        <div className="form-group">
-          <label>Department:</label>
-          <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Tel:</label>
-          <input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Mail:</label>
-          <input type="email" value={mail} onChange={(e) => setMail(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Wage:</label>
-          <input type="number" value={wage} onChange={(e) => setWage(e.target.value)} required />
-        </div>
-        <button type="submit"  className="add_btn">Add Employee</button>
       </form>
     </div>
   );
 };
 
-export default AddEmployees;
+export default AddEmployee;

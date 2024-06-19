@@ -6,11 +6,11 @@ const AddProject = ({ handleAddProject }) => {
     name: '',
     description: '',
     prmatcost: null,
-      prlabcost: null,
-      sale: null,
-      realmatcost: null,
-      reallabcost: null,
-      totalcost: null,
+    prlabcost: null,
+    sale: null,
+    realmatcost: null,
+    reallabcost: null,
+    totalcost: null,
   });
 
   const handleInputChange = (event) => {
@@ -31,12 +31,11 @@ const AddProject = ({ handleAddProject }) => {
     setNewProject({
       name: '',
       description: '',
+      m2: null,
       prmatcost: null,
       prlabcost: null,
       sale: null,
-      realmatcost: null,
-      reallabcost: null,
-      totalcost: null,
+    
     });
   };
 
@@ -63,6 +62,17 @@ const AddProject = ({ handleAddProject }) => {
                 type="text"
                 name="description"
                 value={newProject.description}
+                onChange={handleInputChange}
+              />
+            </label>
+          </div>
+          <div className='form-group'>
+            <label>
+              m2:
+              <input
+                type="number"
+                name="m2"
+                value={newProject.m2}
                 onChange={handleInputChange}
               />
             </label>
@@ -101,43 +111,8 @@ const AddProject = ({ handleAddProject }) => {
             </label>
           </div>
         </div>
-        <div className='form-row'>
-          <div className='form-group'>
-            <label>
-              Real Material Cost:
-              <input
-                type="number"
-                name="realmatcost"
-                value={newProject.realmatcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Real Labor Cost:
-              <input
-                type="number"
-                name="reallabcost"
-                value={newProject.reallabcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Totalcost:
-              <input
-                type="number"
-                name="totalcost"
-                value={newProject.totalcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div>
-            <button className='add_btn' type="submit">Add project</button>
-          </div>
+        <div>
+          <button className='add_btn' type="submit">Add project</button>
         </div>
       </form>
     </div>

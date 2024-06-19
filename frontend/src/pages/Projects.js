@@ -173,6 +173,7 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
         }
       },
       { Header: 'Description', accessor: 'description' },
+      { Header: 'm2', accessor: 'm2' },
       { Header: 'Projected Material Cost', accessor: 'prmatcost' },
       { Header: 'Projected Labor Cost', accessor: 'prlabcost' },
       { Header: 'Sale', accessor: 'sale' },
@@ -319,7 +320,7 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
                   {editingProject && editingProject.prid === row.original.prid && (
                     <tr>
                       <td colSpan={columns.length}>
-                        <EditProject project={editingProject} handleUpdate={handleUpdate} handleCancel={handleCancel} />
+                        <EditProject project={editingProject} handleUpdate={handleUpdate} handleCancel={handleCancel} userRole={userRole}/>
                       </td>
                     </tr>
                   )}

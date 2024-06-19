@@ -30,7 +30,12 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
   const fetchData = useCallback(async () => {
     try {
       const response = await fetchAPI(`${apiBaseUrl}/employeesAPI`);
-      setEmployees(response);
+      // Convert Buffer to boolean
+      const formattedResponse = response.map(employee => ({
+        ...employee,
+        active: employee.active && employee.active.data[0] === 1
+      }));
+      setEmployees(formattedResponse);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -41,10 +46,6 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const handleAddEmployee = (newEmployee) => {
-    setEmployees([...employees, newEmployee]);
-  };
 
   const handleAdd = useCallback(async (newEmployee) => {
     try {
@@ -58,6 +59,7 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
       fetchData();
     } catch (error) {
       console.error('Error adding employee:', error.message);
+      setError(error.message);
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
 
@@ -71,6 +73,7 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
         fetchData();
       } catch (error) {
         console.log('Error deleting employee:', error);
+        setError(error.message);
       }
     }
   }, [fetchAPI, apiBaseUrl, fetchData]);
@@ -92,6 +95,7 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
       setEditingEmployee(null);
     } catch (error) {
       console.error('Error updating the employee:', error);
+      setError(error.message);
     }
   }, [fetchData, apiBaseUrl, fetchAPI]);
 
@@ -108,6 +112,11 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
     { Header: 'Mail', accessor: 'mail' },
     { Header: 'Wage', accessor: 'wage' },
     {
+      Header: 'Active',
+      accessor: 'active',
+      Cell: ({ value }) => (value ? 'Yes' : 'No')
+    },
+    {
       Header: 'Actions', accessor: 'actions',
       Cell: ({ row }) => (
         <div>
@@ -116,7 +125,7 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
         </div>
       ),
     },
-  ], []);
+  ], [handleEdit, handleDelete]);
 
   const {
     getTableProps,
@@ -154,7 +163,7 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
   return (
     <div className='container'>
       <h2>Employees</h2>
-      <AddEmployees apiBaseUrl={apiBaseUrl} onAddEmployee={handleAddEmployee} />
+      <AddEmployees apiBaseUrl={apiBaseUrl} handleAddEmployee={handleAdd} />
       <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map(headerGroup => (
@@ -175,14 +184,23 @@ const EmployeeTable = ({ apiBaseUrl, userRole }) => {
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {page.map(row => {
+          {page.map((row) => {
             prepareRow(row);
             return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => (
-                  <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                ))}
-              </tr>
+              <React.Fragment key={row.getRowProps().key}>
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+                {editingEmployee && editingEmployee.empid === row.original.empid && (
+                  <tr>
+                    <td colSpan={columns.length}>
+                      <EditEmployees employee={editingEmployee} handleUpdate={handleUpdate} handleCancel={handleCancel} userRole={userRole}/>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             );
           })}
         </tbody>

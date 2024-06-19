@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const EditProject = ({ project, handleUpdate, handleCancel }) => {
+const EditProject = ({ project, handleUpdate, handleCancel, userRole }) => {
   const [editedProject, setEditedProject] = useState({ ...project });
 
   const handleInputChange = (event) => {
@@ -19,16 +19,12 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
 
   const resetForm = () => {
     setEditedProject({
-      // Reset the fields as needed for the project
-      // Example:
       name: '',
       description: '',
+      m2: '',
       prmatcost: '',
       prlabcost: '',
       sale: '',
-      realmatcost: '',
-      reallabcost: '',
-      totalcost: '',
       // Add other fields here
     });
   };
@@ -37,8 +33,8 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
     <div className="container">
       <h2 className="heading">Edit Project</h2>
       <form className="form" onSubmit={handleSubmit}>
-        <div className='form-row'>
-          <div className='form-group'>
+        <div className="form-row">
+          <div className="form-group">
             <label>
               Project Name:
               <input
@@ -49,7 +45,7 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
               />
             </label>
           </div>
-          <div className='form-group'>
+          <div className="form-group">
             <label>
               Description:
               <textarea
@@ -60,79 +56,60 @@ const EditProject = ({ project, handleUpdate, handleCancel }) => {
               />
             </label>
           </div>
-          <div className='form-group'>
+          <div className="form-group">
             <label>
-              Projected Material Cost:
+              m2:
               <input
                 type="number"
-                name="prmatcost"
-                value={editedProject.prmatcost}
+                name="m2"
+                value={editedProject.m2}
                 onChange={handleInputChange}
               />
             </label>
           </div>
-          <div className='form-group'>
-            <label>
-              Projected Labor Cost:
-              <input
-                type="number"
-                name="prlabcost"
-                value={editedProject.prlabcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Sale:
-              <input
-                type="number"
-                name="sale"
-                value={editedProject.sale}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Real Material Cost:
-              <input
-                type="number"
-                name="realmatcost"
-                value={editedProject.realmatcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Real Labor Cost:
-              <input
-                type="number"
-                name="reallabcost"
-                value={editedProject.reallabcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
-          <div className='form-group'>
-            <label>
-              Totalcost:
-              <input
-                type="number"
-                name="totalcost"
-                value={editedProject.totalcost}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
+          {userRole !== 'Senior' && (
+            <>
+              <div className="form-group">
+                <label>
+                  Projected Material Cost:
+                  <input
+                    type="number"
+                    name="prmatcost"
+                    value={editedProject.prmatcost}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </div>
+              <div className="form-group">
+                <label>
+                  Projected Labor Cost:
+                  <input
+                    type="number"
+                    name="prlabcost"
+                    value={editedProject.prlabcost}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </div>
+              <div className="form-group">
+                <label>
+                  Sale:
+                  <input
+                    type="number"
+                    name="sale"
+                    value={editedProject.sale}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </div>
+            </>
+          )}
           <button type="submit">Edit project</button>
           <button type="button" className="add_btn" onClick={handleCancel}>
             Cancel
           </button>
         </div>
       </form>
-
     </div>
   );
 };
