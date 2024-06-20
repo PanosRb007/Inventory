@@ -202,11 +202,11 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
 
     const groupedEmployees = useMemo(() => {
         return employees.reduce((groups, employee) => {
-            const department = employee.department || 'No Department';
+            const department = employee.department;
             if (!groups[department]) {
                 groups[department] = [];
             }
-            if (employee.active) {
+            if (employee.active.data[0] === 1) {
                 groups[department].push(employee);
             }
             return groups;
