@@ -179,23 +179,44 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
       { Header: 'Sale', accessor: 'sale' },
       {
         Header: 'Real Material Cost',
-        accessor: 'realmatcostNumeric',
-        Cell: ({ row }) => {
-          const filteredOutflows = outflows.filter(outflow => outflow.project === row.original.prid);
-
-          let totalCost = 0;
-          if (filteredOutflows.length > 0) {
-            totalCost = filteredOutflows.reduce((acc, outflow) => {
-              return acc + parseFloat(calculateCost(outflow, purchases, outflows));
-            }, 0);
-          }
-
-          return `${totalCost.toFixed(2)} €`;
-        },
-        sortType: 'number'
+        accessor: 'realmatcost'
       },
       { Header: 'Real Labor Cost', accessor: 'reallabcost' },
-      { Header: 'Total Cost', accessor: 'totalcost' },
+      {
+        Header: 'Total Cost',
+        accessor: 'totalcost'
+      },
+      {
+        Header: 'Cost/m2',
+        accessor: 'costPerM2',
+        Cell: ({ row }) => {
+          const totalCost = parseFloat(row.original.totalcost) || 0;
+          const m2 = parseFloat(row.original.m2) || 0;
+          const costPerM2 = m2 ? (totalCost / m2).toFixed(2) : 'N/A';
+          return `${costPerM2} €/m2`;
+        }
+      },
+      {
+        Header: 'Profit',
+        accessor: 'profit',
+        Cell: ({ row }) => {
+          const sale = parseFloat(row.original.sale) || 0;
+          const totalCost = parseFloat(row.original.totalcost) || 0;
+          const profit = sale - totalCost;
+          return `${profit.toFixed(2)} €`;
+        }
+      },
+      {
+        Header: 'Profit %',
+        accessor: 'profitPercentage',
+        Cell: ({ row }) => {
+          const sale = parseFloat(row.original.sale) || 0;
+          const totalCost = parseFloat(row.original.totalcost) || 0;
+          const profit = sale - totalCost;
+          const profitPercentage = totalCost ? ((profit / totalCost) * 100).toFixed(2) : 'N/A';
+          return `${profitPercentage} %`;
+        }
+      },
       {
         Header: 'Status',
         accessor: 'status',
@@ -224,7 +245,7 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
         ),
       },
     ],
-    [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable, purchases]
+    [handleEdit, handleDelete, outflows, handleUpdate, openProjectOutflowTable]
   );
 
   const columns = useMemo(() => {
@@ -235,7 +256,10 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
         'Sale',
         'Real Material Cost',
         'Real Labor Cost',
-        'Total Cost'
+        'Total Cost',
+        'Cost/m2',
+        'Profit',
+        'Profit %'
       ].includes(column.Header));
     }
     return allColumns;

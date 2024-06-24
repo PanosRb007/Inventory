@@ -57,16 +57,18 @@ const EditProject = ({ project, handleUpdate, handleCancel, userRole }) => {
             </label>
           </div>
           <div className="form-group">
-            <label>
-              m2:
-              <input
-                type="number"
-                name="m2"
-                value={editedProject.m2}
-                onChange={handleInputChange}
-              />
-            </label>
-          </div>
+  <label>
+    m2:
+    <input
+      type="number"
+      name="m2"
+      value={editedProject.m2}
+      onChange={handleInputChange}
+      step="0.01"
+    />
+  </label>
+</div>
+
           {userRole !== 'Senior' && (
             <>
               <div className="form-group">

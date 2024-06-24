@@ -307,7 +307,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 )}
             </div>
 
-            <div className="labor-hours-container">
+            <div className="material-input-form-container">
                 <h1>Labor Hours</h1>
 
                 <table {...getTableProps()} className="table">
