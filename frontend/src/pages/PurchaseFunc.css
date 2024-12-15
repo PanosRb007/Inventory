@@ -337,4 +337,8 @@ body {
   .content {
     margin-left: 110px; /* Adjusted for smaller sidebar */
   }
+  .form-group {
+    flex: 0 0 100%; /* Full width on smaller screens */
+  }
 }
+

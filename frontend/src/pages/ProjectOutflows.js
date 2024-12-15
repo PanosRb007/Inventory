@@ -1,489 +1,257 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import './PurchaseFunc.css';
 
-const ProjectFunc = ({ apiBaseUrl, userRole }) => {
-    const [projectId, setProjectId] = useState(null);
-    const [projects, setProjects] = useState([]);
-    const [outflows, setOutflows] = useState([]);
-    const [laborHours, setLaborHours] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [employees, setEmployees] = useState([]);
-    const [materials, setMaterials] = useState([]);
-    const [purchases, setPurchases] = useState([]);
-    const [filteredOutflows, setFilteredOutflows] = useState([]);
-    const [filteredLaborHours, setFilteredLaborHours] = useState([]);
+const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
+  const [projectId, setProjectId] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [outflows, setOutflows] = useState([]);
+  const [laborHours, setLaborHours] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const projectIdParam = params.get('projectId');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const projectIdParam = params.get('projectId');
+    if (projectIdParam) setProjectId(parseInt(projectIdParam));
+  }, []);
 
-        if (projectIdParam) {
-            setProjectId(projectIdParam);
-        }
-    }, []);
+  const fetchAPI = useCallback(async (url) => {
+    const authToken = sessionStorage.getItem('authToken');
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error(`Error fetching ${url}`);
+    return response.json();
+  }, []);
 
-    const fetchAPI = useCallback(async (url, options = {}) => {
-        const authToken = sessionStorage.getItem('authToken');
-        const response = await fetch(url, {
-            ...options,
-            headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        if (!response.ok) {
-            const errorResponse = await response.json();
-            throw new Error(errorResponse.message || `Error fetching ${url}`);
-        }
-        return response.json();
-    }, []);
+  const fetchData = useCallback(async () => {
+    if (!projectId) return;
+    setIsLoading(true);
+    try {
+      const [outflowsResponse, laborHoursResponse, projectsResponse, employeesResponse, materialsResponse] = await Promise.all([
+        fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+        fetchAPI(`${apiBaseUrl}/laborHoursAPI`),
+        fetchAPI(`${apiBaseUrl}/projectsAPI`),
+        fetchAPI(`${apiBaseUrl}/employeesAPI`),
+        fetchAPI(`${apiBaseUrl}/materiallist`),
+      ]);
+      setOutflows(outflowsResponse.filter((o) => o.project === projectId));
+      setLaborHours(laborHoursResponse.filter((lh) => lh.projectid === projectId));
+      setProjects(projectsResponse);
+      setEmployees(employeesResponse);
+      setMaterials(materialsResponse);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, apiBaseUrl, fetchAPI]);
 
-    const fetchData = useCallback(async () => {
-        if (!projectId) return;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-        setIsLoading(true);
+  const formatCurrency = (value) => `${parseFloat(value).toFixed(2)} €`;
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('el-GR');
 
-        try {
-            const [outflowsResponse, projectsResponse, employeesResponse, materialsResponse, purchaseResponse, laborHoursResponse] = await Promise.all([
-                fetchAPI(`${apiBaseUrl}/outflowsAPI`),
-                fetchAPI(`${apiBaseUrl}/projectsAPI`),
-                fetchAPI(`${apiBaseUrl}/employeesAPI`),
-                fetchAPI(`${apiBaseUrl}/materiallist`),
-                fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
-                fetchAPI(`${apiBaseUrl}/laborHoursAPI`),
-            ]);
+  const totalMaterialCost = useMemo(() => {
+    return outflows.reduce((sum, outflow) => {
+      const cost = parseFloat(outflow.cost || 0);
+      return sum + cost;
+    }, 0);
+  }, [outflows]);
 
-            const filteredOutflows = outflowsResponse.filter((res) => res.project === parseInt(projectId));
-            const filteredLaborHours = laborHoursResponse.filter((res) => res.projectid === parseInt(projectId));
-            setFilteredOutflows(filteredOutflows);
-            setFilteredLaborHours(filteredLaborHours);
-            setEmployees(employeesResponse);
-            setProjects(projectsResponse);
-            setMaterials(materialsResponse);
-            setPurchases(purchaseResponse);
-            setOutflows(outflowsResponse);
-            setLaborHours(laborHoursResponse);
-        } catch (error) {
-            console.log('Error fetching data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [projectId, apiBaseUrl, fetchAPI]);
+  const totalLaborCost = useMemo(() => {
+    return laborHours.reduce((sum, laborHour) => {
+      const cost = parseFloat(laborHour.cost_of_labor || 0);
+      return sum + cost;
+    }, 0);
+  }, [laborHours]);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+  const totalCost = useMemo(() => {
+    return totalMaterialCost + totalLaborCost;
+  }, [totalMaterialCost, totalLaborCost]);
 
-    console.log('user', userRole);
+  const outflowColumns = useMemo(() => [
+    { Header: 'ID', accessor: 'outflowid' },
+    { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDate(value) },
+    { Header: 'Material ID', accessor: 'materialid' },
+    {
+      Header: 'Material Name',
+      accessor: (row) => {
+        const material = materials.find((m) => m.matid === row.materialid);
+        return material ? material.name : 'Material not found';
+      },
+    },
+    { Header: 'Quantity', accessor: 'quantity', Cell: ({ value }) => parseFloat(value).toFixed(2) },
+    {
+      Header: 'Cost',
+      accessor: 'cost',
+      Cell: ({ row }) => {
+        const cost = parseFloat(row.original.cost || 0);
+        return formatCurrency(cost);
+      },
+    },
+    {
+      Header: 'Employee',
+      accessor: 'employee',
+      Cell: ({ row }) => {
+        const employee = employees.find((e) => e.empid === row.original.employee);
+        return employee ? employee.name : 'Employee not found';
+      },
+    },
+  ], [materials, employees]);
 
-    const handleUpdate = useCallback(async (updatedProject, updatedStatus) => {
-        try {
-            const response = await fetch(`${apiBaseUrl}/projectsAPI/${updatedProject.prid}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify({
-                    ...updatedProject,
-                    status: updatedStatus,
-                }),
-            });
+  const laborHoursColumns = useMemo(() => {
+    const columns = [
+      { Header: 'ID', accessor: 'labid' },
+      { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDate(value) },
+      {
+        Header: 'Employee',
+        accessor: 'employeeid',
+        Cell: ({ value }) => {
+          const employee = employees.find((e) => e.empid === value);
+          return employee ? employee.name : 'Employee not found';
+        },
+      },
+      { Header: 'Start Time', accessor: 'start' },
+      { Header: 'End Time', accessor: 'end' },
+      { Header: 'Hours Worked', accessor: 'hoursWorked', Cell: ({ value }) => `${parseFloat(value).toFixed(2)} h` },
+      { Header: 'Comments', accessor: 'comments' },
+    ];
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Server response:', errorText);
-                throw new Error(errorText || `Error updating project: ${response.status}`);
-            }
-
-            fetchData();
-        } catch (error) {
-            console.error('Error updating the project:', error);
-        }
-    }, [fetchData, apiBaseUrl]);
-
-    const handleCheckboxChange = (project, statusValue) => {
-        handleUpdate(project, statusValue === 1 ? 0 : 1);
-    };
-
-    const currentProject = projects.find(prj => prj.prid === parseInt(projectId));
-
-    const calculateCost = (row, purchases, outflows) => {
-        let totalCost = 0;
-        if (!row.width) {
-            const filteredPurchases = purchases.filter(pur =>
-                pur.location === row.location &&
-                pur.materialid === row.materialid
-            );
-
-            const filteredOutflows = outflows.filter(out =>
-                out.location === row.location &&
-                out.materialid === row.materialid &&
-                out.outflowid < row.outflowid
-            );
-
-            const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
-            let sumOfQuantities = 0;
-            let remainingOutflowQuantity = row.quantity;
-
-            for (const purchase of filteredPurchases) {
-                const purchaseQuantity = parseFloat(purchase.quantity);
-                const purchasePrice = parseFloat(purchase.price);
-                sumOfQuantities += purchaseQuantity;
-                const remQuant = sumOfQuantities - totalPreviousOutflows;
-
-                if (sumOfQuantities >= totalPreviousOutflows) {
-                    if (remainingOutflowQuantity <= remQuant) {
-                        totalCost += remainingOutflowQuantity * purchasePrice;
-                        break;
-                    } else {
-                        totalCost += remQuant * purchasePrice;
-                        remainingOutflowQuantity -= remQuant;
-                    }
-                }
-            }
-        } else if (row.lotnumber) {
-            const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
-            const pricePerUnit = purchase ? purchase.price : 0;
-            totalCost = row.quantity * pricePerUnit * (row.width || 1);
-        }
-
-        return totalCost.toFixed(2);
-    };
-
-    function formatDateTime(dateTimeString) {
-        const options = {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            timeZone: 'Europe/Athens',
-        };
-
-        const dateTime = new Date(dateTimeString);
-        return dateTime.toLocaleString('el-GR', options);
+    if (userRole !== 'Senior') {
+      columns.push({
+        Header: 'Cost of Labor',
+        accessor: 'cost_of_labor',
+        Cell: ({ value }) => formatCurrency(value),
+      });
     }
 
-    const outflowColumns = React.useMemo(() => {
-        const columns = [
-            { Header: 'ID', accessor: 'outflowid' },
-            { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value) },
-            { Header: 'Material Id', accessor: 'materialid' },
-            {
-                Header: 'Material Name',
-                accessor: (row) => {
-                    const material = materials.find((material) => material.matid === row.materialid);
-                    return material ? material.name : 'Material not found';
-                },
-            },
-            { Header: 'Width', accessor: 'width' },
-            { Header: 'Lot #', accessor: 'lotnumber' },
-            {
-                Header: 'Quantity',
-                accessor: 'quantity',
-                Cell: ({ value }) => parseFloat(value).toFixed(2),
-            },
-            {
-                Header: 'Cost/Unit',
-                accessor: (row) => {
-                    const cost = parseFloat(calculateCost(row, purchases, outflows));
-                    const quantity = parseFloat(row.quantity);
-                    return quantity !== 0 ? `${(cost / quantity).toFixed(2)} €` : 'N/A';
-                },
-            },
-        ];
+    return columns;
+  }, [employees, userRole]);
 
-        if (userRole !== 'Senior') {
-            columns.push({
-                Header: 'Cost',
-                accessor: (row) => calculateCost(row, purchases, outflows),
-                Cell: ({ value }) => `${value} €`,
-            });
-        }
+  const outflowTableInstance = useTable(
+    { columns: outflowColumns, data: outflows, initialState: { pageIndex: 0 } },
+    useSortBy,
+    usePagination
+  );
 
-        columns.push({
-            Header: 'Employee',
-            accessor: (value) => {
-                const employee = employees.find((emp) => emp.empid === value.employee);
-                return employee ? `${employee.name}` : 'Employee not found';
-            },
-        });
+  const laborHoursTableInstance = useTable(
+    { columns: laborHoursColumns, data: laborHours, initialState: { pageIndex: 0 } },
+    useSortBy,
+    usePagination
+  );
 
-        return columns;
-    }, [employees, materials, outflows, purchases, userRole]);
-
-    const laborColumns = React.useMemo(() => {
-        const columns = [
-            { Header: 'ID', accessor: 'labid' },
-            { Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value) },
-            {
-                Header: 'Employee',
-                accessor: 'employeeid',
-                Cell: ({ value }) => {
-                    const employee = employees.find(emp => emp.empid === value);
-                    return employee ? employee.name : 'Employee not found';
-                }
-            },
-            { Header: 'Start', accessor: 'start' },
-            { Header: 'End', accessor: 'end' },
-            { Header: 'Comments', accessor: 'comments' },
-            { Header: 'Hours Worked', accessor: 'hoursWorked' },
-        ];
-
-        if (userRole !== 'Senior') {
-            columns.push({
-                Header: 'Cost of Labor',
-                accessor: 'cost_of_labor',
-                Cell: ({ value }) => `${value} €`,
-            });
-        }
-
-        return columns;
-    }, [employees, userRole]);
-
+  const renderTable = (tableInstance, title) => {
     const {
-        getTableProps: getOutflowTableProps,
-        getTableBodyProps: getOutflowTableBodyProps,
-        headerGroups: outflowHeaderGroups,
-        page: outflowPage,
-        prepareRow: prepareOutflowRow,
-        state: { pageIndex: outflowPageIndex, pageSize: outflowPageSize, globalFilter: outflowGlobalFilter },
-        gotoPage: gotoOutflowPage,
-        nextPage: nextOutflowPage,
-        previousPage: previousOutflowPage,
-        canNextPage: canNextOutflowPage,
-        canPreviousPage: canPreviousOutflowPage,
-        setPageSize: setOutflowPageSize,
-        setGlobalFilter: setOutflowGlobalFilter,
-    } = useTable(
-        {
-            columns: outflowColumns,
-            data: filteredOutflows,
-            initialState: { pageIndex: 0, pageSize: 10 },
-        },
-        useGlobalFilter,
-        useSortBy,
-        usePagination
-    );
-
-    const {
-        getTableProps: getLaborTableProps,
-        getTableBodyProps: getLaborTableBodyProps,
-        headerGroups: laborHeaderGroups,
-        page: laborPage,
-        prepareRow: prepareLaborRow,
-        state: { pageIndex: laborPageIndex, pageSize: laborPageSize, globalFilter: laborGlobalFilter },
-        gotoPage: gotoLaborPage,
-        nextPage: nextLaborPage,
-        previousPage: previousLaborPage,
-        canNextPage: canNextLaborPage,
-        canPreviousPage: canPreviousLaborPage,
-        setPageSize: setLaborPageSize,
-        setGlobalFilter: setLaborGlobalFilter,
-    } = useTable(
-        {
-            columns: laborColumns,
-            data: filteredLaborHours,
-            initialState: { pageIndex: 0, pageSize: 10 },
-        },
-        useGlobalFilter,
-        useSortBy,
-        usePagination
-    );
-
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-
+      getTableProps,
+      getTableBodyProps,
+      headerGroups,
+      page,
+      prepareRow,
+      state: { pageIndex, pageSize },
+      gotoPage,
+      nextPage,
+      previousPage,
+      canNextPage,
+      canPreviousPage,
+      pageCount,
+    } = tableInstance;
+  
     return (
-        <div className='container'>
-            <h1 className='header'>
-                Cost for Project: {currentProject?.name}
-            </h1>
-            {currentProject && (
-                <label>
-                    Completed:
-                    <input
-                        type="checkbox"
-                        checked={currentProject.status.data[0] === 1}
-                        onChange={() => handleCheckboxChange(currentProject, currentProject.status.data[0])}
-                    />
-                </label>
-            )}
-            <div className="search">
-                <input
-                    type="text"
-                    value={outflowGlobalFilter || ''}
-                    onChange={(e) => setOutflowGlobalFilter(e.target.value)}
-                    placeholder="Search..."
-                />
-            </div>
-            <table {...getOutflowTableProps()} className="table">
-                <thead>
-                    {outflowHeaderGroups.map((headerGroup) => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                            {headerGroup.headers.map((column) => (
-                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                                    {column.render('Header')}
-                                    <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody {...getOutflowTableBodyProps()}>
-                    {outflowPage.map((row) => {
-                        prepareOutflowRow(row);
-                        return (
-                            <React.Fragment key={row.getRowProps().key}>
-                                <tr {...row.getRowProps()}>
-                                    {row.cells.map((cell) => (
-                                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                    ))}
-                                </tr>
-                            </React.Fragment>
-                        );
-                    })}
-                </tbody>
-            </table>
-            <div className='pagination'>
-                <button onClick={() => previousOutflowPage()} disabled={!canPreviousOutflowPage}>
-                    Previous
-                </button>
-                <button onClick={() => nextOutflowPage()} disabled={!canNextOutflowPage}>
-                    Next
-                </button>
-                <span>
-                    Page{' '}
-                    <strong>
-                        {outflowPageIndex + 1} of {Math.ceil(filteredOutflows.length / outflowPageSize)}
-                    </strong>{' '}
-                </span>
-                <span>
-                    | Go to page:{' '}
-                    <input
-                        type="number"
-                        defaultValue={outflowPageIndex + 1}
-                        onChange={(e) => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                            gotoOutflowPage(page);
-                        }}
-                        style={{ width: '50px' }}
-                    />
-                </span>
-                <select
-                    value={outflowPageSize}
-                    onChange={(e) => setOutflowPageSize(Number(e.target.value))}
-                >
-                    {[10, 25, 50, 100].map((pageSize) => (
-                        <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            {userRole !== 'Senior' && filteredOutflows.length > 0 && (
-                <div className="total-cost">
-                    <strong>Total Cost:</strong> {(() => {
-                        let totalCost = 0;
-                        totalCost = filteredOutflows.reduce((acc, outflow) => {
-                            return acc + (parseFloat(calculateCost(outflow, purchases, outflows)) || 0);
-                        }, 0);
-                        return totalCost.toFixed(2);
-                    })()} €
-                </div>
-            )}
-
-            <h2>Labor Hours for Project</h2>
-            <div className="search">
-                <input
-                    type="text"
-                    value={laborGlobalFilter || ''}
-                    onChange={(e) => setLaborGlobalFilter(e.target.value)}
-                    placeholder="Search..."
-                />
-            </div>
-            <table {...getLaborTableProps()} className="table">
-                <thead>
-                    {laborHeaderGroups.map((headerGroup) => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                            {headerGroup.headers.map((column) => (
-                                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                                    {column.render('Header')}
-                                    <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody {...getLaborTableBodyProps()}>
-                    {laborPage.map((row) => {
-                        prepareLaborRow(row);
-                        return (
-                            <React.Fragment key={row.getRowProps().key}>
-                                <tr {...row.getRowProps()}>
-                                    {row.cells.map((cell) => (
-                                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                    ))}
-                                </tr>
-                            </React.Fragment>
-                        );
-                    })}
-                </tbody>
-            </table>
-            <div className='pagination'>
-                <button onClick={() => previousLaborPage()} disabled={!canPreviousLaborPage}>
-                    Previous
-                </button>
-                <button onClick={() => nextLaborPage()} disabled={!canNextLaborPage}>
-                    Next
-                </button>
-                <span>
-                    Page{' '}
-                    <strong>
-                        {laborPageIndex + 1} of {Math.ceil(filteredLaborHours.length / laborPageSize)}
-                    </strong>{' '}
-                </span>
-                <span>
-                    | Go to page:{' '}
-                    <input
-                        type="number"
-                        defaultValue={laborPageIndex + 1}
-                        onChange={(e) => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                            gotoLaborPage(page);
-                        }}
-                        style={{ width: '50px' }}
-                    />
-                </span>
-                <select
-                    value={laborPageSize}
-                    onChange={(e) => setLaborPageSize(Number(e.target.value))}
-                >
-                    {[10, 25, 50, 100].map((pageSize) => (
-                        <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            {userRole !== 'Senior' && filteredLaborHours.length > 0 && (
-                <div className="total-cost">
-                    <strong>Total Labor Cost:</strong> {(() => {
-                        let totalLaborCost = 0;
-                        totalLaborCost = filteredLaborHours.reduce((acc, filteredLaborHour) => {
-                            return acc + (parseFloat(filteredLaborHour.cost_of_labor) || 0);
-                        }, 0);
-                        return totalLaborCost.toFixed(2);
-                    })()} €
-                </div>
-            )}
+      <div>
+        <h2>{title}</h2>
+        <table {...getTableProps()} className="table">
+          <thead>
+            {headerGroups.map((headerGroup) => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column) => (
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                    {column.render('Header')}
+                    <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {page.map((row) => {
+              prepareRow(row);
+              return (
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <div className="pagination">
+          <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+            Previous
+          </button>
+          <span>
+            Page {pageIndex + 1} of {pageCount || 1}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={(e) => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                gotoPage(page);
+              }}
+              style={{ width: '50px', marginLeft: '5px' }}
+            />
+          </span>
+          <button onClick={() => nextPage()} disabled={!canNextPage}>
+            Next
+          </button>
+          <select
+            value={pageSize}
+            onChange={(e) => tableInstance.setPageSize(Number(e.target.value))}
+            style={{ marginLeft: '10px' }}
+          >
+            {[10, 25, 50].map((size) => (
+              <option key={size} value={size}>
+                Show {size}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
     );
+  };
+  
+
+  if (isLoading) return <div>Loading...</div>;
+
+  const currentProject = projects.find((p) => p.prid === projectId);
+
+  return (
+    <div className="container">
+      <h1>Project: {currentProject?.name || 'Unknown'}</h1>
+      {renderTable(outflowTableInstance, 'Outflows')}
+      {userRole !== 'Senior' && (
+        <div className="total-cost"><strong>Total Material Cost:</strong> {formatCurrency(totalMaterialCost)}</div>
+      )}
+      {renderTable(laborHoursTableInstance, 'Labor Hours')}
+      {userRole !== 'Senior' && (
+        <div className="total-cost"><strong>Total Labor Cost:</strong> {formatCurrency(totalLaborCost)}</div>
+      )}
+      {userRole !== 'Senior' && (
+        <div className="total-cost final"><strong>Total Cost:</strong> {formatCurrency(totalCost)}</div>
+      )}
+    </div>
+  );
 };
 
-export default ProjectFunc;
+export default ProjectOutflows;

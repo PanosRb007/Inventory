@@ -27,6 +27,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   const [showAddInstOutflowForm, setShowAddInstOutflowForm] = useState(false);
   const [showVendPurc, setShowVendPurc] = useState(false);
   const [rowdata, setRowdata] = useState([]);
+  const [remainingQuantities, setRemainingQuantities] = useState(new Map());
 
   const openAddOutflowForm = useCallback((row) => {
     setSelectedOutflowRow(row);
@@ -37,7 +38,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setShowVendPurc(true);
     setRowdata(rowd);
   };
-  
+
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
     const response = await fetch(url, {
@@ -67,6 +68,20 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
         fetchAPI(`${apiBaseUrl}/projectsAPI`),
       ]);
+      const precomputedQuantities = new Map();
+      purchaseData.forEach((purchase) => {
+        const key = `${purchase.materialid}-${purchase.lotnumber}-${purchase.location}`;
+        const current = precomputedQuantities.get(key) || { purchases: 0, outflows: 0 };
+        current.purchases += parseFloat(purchase.quantity);
+        precomputedQuantities.set(key, current);
+      });
+
+      outflowsData.forEach((outflow) => {
+        const key = `${outflow.materialid}-${outflow.lotnumber}-${outflow.location}`;
+        const current = precomputedQuantities.get(key) || { purchases: 0, outflows: 0 };
+        current.outflows += parseFloat(outflow.quantity);
+        precomputedQuantities.set(key, current);
+      });
       setPurchases(purchaseData);
       setLocations(locationData);
       setMaterials(materialData);
@@ -75,6 +90,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       setOutflows(outflowsData);
       setEmployees(employeesData);
       setProjects(projectsData);
+      setRemainingQuantities(precomputedQuantities);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -89,25 +105,18 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   console.log('purhases, purchases', purchases);
 
   const filteredData = useMemo(() => {
+    const lowerCaseFilterOne = globalFilterOne.toLowerCase();
+    const lowerCaseFilterTwo = globalFilterTwo.toLowerCase();
+
     return purchases.filter(row => {
-      // Find the location name for the current row
-      const location = locations.find(loc => loc.id === row.location);
-      const locationName = location ? location.locationname.toLowerCase() : '';
+        const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
+        const vendorName = vendors.find(vendor => vendor.vendorid === row.vendor)?.name.toLowerCase() || '';
+        const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
 
-      // Find the vendor name for the current row
-      const vendor = vendors.find(v => v.vendorid === row.vendor);
-      const vendorName = vendor ? vendor.name.toLowerCase() : '';
-
-      const material = materials.find(m => m.matid === row.materialid);
-      const materialName = material ? material.name.toLowerCase() : '';
-
-      // Create a string that includes all the row values, location name, and vendor name
-      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + vendorName+ ' ' + materialName;
-
-      // Check if the row string includes both global filters
-      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+        const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${vendorName} ${materialName}`;
+        return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
     });
-  }, [purchases, globalFilterOne, globalFilterTwo, locations, vendors, materials]);
+}, [purchases, globalFilterOne, globalFilterTwo, locations, vendors, materials]);
 
   const handleAdd = useCallback(async (newPurchase) => {
     try {
@@ -194,7 +203,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       vendor_id: row.vendor,
       // Add any other fields that are required for the order
     };
-  
+
     try {
       // Make a POST request to the order_list API
       await fetchAPI(`${apiBaseUrl}/order_listAPI`, {
@@ -211,26 +220,25 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       alert('Error creating order:', error.message);
     }
   }, [fetchAPI, apiBaseUrl]);
-  
+
 
   const handleAddInstOutflow = useCallback((newOutflow) => {
     fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
       method: 'POST',
       body: JSON.stringify(newOutflow),
     })
-    .then((data) => {
-   
-      setShowAddInstOutflowForm(false);
-      console.log('Outflow added successfully', data);
-      alert('Outflow added successfully.');
-    })
-    
+      .then((data) => {
+
+        setShowAddInstOutflowForm(false);
+        console.log('Outflow added successfully', data);
+        alert('Outflow added successfully.');
+      })
+
       .catch((error) => {
         console.error('Error adding outflow:', error.message);
         alert('Error adding outflow:');
       });
-  }, [ apiBaseUrl, fetchAPI,setShowAddInstOutflowForm]);
-  
+  }, [apiBaseUrl, fetchAPI, setShowAddInstOutflowForm]);
 
   const columns = React.useMemo(
     () => [
@@ -256,33 +264,11 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
-          const materialId = row.materialid;
-          const lotNumber = row.lotnumber;
-          const location = row.location;
-
-          // Filter purchases and outflows for the current row's material ID, lot number, and location
-          const filteredPurchases = purchases.filter(purchase =>
-            purchase.materialid === materialId &&
-            purchase.lotnumber === lotNumber &&
-            purchase.location === location
-          );
-          console.log('Outflows:', outflows);
-
-          const filteredOutflows = outflows.filter(outflow =>
-            outflow.materialid === materialId &&
-            outflow.lotnumber === lotNumber &&
-            outflow.location === location
-          );
-
-          // Calculate total quantity (sum of purchases - sum of outflows)
-          const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
-          const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
-          const remainingQuantity = (totalPurchases - totalOutflows).toFixed(2);
-
-          return (
-            <span style={{ color: 'red' }}>{remainingQuantity}</span>
-          );
-        }
+          const key = `${row.materialid}-${row.lotnumber}-${row.location}`;
+          const data = remainingQuantities.get(key);
+          const remaining = data ? (data.purchases - data.outflows).toFixed(2) : 'N/A';
+          return <span style={{ color: 'red' }}>{remaining}</span>;
+        },
       },
       {
         Header: 'Price',
@@ -317,8 +303,8 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
             const tooltipContent = `Vendor Name: ${vendor.name}\nField: ${vendor.field}\neMail: ${vendor.mail}\nTelephone: ${vendor.tel}\nContact Name: ${vendor.contactname}`;
             return (
               <div>
-                <span title={tooltipContent} 
-                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openVendPurc(row.original)}>
+                <span title={tooltipContent}
+                  style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openVendPurc(row.original)}>
                   {value}
                 </span>
               </div>
@@ -327,7 +313,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           return 'Vendor not found';
         },
       },
-      
+
 
       {
         Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
@@ -359,7 +345,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Cell: ({ value }) => (value ? formatDateTime(value) : ''), // Check for empty verification date
       },
     ],
-    [handleEdit, handleDelete, handleVerification , outflows, purchases, locations, materials, vendors, materialchanges,openAddOutflowForm, handleOrder]
+    [handleEdit, handleDelete, handleVerification, locations, materials, vendors, materialchanges, openAddOutflowForm, handleOrder, remainingQuantities]
   );
 
   function formatDateTime(dateTimeString) {
@@ -369,12 +355,11 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       year: 'numeric',
       timeZone: 'Europe/Athens', // Set to Athens time zone for Greece
     };
-  
+
     const dateTime = new Date(dateTimeString);
     const formattedDateTime = dateTime.toLocaleString('el-GR', options);
     return formattedDateTime;
   }
-  
 
   const {
     getTableProps,
@@ -518,27 +503,27 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         </select>
       </div>
       {showAddInstOutflowForm && selectedOutflowRow && (
-  <div className="overlay">
-    <div className="popup">
-      <span className="close-popup" onClick={() => setShowAddInstOutflowForm(false)}>
-        &times;
-      </span>
-      <InstOut
-        handleAddInstOutflow={handleAddInstOutflow}
-        locations={locations}
-        materials={materials}
-        employees={employees}
-        projects={projects}
-        outflows={outflows}
-        purchases={purchases}
-        apiBaseUrl={apiBaseUrl}
-        setProjects={setProjects}
-        instOutflow={selectedOutflowRow}
-      />
-    </div>
-  </div>
-)}
-{showVendPurc && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowAddInstOutflowForm(false)}>
+              &times;
+            </span>
+            <InstOut
+              handleAddInstOutflow={handleAddInstOutflow}
+              locations={locations}
+              materials={materials}
+              employees={employees}
+              projects={projects}
+              outflows={outflows}
+              purchases={purchases}
+              apiBaseUrl={apiBaseUrl}
+              setProjects={setProjects}
+              instOutflow={selectedOutflowRow}
+            />
+          </div>
+        </div>
+      )}
+      {showVendPurc && (
         <div className="overlay">
           <div className="popup">
             <span className="close-popup" onClick={() => setShowVendPurc(false)}>

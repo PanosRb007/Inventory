@@ -6,7 +6,7 @@ import './PurchaseFunc.css';
 
 const ProjectFunc = ({ apiBaseUrl, userRole }) => {
   const [editingProject, setEditingProject] = useState(null);
-  const [purchases, setPurchases] = useState([]);
+  //const [purchases, setPurchases] = useState([]);
   const [projects, setProjects] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,11 +33,11 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
     try {
       const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
       const outflowsResponse = await fetchAPI(`${apiBaseUrl}/outflowsAPI`);
-      const purchasesResponse = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
+     // const purchasesResponse = await fetchAPI(`${apiBaseUrl}/PurchasesAPI`);
 
       setProjects(projectResponse);
       setOutflows(outflowsResponse);
-      setPurchases(purchasesResponse);
+      //setPurchases(purchasesResponse);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -49,7 +49,7 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
     fetchData();
   }, [fetchData]);
 
-  const calculateCost = (row, purchases, outflows) => {
+  /*const calculateCost = (row, purchases, outflows) => {
     let totalCost = 0;
 
     if (!row.width) {
@@ -97,7 +97,7 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
     }
 
     return parseFloat(totalCost.toFixed(2)); // Ensure the result is a number with 2 decimal places
-  };
+  };*/
 
   const handleAddProject = useCallback(async (newProject) => {
     try {
@@ -174,49 +174,73 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
       },
       { Header: 'Description', accessor: 'description' },
       { Header: 'm2', accessor: 'm2' },
-      { Header: 'Projected Material Cost', accessor: 'prmatcost' },
-      { Header: 'Projected Labor Cost', accessor: 'prlabcost' },
-      { Header: 'Sale', accessor: 'sale' },
+      {
+        Header: 'Projected Material Cost',
+        accessor: (row) => parseFloat(row.prmatcost) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
+      },
+      {
+        Header: 'Projected Labor Cost',
+        accessor: (row) => parseFloat(row.prlabcost) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
+      },
+      {
+        Header: 'Sale',
+        accessor: (row) => parseFloat(row.sale) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
+      },      
       {
         Header: 'Real Material Cost',
-        accessor: 'realmatcost'
+        accessor: (row) => parseFloat(row.realmatcost) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
       },
-      { Header: 'Real Labor Cost', accessor: 'reallabcost' },
+      {
+        Header: 'Real Labor Cost',
+        accessor: (row) => parseFloat(row.reallabcost) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
+      },
       {
         Header: 'Total Cost',
-        accessor: 'totalcost'
+        accessor: (row) => parseFloat(row.totalcost) || 0,
+        Cell: ({ value }) => `${value.toFixed(2)} €`,
+        sortType: 'basic',
       },
       {
         Header: 'Cost/m2',
-        accessor: 'costPerM2',
-        Cell: ({ row }) => {
-          const totalCost = parseFloat(row.original.totalcost) || 0;
-          const m2 = parseFloat(row.original.m2) || 0;
-          const costPerM2 = m2 ? (totalCost / m2).toFixed(2) : 'N/A';
-          return `${costPerM2} €/m2`;
-        }
+        accessor: (row) => {
+          const totalCost = parseFloat(row.totalcost) || 0;
+          const m2 = parseFloat(row.m2) || 0;
+          return m2 ? totalCost / m2 : 0;
+        },
+        Cell: ({ value }) => `${value.toFixed(2)} €/m2`,
+        sortType: 'basic',
       },
       {
         Header: 'Profit',
-        accessor: 'profit',
-        Cell: ({ row }) => {
-          const sale = parseFloat(row.original.sale) || 0;
-          const totalCost = parseFloat(row.original.totalcost) || 0;
-          const profit = sale - totalCost;
-          return `${profit.toFixed(2)} €`;
-        }
+        accessor: (row) => {
+          const sale = parseFloat(row.sale) || 0;
+          const totalCost = parseFloat(row.totalcost) || 0;
+          return sale - totalCost; // Επιστρέφει αριθμητική τιμή
+        },
+        Cell: ({ value }) => `${value.toFixed(2)} €`, // Εμφανίζει με το σύμβολο €
+        sortType: 'basic', // Προαιρετικό: Εξασφαλίζει αλφαριθμητικό sorting
       },
       {
         Header: 'Profit %',
-        accessor: 'profitPercentage',
-        Cell: ({ row }) => {
-          const sale = parseFloat(row.original.sale) || 0;
-          const totalCost = parseFloat(row.original.totalcost) || 0;
+        accessor: (row) => {
+          const sale = parseFloat(row.sale) || 0;
+          const totalCost = parseFloat(row.totalcost) || 0;
           const profit = sale - totalCost;
-          const profitPercentage = totalCost ? ((profit / totalCost) * 100).toFixed(2) : 'N/A';
-          return `${profitPercentage} %`;
-        }
-      },
+          return totalCost ? (profit / totalCost) * 100 : 0; // Επιστρέφει αριθμητική τιμή
+        },
+        Cell: ({ value }) => `${value.toFixed(2)} %`, // Εμφανίζει με το σύμβολο %
+        sortType: 'basic',
+      },      
       {
         Header: 'Status',
         accessor: 'status',

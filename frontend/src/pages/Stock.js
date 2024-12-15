@@ -73,55 +73,91 @@ const Stocks = ({ apiBaseUrl }) => {
   }, [apiBaseUrl, fetchAPI, selectedLocation]);
 
   const filteredData = useMemo(() => {
-    return stock.filter(row => {
-
-      const material = materials.find(m => m.matid === row.materialid);
-      const materialName = material ? material.name.toLowerCase() : '';
-
-      // Create a string that includes all the row values, location name, and vendor name
-      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') +  ' ' + materialName;
-
-      // Check if the row string includes both global filters
-      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+    const calculatedData = stock.map((row) => {
+      const materialId = row.materialid;
+      const lotNumber = row.lotnumber;
+      const location = parseInt(selectedLocation); // Ενημερωμένο location
+  
+      const filteredPurchases = purchases.filter(purchase =>
+        purchase.materialid === materialId &&
+        purchase.lotnumber === lotNumber &&
+        purchase.location === location // Φιλτράρισμα βάσει location
+      );
+  
+      const filteredOutflows = outflows.filter(outflow =>
+        outflow.materialid === materialId &&
+        outflow.lotnumber === lotNumber &&
+        outflow.location === location // Φιλτράρισμα βάσει location
+      );
+  
+      const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
+      const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
+  
+      const quantity = (totalPurchases - totalOutflows).toFixed(2);
+  
+      return {
+        ...row,
+        quantity: parseFloat(quantity), // Υπολογισμένο υπόλοιπο
+      };
     });
-  }, [stock, globalFilterOne, globalFilterTwo, materials]);
-  console.log("purchases", purchases);
-  console.log("outflows", outflows);
+  
+    // Φιλτράρισμα γραμμών όπου quantity > 0
+    return calculatedData.filter((row) => {
+      if (row.quantity <= 0) {
+        return false; // Εξαίρεση γραμμών με quantity <= 0
+      }
+  
+      const material = materials.find((m) => m.matid === row.materialid);
+      const materialName = material ? material.name.toLowerCase() : '';
+      const rowString =
+        Object.values(row)
+          .map((val) => String(val).toLowerCase())
+          .join(' ') + ' ' + materialName;
+  
+      return (
+        rowString.includes(globalFilterOne.toLowerCase()) &&
+        rowString.includes(globalFilterTwo.toLowerCase())
+      );
+    });
+  }, [stock, purchases, outflows, selectedLocation, globalFilterOne, globalFilterTwo, materials]);
+  
 
 
-  const calculateTotalCost = useCallback((materialId, location, lotNumber) => {
+  const calculateTotalCost = useCallback((materialId, location, lotNumber, width) => {
     let totalCost = 0;
-
-    // Calculate cost from purchases
+  
+    // 1. Φιλτράρισμα Αγορών
     const filteredPurchases = purchases.filter(purchase =>
       purchase.materialid === materialId && purchase.location === location && purchase.lotnumber === lotNumber
     );
+  
     filteredPurchases.forEach(purchase => {
-      totalCost += parseFloat(purchase.quantity) * parseFloat(purchase.price);
+      const adjustedQuantity = purchase.width ? purchase.quantity * parseFloat(purchase.width) : purchase.quantity;
+      totalCost += parseFloat(adjustedQuantity) * parseFloat(purchase.price);
     });
-
-    // Calculate cost reduction from outflows using FIFO
+  
+    // 2. Φιλτράρισμα Εξόδων
     let remainingOutflow = outflows
       .filter(outflow => outflow.materialid === materialId && outflow.location === location && outflow.lotnumber === lotNumber)
-      .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0);
-
+      .reduce((total, outflow) => {
+        const adjustedQuantity = outflow.width ? outflow.quantity * parseFloat(outflow.width) : outflow.quantity;
+        return total + parseFloat(adjustedQuantity);
+      }, 0);
+  
+    // 3. Υπολογισμός με FIFO
     for (const purchase of filteredPurchases) {
-      if (remainingOutflow <= 0) break;
-      const availableQuantity = parseFloat(purchase.quantity);
-      const usedQuantity = Math.min(availableQuantity, remainingOutflow);
-      totalCost -= usedQuantity * parseFloat(purchase.price);
-      remainingOutflow -= usedQuantity;
+      if (remainingOutflow <= 0) break; // Αν δεν υπάρχει υπόλοιπο για έξοδο, σταματάμε
+      const availableQuantity = purchase.width
+        ? purchase.quantity * parseFloat(purchase.width)
+        : purchase.quantity;
+      const usedQuantity = Math.min(availableQuantity, remainingOutflow); // Παίρνουμε όσο χρειάζεται ή όσο είναι διαθέσιμο
+      totalCost -= usedQuantity * parseFloat(purchase.price); // Αφαιρούμε το κόστος
+      remainingOutflow -= usedQuantity; // Μειώνουμε το υπόλοιπο των εξόδων
     }
-
-    return totalCost;
+  
+    return totalCost; // Επιστροφή του τελικού κόστους
   }, [purchases, outflows]);
-
-
-
-  const uniqueMaterialIds = [...new Set(stock.map(item => item.materialid))];
-
-  console.log('uniqueMaterialIds', uniqueMaterialIds);
-
+  
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -140,6 +176,13 @@ const Stocks = ({ apiBaseUrl }) => {
           return material ? material.name : 'Material not found';
         },
       },
+      {
+        Header: 'Material Field', // Προσθήκη Material Field
+        accessor: (row) => {
+          const material = materials.find((m) => m.matid === row.materialid);
+          return material ? material.field : 'Field not available';
+        },
+      },
       { Header: 'Width', accessor: 'width' },
       { Header: 'Lot No', accessor: 'lotnumber' },
       {
@@ -148,27 +191,29 @@ const Stocks = ({ apiBaseUrl }) => {
           const materialId = row.materialid;
           const lotNumber = row.lotnumber;
           const location = parseInt(selectedLocation);
-
-          // Filter purchases and outflows for the current row's material ID, lot number, and location
+      
+          // Φιλτράρισμα των αγορών και των outflows
           const filteredPurchases = purchases.filter(purchase =>
             purchase.materialid === materialId &&
             purchase.lotnumber === lotNumber &&
             purchase.location === location
           );
-
+      
           const filteredOutflows = outflows.filter(outflow =>
             outflow.materialid === materialId &&
             outflow.lotnumber === lotNumber &&
             outflow.location === location
           );
-
-          // Calculate total quantity (sum of purchases - sum of outflows)
+      
+          // Υπολογισμός του συνολικού quantity (αγορές - outflows)
           const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
           const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
-
-          return totalPurchases - totalOutflows;
-        }
+      
+          return (totalPurchases - totalOutflows).toFixed(2); // Επιστροφή με 2 δεκαδικά
+        },
+        Cell: ({ value }) => `${value}`, // Προβολή με 2 δεκαδικά
       },
+      
 
       {
         Header: 'Average Cost',
@@ -179,12 +224,19 @@ const Stocks = ({ apiBaseUrl }) => {
         },
       },
 
-
-
     ],
     [materials, calculateTotalCost, outflows, purchases, selectedLocation]
   );
 
+  const totalStockCost = useMemo(() => {
+    return filteredData.reduce((sum, row) => {
+      const totalCost = calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber);
+      return sum + totalCost;
+    }, 0);
+  }, [filteredData, calculateTotalCost, selectedLocation]);
+  
+  
+  
   const {
     getTableProps,
     getTableBodyProps,
@@ -314,13 +366,16 @@ const Stocks = ({ apiBaseUrl }) => {
             setPageSize(Number(e.target.value));
           }}
         >
-          {[10, 25, 50].map((pageSize) => (
+          {[10, 25, 2000].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
               Show {pageSize}
             </option>
           ))}
         </select>
       </div>
+      <div className="total-cost">
+  <strong>Total Inventory Cost:</strong> {totalStockCost.toFixed(2)} €
+</div>
 
     </div>
   );

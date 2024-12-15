@@ -5,9 +5,6 @@ import './PurchaseFunc.css';
 import AddOutflow from './AddOutflow.js';
 import OutMatQuery from './OutMatQuery.js';
 
-
-
-
 const OutflowFunc = ({ apiBaseUrl, userRole }) => {
 
   const [materials, setMaterials] = useState([]);
@@ -22,6 +19,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
   const [showOutMatQuery, setShowOutMatQuery] = useState(false);
   const [rowdata, setRowdata] = useState([]);
+  const [remainingQuantities, setRemainingQuantities] = useState(new Map());
 
   const openProjectOutflowTable = useCallback((projectId) => {
     window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
@@ -70,6 +68,25 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         setEmployees(employeesResponse);
         setOutflows(outflowsResponse);
         setMaterialchanges(materialchangesData);
+
+        // Precompute remaining quantities
+        const quantitiesMap = new Map();
+
+        purchaseResponse.forEach((purchase) => {
+          const key = `${purchase.materialid}-${purchase.lotnumber}-${purchase.location}`;
+          const current = quantitiesMap.get(key) || { purchases: 0, outflows: 0 };
+          current.purchases += parseFloat(purchase.quantity);
+          quantitiesMap.set(key, current);
+        });
+
+        outflowsResponse.forEach((outflow) => {
+          const key = `${outflow.materialid}-${outflow.lotnumber}-${outflow.location}`;
+          const current = quantitiesMap.get(key) || { purchases: 0, outflows: 0 };
+          current.outflows += parseFloat(outflow.quantity);
+          quantitiesMap.set(key, current);
+        });
+
+        setRemainingQuantities(quantitiesMap);
       } catch (error) {
         console.log('Error fetching data:', error);
       }
@@ -81,26 +98,17 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   }, [apiBaseUrl, fetchAPI]);
 
   const filteredData = useMemo(() => {
+    const lowerCaseFilterOne = globalFilterOne.toLowerCase();
+    const lowerCaseFilterTwo = globalFilterTwo.toLowerCase();
+
     return outflows.filter(row => {
-      // Find the location name for the current row
-      const location = locations.find(loc => loc.id === row.location);
-      const locationName = location ? location.locationname.toLowerCase() : '';
+      const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
+      const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
+      const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
+      const projectName = projects.find(project => project.prid === row.project)?.name.toLowerCase() || '';
 
-      // Find the vendor name for the current row
-      const employee = employees.find(e => e.empid === row.employee);
-      const employeeName = employee ? employee.name.toLowerCase() : '';
-
-      const material = materials.find(m => m.matid === row.materialid);
-      const materialName = material ? material.name.toLowerCase() : '';
-
-      const project = projects.find(p => p.prid === row.project);
-      const projectName = project ? project.name.toLowerCase() : '';
-
-      // Create a string that includes all the row values, location name, and vendor name
-      const rowString = Object.values(row).map(val => String(val).toLowerCase()).join(' ') + ' ' + locationName + ' ' + employeeName + ' ' + materialName + ' ' + projectName;
-
-      // Check if the row string includes both global filters
-      return rowString.includes(globalFilterOne.toLowerCase()) && rowString.includes(globalFilterTwo.toLowerCase());
+      const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
+      return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
     });
   }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials, projects]);
 
@@ -233,8 +241,6 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
     return formattedDateTime;
   }, []);
 
-
-
   const columns = React.useMemo(
     () => [
 
@@ -255,9 +261,6 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
           </span>
         )
       },
-
-
-
       {
         Header: 'Material Name',
         accessor: (row) => {
@@ -276,84 +279,15 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
-          const materialId = row.materialid;
-          const lotNumber = row.lotnumber;
-          const location = row.location;
-
-          // Filter purchases and outflows for the current row's material ID, lot number, and location
-          const filteredPurchases = purchases.filter(purchase =>
-            purchase.materialid === materialId &&
-            purchase.lotnumber === lotNumber &&
-            purchase.location === location
-          );
-
-          const filteredOutflows = outflows.filter(outflow =>
-            outflow.materialid === materialId &&
-            outflow.lotnumber === lotNumber &&
-            outflow.location === location
-          );
-
-          // Calculate total quantity (sum of purchases - sum of outflows)
-          const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.quantity), 0);
-          const totalOutflows = filteredOutflows.reduce((sum, outflow) => sum + parseFloat(outflow.quantity), 0);
-          const remainingQuantity = (totalPurchases - totalOutflows).toFixed(2);
-
-          return (
-            <span style={{ color: 'red' }}>{remainingQuantity}</span>
-          );
-        }
+          const key = `${row.materialid}-${row.lotnumber}-${row.location}`;
+          const data = remainingQuantities.get(key);
+          const remaining = data ? (data.purchases - data.outflows).toFixed(2) : 'N/A';
+          return <span style={{ color: 'red' }}>{remaining}</span>;
+        },
       },
       {
         Header: 'Cost',
-        accessor: (row) => {
-          let totalCost = 0;
-
-          if (!row.width) {
-            const filteredPurchases = purchases.filter(pur =>
-              pur.location === row.location &&
-              pur.materialid === row.materialid
-            );
-
-            // Filter outflows up to but not including the current row's outflowid
-            const filteredOutflows = outflows.filter(out =>
-              out.location === row.location &&
-              out.materialid === row.materialid &&
-              out.outflowid < row.outflowid // Assuming outflowid is a sequential identifier
-            );
-
-            const totalPreviousOutflows = filteredOutflows.reduce((sum, out) => sum + parseFloat(out.quantity), 0);
-
-            let sumOfQuantities = 0;
-            let remainingOutflowQuantity = row.quantity;
-
-            for (const purchase of filteredPurchases) {
-              const purchaseQuantity = parseFloat(purchase.quantity);
-              const purchasePrice = parseFloat(purchase.price);
-              sumOfQuantities += purchaseQuantity;
-              const remQuant = sumOfQuantities - totalPreviousOutflows;
-
-              if (sumOfQuantities >= totalPreviousOutflows) {
-                if (remainingOutflowQuantity <= remQuant) {
-                  totalCost += remainingOutflowQuantity * purchasePrice;
-                  break;
-                } else {
-                  totalCost += remQuant * purchasePrice;
-                  remainingOutflowQuantity -= remQuant;
-                }
-              }
-            }
-          } else if (row.lotnumber) {
-            const purchase = purchases.find(pur => pur.materialid === row.materialid && pur.lotnumber === row.lotnumber);
-            const pricePerUnit = purchase ? purchase.price : 0;
-            totalCost = row.quantity * pricePerUnit * (row.width || 1);
-          }
-
-          return totalCost.toFixed(2); // Format to 2 decimal places
-        },
-        Cell: ({ value }) => `${value} €`,
-      }
-      ,
-
+        accessor: 'cost'},
       {
         Header: 'Employee',
         accessor: (value) => {
@@ -412,7 +346,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         ),
       },
     ],
-    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, purchases, formatDateTime, openProjectOutflowTable]
+    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, formatDateTime, openProjectOutflowTable, remainingQuantities]
   );
 
   const {
@@ -592,8 +526,8 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
               purchases={purchases}
               handleOrder={handleOrder}
               openProjectOutflowTable={openProjectOutflowTable}
-              formatDateTime={formatDateTime} 
-              userRole={userRole}/>
+              formatDateTime={formatDateTime}
+              userRole={userRole} />
           </div>
         </div>
       )}
