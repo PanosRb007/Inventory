@@ -131,22 +131,35 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
 
   console.log('outflowspurch', purchases);
 
-  const handleAdd = useCallback((newOutflow) => {
-    fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
-      method: 'POST',
-      body: JSON.stringify(newOutflow),
-    })
-      .then((addedOutflow) => {
-        setOutflows((prevOutflows) => [...prevOutflows, addedOutflow]); // Προσθήκη στο state χωρίς refresh
-        return fetchData(); // ✅ Ενημερώνουμε όλα τα δεδομένα
-      })
-      .then(() => {
-        console.log('Outflow added successfully');
-      })
-      .catch((error) => {
-        console.error('Error adding outflow:', error.message);
+  const handleAdd = useCallback(async (newOutflow) => {
+    console.log('Outflow being sent:', newOutflow);
+  
+    // ✅ Μετατροπή των "" σε null για quotedItemid και lotnumber
+    const sanitizedOutflow = {
+      ...newOutflow,
+      quantity: parseFloat(newOutflow.quantity).toFixed(2), // ✅ Διασφαλίζει ότι είναι αριθμός
+      lotnumber: newOutflow.lotnumber === "" ? null : newOutflow.lotnumber,
+      quotedItemid: newOutflow.quotedItemid === "" ? null : newOutflow.quotedItemid,
+    };
+  
+    console.log('Sanitized Outflow:', sanitizedOutflow);
+  
+    try {
+      const response = await fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
+        method: 'POST',
+        body: JSON.stringify(sanitizedOutflow),
       });
-  }, [apiBaseUrl, fetchAPI, setOutflows, fetchData]); // ✅ Σωστά dependencies
+  
+      console.log("Server response:", response);
+  
+      setOutflows((prevOutflows) => [...prevOutflows, response]);
+      await fetchData();
+    } catch (error) {
+      console.error('Error adding outflow:', error);
+      alert(`Failed to add outflow: ${error.message}`);
+    }
+  }, [apiBaseUrl, fetchAPI, setOutflows, fetchData]);
+  
 
 
   const handleDelete = useCallback((deletedOutflow) => {
