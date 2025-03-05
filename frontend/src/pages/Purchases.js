@@ -65,7 +65,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [purchaseData, locationData, materialData, vendorData, materialchangesData, outflowsData, employeesData, projectsData] = await Promise.all([
+      const [purchaseData, locationData, materialData, vendorData, materialchangesData, outflowsData, employeesData, projectsData, remainingQuantityData] = await Promise.all([
         fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
         fetchAPI(`${apiBaseUrl}/LocationsAPI`),
         fetchAPI(`${apiBaseUrl}/materiallist`),
@@ -74,6 +74,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         fetchAPI(`${apiBaseUrl}/outflowsAPI`),
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
         fetchAPI(`${apiBaseUrl}/projectsAPI`),
+        fetchAPI(`${apiBaseUrl}/remaining_quantityAPI`),
       ]);
 
       setPurchases(purchaseData);
@@ -84,6 +85,8 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       setOutflows(outflowsData);
       setEmployees(employeesData);
       setProjects(projectsData);
+      setRemainingQuantities(remainingQuantityData);
+
 
     } catch (error) {
       setError(error.message);
@@ -95,104 +98,6 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const calculateRemainingQuantities = (purchases, outflows) => {
-    if (!Array.isArray(purchases) || !Array.isArray(outflows)) {
-      console.warn('❌ Invalid purchases or outflows data:', { purchases, outflows });
-      return [];
-    }
-  
-    console.log('🔄 Calculating Remaining Quantities...');
-    console.log('📌 Purchases:', purchases.length > 0 ? purchases : '❌ No purchases found');
-    console.log('📌 Outflows:', outflows.length > 0 ? outflows : '❌ No outflows found');
-  
-    const materialMap = new Map();
-  
-    // Helper function to generate a unique key based on width & lotnumber
-    const generateKey = (item) =>
-      `${item.location}-${item.materialid}-${item.width ?? 'null'}-${item.lotnumber ?? 'null'}`;
-  
-    // 🔹 Process purchases
-    purchases.forEach((purchase) => {
-      const key = generateKey(purchase);
-      if (!materialMap.has(key)) {
-        materialMap.set(key, {
-          location: purchase.location,
-          materialid: purchase.materialid,
-          width: purchase.width,
-          lotnumber: purchase.lotnumber,
-          totalPurchases: 0,
-          totalOutflows: 0,
-          purchasesCount: 0, // Count purchases
-          outflowsCount: 0,  // Count outflows
-        });
-      }
-      const material = materialMap.get(key);
-      material.totalPurchases += isNaN(parseFloat(purchase.quantity)) ? 0 : parseFloat(purchase.quantity);
-      material.purchasesCount += 1; // Increment count
-      materialMap.set(key, material);
-    });
-  
-    // 🔹 Process outflows
-    outflows.forEach((outflow) => {
-      const key = generateKey(outflow);
-      if (!materialMap.has(key)) {
-        materialMap.set(key, {
-          location: outflow.location,
-          materialid: outflow.materialid,
-          width: outflow.width,
-          lotnumber: outflow.lotnumber,
-          totalPurchases: 0,
-          totalOutflows: 0,
-          purchasesCount: 0, // Count purchases
-          outflowsCount: 0,  // Count outflows
-        });
-      }
-      const material = materialMap.get(key);
-      material.totalOutflows += isNaN(parseFloat(outflow.quantity)) ? 0 : parseFloat(outflow.quantity);
-      material.outflowsCount += 1; // Increment count
-      materialMap.set(key, material);
-    });
-  
-    // 🔹 Generate final array
-    const updatedQuantities = Array.from(materialMap.values()).map((material) => ({
-      location: material.location,
-      materialid: material.materialid,
-      width: material.width,
-      lotnumber: material.lotnumber,
-      remainingQuantity: material.totalPurchases - material.totalOutflows,
-      totalPurchases: material.totalPurchases,
-      totalOutflows: material.totalOutflows,
-      purchasesCount: material.purchasesCount,
-      outflowsCount: material.outflowsCount,
-    }));
-  
-    console.log('✅ Updated Remaining Quantities:', updatedQuantities);
-    return updatedQuantities;
-  };
-  
-    
-    useEffect(() => {
-      if (purchases.length > 0 && outflows.length > 0) {
-        const updatedQuantities = calculateRemainingQuantities(purchases, outflows);
-        console.log('Recalculating Remaining Quantities:', updatedQuantities);
-        setRemainingQuantities(updatedQuantities);
-      }
-    }, [purchases, outflows]);
-
-    useEffect(() => {
-      console.log('Purchases Updated:', purchases);
-    }, [purchases]);
-    
-    useEffect(() => {
-      console.log('Outflows Updated:', outflows);
-    }, [outflows]);
-    
-    useEffect(() => {
-      console.log('Remaining Quantities Updated:', remainingQuantities);
-    }, [remainingQuantities]);
-    
-    
   
     console.log('rems',remainingQuantities);
 
@@ -244,23 +149,66 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   
 
   const handleDelete = useCallback((deletedPurchase) => {
-
-    const isConfirmed = window.confirm('Are you sure you want to delete this purchase?');
-
-    if (isConfirmed) {
+    const { materialid, lotnumber, location, width, quantity } = deletedPurchase;
+  
+    // ✅ Normalize lotnumber and width
+    const normalizedLotnumber = (!lotnumber || lotnumber.trim() === '') ? null : lotnumber;
+    const normalizedWidth = (!width || width.trim() === '') ? null : width;
+  
+    console.log(`🔍 Checking remaining quantity for: 
+      Material: ${materialid}, 
+      Location: ${location}, 
+      Lot: ${normalizedLotnumber || 'NULL'}, 
+      Width: ${normalizedWidth || 'NULL'}`);
+  
+    // 🔎 Find the correct `remaining_quantity`
+    const matchingEntry = remainingQuantities.find((entry) =>
+      entry.materialid === materialid &&
+      entry.location === location &&
+      (
+        entry.lotnumber === normalizedLotnumber || 
+        (!entry.lotnumber && (!normalizedLotnumber || normalizedLotnumber === "EMPTY")) ||
+        (entry.lotnumber === "EMPTY" && (!normalizedLotnumber || normalizedLotnumber === "EMPTY"))
+      ) &&
+      (
+        parseFloat(entry.width) === parseFloat(normalizedWidth) || 
+        (entry.width === null && (!normalizedWidth || parseFloat(normalizedWidth) === -1)) ||
+        (parseFloat(entry.width) === -1 && (!normalizedWidth || parseFloat(normalizedWidth) === -1))
+      )
+    );
+  
+    if (!matchingEntry) {
+      alert(`❌ Error: No remaining quantity data found for this purchase.`);
+      return;
+    }
+  
+    const remaining = parseFloat(matchingEntry.remaining_quantity) || 0;
+    console.log(`✅ Found Remaining Quantity: ${remaining.toFixed(2)} for this material.`);
+  
+    // ❌ Block delete if remaining quantity is smaller than row quantity
+    if (remaining < quantity) {
+      alert(`❌ Cannot delete: Remaining quantity (${remaining.toFixed(2)}) is less than the purchase quantity (${quantity}).`);
+      return;
+    }
+  
+    // ✅ Proceed with delete only if all checks pass
+    if (window.confirm('Are you sure you want to delete this purchase?')) {
       fetchAPI(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
         method: 'DELETE',
       })
         .then(() => {
-          const updatedPurchaseList = purchases.filter((p) => p.id !== deletedPurchase.id);
-          setPurchases(updatedPurchaseList);
-          alert('Purchase is Deleted.');
+          setPurchases((prevPurchases) => prevPurchases.filter((p) => p.id !== deletedPurchase.id));
+          alert('✅ Purchase deleted successfully.');
         })
         .catch((error) => {
-          console.log('Error deleting purchase:', error);
+          console.error('❌ Error deleting purchase:', error);
+          alert('❌ Error deleting purchase.');
         });
     }
-  }, [purchases, apiBaseUrl, fetchAPI]);
+  }, [remainingQuantities, apiBaseUrl, fetchAPI]);
+  
+  
+  
 
   const handleEdit = useCallback((purchase) => {
     if (editingPurchase && editingPurchase.id === purchase.id) {
@@ -280,7 +228,86 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
     setVerPurchase(purchase);
   }, [verPurchase]);
 
-  const handleUpdate = useCallback(async (updatedPurchase) => {
+  const handleUpdate = useCallback((updatedPurchase) => {
+    const { id, materialid, lotnumber, location, width, quantity } = updatedPurchase;
+  
+    // ✅ Normalize lotnumber and width
+    const normalizedLotnumber = (!lotnumber || lotnumber.trim() === '') ? null : lotnumber;
+    const normalizedWidth = (!width || width.trim() === '') ? null : width;
+  
+    console.log(`🔍 Checking remaining quantity before edit:
+      Material: ${materialid}, 
+      Location: ${location}, 
+      Lot: ${normalizedLotnumber || 'NULL'}, 
+      Width: ${normalizedWidth || 'NULL'}, 
+      New Quantity: ${quantity}`);
+  
+    // 🔎 Find the current `remaining_quantity`
+    const matchingEntry = remainingQuantities.find((entry) =>
+      entry.materialid === materialid &&
+      entry.location === location &&
+      (
+        entry.lotnumber === normalizedLotnumber || 
+        (!entry.lotnumber && (!normalizedLotnumber || normalizedLotnumber === "EMPTY")) ||
+        (entry.lotnumber === "EMPTY" && (!normalizedLotnumber || normalizedLotnumber === "EMPTY"))
+      ) &&
+      (
+        parseFloat(entry.width) === parseFloat(normalizedWidth) || 
+        (entry.width === null && (!normalizedWidth || parseFloat(normalizedWidth) === -1)) ||
+        (parseFloat(entry.width) === -1 && (!normalizedWidth || parseFloat(normalizedWidth) === -1))
+      )
+    );
+  
+    if (!matchingEntry) {
+      alert(`❌ Error: No remaining quantity data found for this purchase.`);
+      return;
+    }
+  
+    const currentRemaining = parseFloat(matchingEntry.remaining_quantity) || 0;
+    console.log(`✅ Found Current Remaining Quantity: ${currentRemaining.toFixed(2)}`);
+  
+    // ✅ Find the original purchase quantity before updating
+    const originalPurchase = purchases.find(p => p.id === id);
+    if (!originalPurchase) {
+      alert(`❌ Error: Cannot find the original purchase.`);
+      return;
+    }
+  
+    const originalQuantity = parseFloat(originalPurchase.quantity) || 0;
+    console.log(`🔄 Original Purchase Quantity: ${originalQuantity}`);
+  
+    // 🔹 Calculate the maximum allowed quantity
+    const minQuantity = originalQuantity - currentRemaining;
+    console.log(`🔄 Minimum Allowed Quantity: ${minQuantity.toFixed(2)}`);
+  
+    // ❌ Block update if it exceeds the maximum allowed quantity
+    if (quantity < minQuantity) {
+      alert(`❌ Cannot update: The new quantity (${quantity}) exceeds the available stock (${minQuantity.toFixed(2)}).`);
+      return;
+    }
+  
+    // ✅ Proceed with update only if all checks pass
+    fetchAPI(`${apiBaseUrl}/PurchasesAPI/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedPurchase),
+    })
+      .then(() => {
+        fetchData(); // Refresh data after update
+        setEditingPurchase(null);
+        alert('✅ Purchase updated successfully.');
+      })
+      .catch((error) => {
+        console.error('❌ Error updating the purchase:', error);
+        alert('❌ Error updating purchase.');
+      });
+  }, [purchases, remainingQuantities, apiBaseUrl, fetchAPI, fetchData]);
+  
+  
+
+  /*const handleUpdate = useCallback(async (updatedPurchase) => {
     try {
       await fetchAPI(`${apiBaseUrl}/PurchasesAPI/${updatedPurchase.id}`, {
         method: 'PUT',
@@ -297,7 +324,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       console.error('Error updating the purchase:', error);
       alert('Edit Error.');
     }
-  }, [fetchData, apiBaseUrl, fetchAPI]);
+  }, [fetchData, apiBaseUrl, fetchAPI]);*/
 
 
   const handleCancel = () => {
@@ -392,23 +419,33 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
-          const { materialid, lotnumber, location, width } = row;
-      
-          // Find the matching entry in remainingQuantities
-          const matchingEntry = remainingQuantities.find((data) =>
-            data.materialid === materialid &&
-            data.location === location &&
-            data.width === width &&
-            data.lotnumber === lotnumber
+          // Εύρεση αντιστοιχίας στο testremaining
+          const data = remainingQuantities.find((entry) =>
+            entry.materialid === row.materialid && // Ταιριάζει το materialid
+            entry.location === row.location && // Σιγουρεύουμε ότι το location είναι αριθμός
+            (
+              entry.lotnumber === row.lotnumber || // Σωστή αντιστοίχιση lotnumber
+              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) || // Αν το entry.lotnumber είναι null/empty και το row.lotnumber είναι επίσης empty
+              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY")) // Αν το entry.lotnumber είναι "EMPTY"
+          )
+           &&
+            (
+              parseFloat(entry.width) === parseFloat(row.width) || // Σωστή σύγκριση width
+              (entry.width === null && (!row.width || parseFloat(row.width) === -1)) || // Αν entry.width είναι null, τότε row.width πρέπει να είναι -1 ή undefined
+              (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1)) // Αν entry.width είναι -1, το row.width πρέπει να είναι το ίδιο
+            )
           );
-      
-          // Get the remaining quantity or default to 0, formatted to 2 decimal places
-          const remaining = matchingEntry ? matchingEntry.remainingQuantity.toFixed(2) : '0.00';
-      
-          // Return the remaining quantity styled in red
+
+          // Αν υπάρχει σωστό remaining_quantity, εμφανίζεται, αλλιώς 'N/A'
+          const remaining = data && !isNaN(parseFloat(data.remaining_quantity))
+            ? parseFloat(data.remaining_quantity).toFixed(2)
+            : 'N/A';
+
           return <span style={{ color: 'red' }}>{remaining}</span>;
         },
-      },
+      }
+      ,
+      
       {
         Header: 'Price',
         accessor: 'price',

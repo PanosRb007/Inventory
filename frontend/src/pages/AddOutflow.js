@@ -48,14 +48,14 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
   const openAddProjectForm = () => {
     setShowAddProjectForm(true);
   };
-  console.log('availableQuotedItems:', availableQuotedItems);
+  console.log('availablematerials:', availableMaterials);
 
 
   useEffect(() => {
     const fetchMaterials = async () => {
       if (newOutflow.location) {
         try {
-          const response = await fetchAPI(`${apiBaseUrl}/outflowsAPI/unique-materials/${newOutflow.location}`);
+          const response = await fetchAPI(`${apiBaseUrl}/remaining_quantityAPI/${newOutflow.location}`);
           const filteredMaterials = response.filter(material => material.remaining_quantity > 0); // Filter remaining_quantity > 0
           setAvailableMaterials(filteredMaterials);
         } catch (error) {
