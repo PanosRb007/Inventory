@@ -19,7 +19,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  transition: width 0.3s ease-in-out;
+  transition: width 0.9s ease-in-out;
   overflow-y: auto;
   border-top-right-radius: 20px;
   border-bottom-right-radius: 20px;
@@ -33,16 +33,18 @@ body {
 .sidebar:hover {
   width: 200px;
   align-items: flex-start;
+  transition-delay: 0.9s;
 }
 
 .content {
-  transition: margin-left 0.3s ease-in-out;
+  transition: margin-left 0.9s ease-in-out;
   margin-left: 60px;
   padding: 20px;
 }
 
 .sidebar:hover ~ .content {
   margin-left: 200px;
+  transition: margin-left 0.9s ease-in-out 0.9s;
 }
 
 .sidebar:hover .nav-link {
@@ -52,7 +54,7 @@ body {
 .sidebar:hover .nav-link span {
   opacity: 1;
   width: auto;
-  transition-delay: 0.1s;
+  transition-delay: 0.9s;
 }
 
 .navbar-nav {
@@ -71,7 +73,7 @@ body {
   color: #ffffff;
   padding: 10px;
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.9s ease;
   justify-content: center; /* Κέντρο το εικονίδιο */
 }
 
@@ -86,7 +88,7 @@ body {
 
 .nav-link span {
   opacity: 0; /* Κρύβεται όταν το sidebar είναι μικρό */
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.9s ease-in-out;
   width: 0;
   overflow: hidden;
 }
@@ -105,7 +107,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s;
+  transition: background-color 0.9s;
 }
 
 .sidebar button:hover {
@@ -126,12 +128,12 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s, width 0.3s ease-in-out;
+  transition: background-color 0.9s, width 0.9s ease-in-out;
 }
 
 .logout-btn span {
   opacity: 0; /* Το κείμενο είναι κρυφό αρχικά */
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.9s ease-in-out;
   width: 0;
   overflow: hidden;
 }
@@ -145,7 +147,7 @@ body {
 .sidebar:hover .logout-btn span {
   opacity: 1;
   width: auto;
-  transition-delay: 0.1s;
+  transition-delay: 0.9s;
 }
 
 .logout-btn:hover {
