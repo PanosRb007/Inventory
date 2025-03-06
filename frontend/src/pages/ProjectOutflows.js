@@ -131,6 +131,7 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
       },
     },
     { Header: 'Quantity', accessor: 'quantity', Cell: ({ value }) => parseFloat(value).toFixed(2) },
+    { Header: 'Width', accessor: 'width'},
     {
       Header: 'Cost',
       accessor: 'cost',

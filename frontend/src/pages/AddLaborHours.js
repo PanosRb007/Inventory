@@ -308,6 +308,11 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         }, {});
     }, [employees]);
 
+    const filteredProjects = projects.filter(project => project.status?.data?.[0] === 0);
+
+console.log("Filtered Projects:", filteredProjects);
+
+
     if (error) {
         return <div className="error">Error: {error}</div>;
     }
@@ -345,20 +350,25 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                             <div className="form-group">
                                 <label>Project:</label>
                                 <Select
-                                    name="projectid"
-                                    value={
-                                        projects.find(project => project.prid === dayRecords.projectid)
-                                            ? { value: dayRecords.projectid, label: projects.find(project => project.prid === dayRecords.projectid).name }
-                                            : null
-                                    }
-                                    options={projects.map(project => ({
-                                        value: project.prid,
-                                        label: project.name,
-                                    }))}
-                                    onChange={selectedOption => handleChange('projectid', selectedOption.value)}
-                                    placeholder="Select a Project"
-                                    required
-                                />
+    name="projectid"
+    value={
+        (() => {
+            const selectedProject = projects.find(project => project.prid === dayRecords.projectid);
+            return selectedProject ? { value: selectedProject.prid, label: selectedProject.name } : null;
+        })()
+    }
+    options={filteredProjects
+        
+        .map(project => ({
+            value: project.prid,
+            label: project.name,
+        }))
+    }
+    onChange={selectedOption => handleChange('projectid', selectedOption.value)}
+    placeholder="Select a Project"
+    required
+/>
+
                             </div>
                             <div className='form-group'>
                                 <label>Quoted Items:</label>

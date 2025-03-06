@@ -4,7 +4,6 @@ import './PurchaseFunc.css';
 
 const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases, locations, materials, employees, projects }) => {
 
-  const [availableMaterials, setAvailableMaterials] = useState([]);
   const [availableWidths, setAvailableWidths] = useState([]);
   const [availableLots, setAvailableLots] = useState([]);
   const [availableSubProjects, setAvailableSubProjects] = useState([]);
@@ -22,35 +21,6 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
   useEffect(() => {
 
     const fetchData = async () => {
-
-      if (editedOutflow.location) {
-        try {
-
-          const filteredMaterials = purchases.filter((mat) =>
-            mat.location === editedOutflow.location
-          );
-          const filteredOutflows = outflows.filter((out) =>
-            out.location === editedOutflow.location
-          );
-
-          const filteredNonZero = filteredMaterials.filter((mat) => {
-            const sumOfOutflows = filteredOutflows
-              .filter((outflow) => outflow.materialid === mat.materialid)
-              .reduce((total, outflow) => total + parseFloat(outflow.quantity), 0);
-
-            const sumOfPurchases = filteredMaterials
-              .filter((purchase) => purchase.materialid === mat.materialid)
-              .reduce((total, purchase) => total + parseFloat(purchase.quantity), 0);
-
-
-            return sumOfPurchases - sumOfOutflows > 0;
-          });
-
-          setAvailableMaterials(filteredNonZero);
-        } catch (error) {
-          console.error('Error fetching material data:', error);
-        }
-      }
 
       if (editedOutflow.materialid) {
         try {
@@ -238,53 +208,7 @@ const EditOutflow = ({ outflow, handleUpdate, handleCancel, outflows, purchases,
       <h2 className="heading">Edit Outflow</h2>
       <form onSubmit={handleSubmit} className="form">
         <div className='form-row'>
-          <div className='form-group'>
-            <label>Location:</label>
-            <Select
-              name="location"
-              value={editedOutflow.location ? { value: editedOutflow.location, label: locations.find(loc => loc.id === editedOutflow.location)?.locationname } : null}
-              options={locations.map((location) => ({
-                value: location.id,
-                label: location.locationname
-              }))}
-              onChange={(selectedOption) =>
-                handleChange({
-                  target: {
-                    name: 'location',
-                    value: selectedOption.value,
-                  },
-                })
-              }
-              placeholder="Select a location"
-              required
-            />
-          </div>
-
-          {editedOutflow.location && (
-            <div>
-              <div className='form-group'>
-                <label>Material ID:</label>
-                <Select
-                  name="materialid"
-                  value={editedOutflow.materialid ? { value: editedOutflow.materialid, label: editedOutflow.materialid } : null}
-                  options={availableMaterials
-                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
-                    .map((material) => ({
-                      value: material.materialid,
-                      label: material.materialid,
-                    }))}
-                  onChange={(selectedOption) => handleChange({ target: { name: 'materialid', value: selectedOption.value } })}
-                  placeholder="Select a material"
-                  required // Add the required attribute
-                />
-
-              </div>
-              <div className='form-group'>
-                <label>Material Name:</label>
-                <input type="text" name="materialname" value={materials.find(mat => mat.matid === editedOutflow.materialid)?.name} readOnly required />
-              </div>
-            </div>
-          )}
+          
           {showExtras && editedOutflow.materialname && (
             <div className='form-group'>
               <label>Width:</label>
