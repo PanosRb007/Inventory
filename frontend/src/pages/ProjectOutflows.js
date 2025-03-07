@@ -363,8 +363,9 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
                 <th>Product Name</th>
                 <th>Product Description</th>
                 <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total</th>
+                     {/* ✅ Εμφάνιση μόνο αν ο χρήστης ΔΕΝ είναι Senior */}
+          {userRole !== 'Senior' && <th>Unit Price</th>}
+          {userRole !== 'Senior' && <th>Total</th>}
               </tr>
             </thead>
             <tbody>
@@ -373,8 +374,9 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
                   <td>{item.product_name}</td>
                   <td>{item.product_description}</td>
                   <td>{parseFloat(item.quantity).toFixed(2)}</td>
-                  <td>{item.unit_price ? `${parseFloat(item.unit_price).toFixed(2)} €` : '-'}</td>
-                  <td>{item.total ? `${parseFloat(item.total).toFixed(2)} €` : '-'}</td>
+                  {/* ✅ Εμφάνιση μόνο αν ο χρήστης ΔΕΝ είναι Senior */}
+            {userRole !== 'Senior' && <td>{item.unit_price ? `${parseFloat(item.unit_price).toFixed(2)} €` : '-'}</td>}
+            {userRole !== 'Senior' && <td>{item.total ? `${parseFloat(item.total).toFixed(2)} €` : '-'}</td>}
                 </tr>
               ))}
             </tbody>
