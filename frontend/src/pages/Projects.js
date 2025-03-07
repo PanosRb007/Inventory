@@ -267,8 +267,8 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
           <table className="sub-table">
             <thead>
               <tr>
-                <th>Product ID</th>
                 <th>Product Name</th>
+                <th>Product Description</th>
                 <th>Quantity</th>
                 <th>Unit Price</th>
                 <th>Total</th>
@@ -277,8 +277,8 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
             <tbody>
               {row.original.quotedItems.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.product_id}</td>
                   <td>{item.product_name}</td>
+                  <td>{item.product_description}</td>
                   <td>{item.quantity}</td>
                   <td>{item.unit_price ? `${parseFloat(item.unit_price).toFixed(2)} €` : '-'}</td>
                   <td>{item.total ? `${parseFloat(item.total).toFixed(2)} €` : '-'}</td>

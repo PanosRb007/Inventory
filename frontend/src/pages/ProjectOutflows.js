@@ -93,10 +93,6 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
     }
   }, [currentProject, apiBaseUrl, fetchData, statusValue]);
 
-
-
-
-
   const formatCurrency = (value) => `${parseFloat(value).toFixed(2)} €`;
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('el-GR');
 
@@ -131,7 +127,7 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
       },
     },
     { Header: 'Quantity', accessor: 'quantity', Cell: ({ value }) => parseFloat(value).toFixed(2) },
-    { Header: 'Width', accessor: 'width'},
+    { Header: 'Width', accessor: 'width' },
     {
       Header: 'Cost',
       accessor: 'cost',
@@ -148,6 +144,7 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
         return employee ? employee.name : 'Employee not found';
       },
     },
+    { Header: 'Comments', accessor: 'comments' },
   ], [materials, employees]);
 
   const laborHoursColumns = useMemo(() => {
@@ -165,6 +162,19 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
       { Header: 'Start Time', accessor: 'start' },
       { Header: 'End Time', accessor: 'end' },
       { Header: 'Hours Worked', accessor: 'hoursWorked', Cell: ({ value }) => `${parseFloat(value).toFixed(2)} h` },
+      {
+        Header: 'Sub Project',
+        accessor: (row) => {
+          const project = projects.find(prj => prj.prid === row.projectid);
+          const quotedItem = project?.quotedItems?.find(item => item.id === row.quotedItemid);
+          return quotedItem ? { name: quotedItem.product_name, description: quotedItem.product_description } : { name: '', description: '' };
+        },
+        Cell: ({ value }) => (
+          <span style={{ color: 'green' }} title={value.description}>
+            {value.name}
+          </span>
+        ),
+      },
       { Header: 'Comments', accessor: 'comments' },
     ];
 
@@ -177,7 +187,7 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
     }
 
     return columns;
-  }, [employees, userRole]);
+  }, [employees, userRole, projects]);
 
   const outflowTableInstance = useTable(
     { columns: outflowColumns, data: outflows, initialState: { pageIndex: 0 } },
@@ -343,6 +353,34 @@ const ProjectOutflows = ({ apiBaseUrl, userRole }) => {
           </div>
         )}
       </div>
+
+      {currentProject?.quotedItems?.length > 0 && (
+        <div>
+          <h2>Quoted Items</h2>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Product Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentProject.quotedItems.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.product_name}</td>
+                  <td>{item.product_description}</td>
+                  <td>{parseFloat(item.quantity).toFixed(2)}</td>
+                  <td>{item.unit_price ? `${parseFloat(item.unit_price).toFixed(2)} €` : '-'}</td>
+                  <td>{item.total ? `${parseFloat(item.total).toFixed(2)} €` : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Outflows & Labor Hours Tables */}
       {renderTable(outflowTableInstance, 'Outflows')}
