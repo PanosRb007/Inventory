@@ -98,8 +98,8 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-  
-    console.log('rems',remainingQuantities);
+
+  console.log('rems', remainingQuantities);
 
   const filteredData = useMemo(() => {
     const lowerCaseFilterOne = globalFilterOne.toLowerCase();
@@ -123,7 +123,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
           (purchase) =>
             purchase.lotnumber === newPurchase.lotnumber
         );
-  
+
         if (duplicate) {
           alert(
             'The specified Lot Number already exists for this material with the same width.'
@@ -139,58 +139,58 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         },
         body: JSON.stringify(newPurchase),
       });
-  
+
       fetchData(); // Refresh data after adding the purchase
     } catch (error) {
       console.error('Error adding purchase:', error.message);
       alert('Failed to add the purchase. Please try again.');
     }
   }, [fetchData, apiBaseUrl, fetchAPI, purchases]);
-  
+
 
   const handleDelete = useCallback((deletedPurchase) => {
     const { materialid, lotnumber, location, width, quantity } = deletedPurchase;
-  
+
     // ✅ Normalize lotnumber and width
     const normalizedLotnumber = (!lotnumber || lotnumber.trim() === '') ? null : lotnumber;
     const normalizedWidth = (!width || width.trim() === '') ? null : width;
-  
+
     console.log(`🔍 Checking remaining quantity for: 
       Material: ${materialid}, 
       Location: ${location}, 
       Lot: ${normalizedLotnumber || 'NULL'}, 
       Width: ${normalizedWidth || 'NULL'}`);
-  
+
     // 🔎 Find the correct `remaining_quantity`
     const matchingEntry = remainingQuantities.find((entry) =>
       entry.materialid === materialid &&
       entry.location === location &&
       (
-        entry.lotnumber === normalizedLotnumber || 
+        entry.lotnumber === normalizedLotnumber ||
         (!entry.lotnumber && (!normalizedLotnumber || normalizedLotnumber === "EMPTY")) ||
         (entry.lotnumber === "EMPTY" && (!normalizedLotnumber || normalizedLotnumber === "EMPTY"))
       ) &&
       (
-        parseFloat(entry.width) === parseFloat(normalizedWidth) || 
+        parseFloat(entry.width) === parseFloat(normalizedWidth) ||
         (entry.width === null && (!normalizedWidth || parseFloat(normalizedWidth) === -1)) ||
         (parseFloat(entry.width) === -1 && (!normalizedWidth || parseFloat(normalizedWidth) === -1))
       )
     );
-  
+
     if (!matchingEntry) {
       alert(`❌ Error: No remaining quantity data found for this purchase.`);
       return;
     }
-  
+
     const remaining = parseFloat(matchingEntry.remaining_quantity) || 0;
     console.log(`✅ Found Remaining Quantity: ${remaining.toFixed(2)} for this material.`);
-  
+
     // ❌ Block delete if remaining quantity is smaller than row quantity
     if (remaining < quantity) {
       alert(`❌ Cannot delete: Remaining quantity (${remaining.toFixed(2)}) is less than the purchase quantity (${quantity}).`);
       return;
     }
-  
+
     // ✅ Proceed with delete only if all checks pass
     if (window.confirm('Are you sure you want to delete this purchase?')) {
       fetchAPI(`${apiBaseUrl}/PurchasesAPI/${deletedPurchase.id}`, {
@@ -206,9 +206,9 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         });
     }
   }, [remainingQuantities, apiBaseUrl, fetchAPI]);
-  
-  
-  
+
+
+
 
   const handleEdit = useCallback((purchase) => {
     if (editingPurchase && editingPurchase.id === purchase.id) {
@@ -230,62 +230,62 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
   const handleUpdate = useCallback((updatedPurchase) => {
     const { id, materialid, lotnumber, location, width, quantity } = updatedPurchase;
-  
+
     // ✅ Normalize lotnumber and width
     const normalizedLotnumber = (!lotnumber || lotnumber.trim() === '') ? null : lotnumber;
     const normalizedWidth = (!width || width.trim() === '') ? null : width;
-  
+
     console.log(`🔍 Checking remaining quantity before edit:
       Material: ${materialid}, 
       Location: ${location}, 
       Lot: ${normalizedLotnumber || 'NULL'}, 
       Width: ${normalizedWidth || 'NULL'}, 
       New Quantity: ${quantity}`);
-  
+
     // 🔎 Find the current `remaining_quantity`
     const matchingEntry = remainingQuantities.find((entry) =>
       entry.materialid === materialid &&
       entry.location === location &&
       (
-        entry.lotnumber === normalizedLotnumber || 
+        entry.lotnumber === normalizedLotnumber ||
         (!entry.lotnumber && (!normalizedLotnumber || normalizedLotnumber === "EMPTY")) ||
         (entry.lotnumber === "EMPTY" && (!normalizedLotnumber || normalizedLotnumber === "EMPTY"))
       ) &&
       (
-        parseFloat(entry.width) === parseFloat(normalizedWidth) || 
+        parseFloat(entry.width) === parseFloat(normalizedWidth) ||
         (entry.width === null && (!normalizedWidth || parseFloat(normalizedWidth) === -1)) ||
         (parseFloat(entry.width) === -1 && (!normalizedWidth || parseFloat(normalizedWidth) === -1))
       )
     );
-  
+
     if (!matchingEntry) {
       alert(`❌ Error: No remaining quantity data found for this purchase.`);
       return;
     }
-  
+
     const currentRemaining = parseFloat(matchingEntry.remaining_quantity) || 0;
     console.log(`✅ Found Current Remaining Quantity: ${currentRemaining.toFixed(2)}`);
-  
+
     // ✅ Find the original purchase quantity before updating
     const originalPurchase = purchases.find(p => p.id === id);
     if (!originalPurchase) {
       alert(`❌ Error: Cannot find the original purchase.`);
       return;
     }
-  
+
     const originalQuantity = parseFloat(originalPurchase.quantity) || 0;
     console.log(`🔄 Original Purchase Quantity: ${originalQuantity}`);
-  
+
     // 🔹 Calculate the maximum allowed quantity
     const minQuantity = originalQuantity - currentRemaining;
     console.log(`🔄 Minimum Allowed Quantity: ${minQuantity.toFixed(2)}`);
-  
+
     // ❌ Block update if it exceeds the maximum allowed quantity
     if (quantity < minQuantity) {
       alert(`❌ Cannot update: The new quantity (${quantity}) exceeds the available stock (${minQuantity.toFixed(2)}).`);
       return;
     }
-  
+
     // ✅ Proceed with update only if all checks pass
     fetchAPI(`${apiBaseUrl}/PurchasesAPI/${id}`, {
       method: 'PUT',
@@ -304,8 +304,8 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         alert('❌ Error updating purchase.');
       });
   }, [purchases, remainingQuantities, apiBaseUrl, fetchAPI, fetchData]);
-  
-  
+
+
 
   /*const handleUpdate = useCallback(async (updatedPurchase) => {
     try {
@@ -363,26 +363,26 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         method: 'POST',
         body: JSON.stringify(newOutflow),
       });
-  
+
       console.log('✅ Outflow added successfully.');
-  
+
       // Force update purchases and outflows
       await fetchData();
-  
+
       // Close the InstOut form
       setShowAddInstOutflowForm(false);
-  
+
       alert('✅ Outflow added successfully.');
     } catch (error) {
       console.error('❌ Error adding outflow:', error.message);
       alert('❌ Error adding outflow.');
     }
   }, [apiBaseUrl, fetchAPI, fetchData, setShowAddInstOutflowForm]);
-  
-  
-  
-  
-  
+
+
+
+
+
 
   const columns = React.useMemo(
     () => [
@@ -398,15 +398,15 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         Header: 'Material ID',
         accessor: 'materialid',
         Cell: ({ row }) => (
-            <span 
-                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-                onClick={() => openMATPurc(row.original)}
-            >
-                {row.original.materialid}
-            </span>
+          <span
+            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+            onClick={() => openMATPurc(row.original)}
+          >
+            {row.original.materialid}
+          </span>
         ),
-    },
-          {
+      },
+      {
         Header: 'Material Name',
         accessor: (row) => {
           const material = materials.find((material) => material.matid === row.materialid);
@@ -427,8 +427,8 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
               entry.lotnumber === row.lotnumber || // Σωστή αντιστοίχιση lotnumber
               (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) || // Αν το entry.lotnumber είναι null/empty και το row.lotnumber είναι επίσης empty
               (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY")) // Αν το entry.lotnumber είναι "EMPTY"
-          )
-           &&
+            )
+            &&
             (
               parseFloat(entry.width) === parseFloat(row.width) || // Σωστή σύγκριση width
               (entry.width === null && (!row.width || parseFloat(row.width) === -1)) || // Αν entry.width είναι null, τότε row.width πρέπει να είναι -1 ή undefined
@@ -445,7 +445,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         },
       }
       ,
-      
+
       {
         Header: 'Price',
         accessor: 'price',
@@ -480,7 +480,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
             return (
               <div>
                 <span title={tooltipContent}
-                  style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} 
+                  style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
                   onClick={() => openVendPurc(row.original)}>
                   {value}
                 </span>
@@ -625,26 +625,26 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
                 {editingPurchase && editingPurchase.id === row.original.id && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <EditPurchase 
-                      purchase={editingPurchase} 
-                      handleUpdate={handleUpdate} 
-                      vendors={vendors} 
-                      locations={locations} 
-                      materials={materials} 
-                      purchases={purchases} 
-                      setPurchases={setPurchases} 
-                      handleCancel={handleCancel} 
-                      apiBaseUrl={apiBaseUrl} />
+                      <EditPurchase
+                        purchase={editingPurchase}
+                        handleUpdate={handleUpdate}
+                        vendors={vendors}
+                        locations={locations}
+                        materials={materials}
+                        purchases={purchases}
+                        setPurchases={setPurchases}
+                        handleCancel={handleCancel}
+                        apiBaseUrl={apiBaseUrl} />
                     </td>
                   </tr>
                 )}
                 {verPurchase && verPurchase.id === row.original.id && (
                   <tr>
                     <td colSpan={columns.length}>
-                      <PurchaseVerification 
-                      purchase={verPurchase} 
-                      handleCancel={handleCancel} 
-                      handleUpdate={handleUpdate} />
+                      <PurchaseVerification
+                        purchase={verPurchase}
+                        handleCancel={handleCancel}
+                        handleUpdate={handleUpdate} />
                     </td>
                   </tr>
                 )}
@@ -735,7 +735,7 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
         </div>
       )}
 
-{showMatPurc && (
+      {showMatPurc && (
         <div className="overlay">
           <div className="popup">
             <span className="close-popup" onClick={() => setShowMatPurc(false)}>

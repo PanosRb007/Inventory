@@ -1,0 +1,172 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Fullscreen container */
+.calendar-container {
+    position: absolute; /* Αν το sidebar είναι fixed, τότε το calendar πρέπει να είναι absolute */
+    top: 0;
+    left: 450px; /* Αν το sidebar έχει πλάτος 200px */
+    width: calc(100% - 200px); /* Αφαιρούμε το πλάτος του sidebar */
+    height: calc(100vh - 120px); /* 120px = Ύψος του header με το logo */    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    z-index: 500; /* Να είναι πάνω από το sidebar */
+    flex-grow: 1;
+    padding: 10px;
+}
+
+/* Fullscreen mode */
+.calendar-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1000; /* Μεγαλύτερο z-index για να φαίνεται πάνω από όλα */
+    background: white;
+}
+
+/* FullCalendar styling */
+.fc {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Toolbar styling */
+.calendar-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 100px 0; /* Μειώνουμε το padding */
+    background: #f4f4f4;
+    margin-bottom: 5px; /* Προσθέτουμε μικρό κενό */
+}
+
+
+.calendar-toolbar button {
+    padding: 8px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.calendar-toolbar button:hover {
+    background: #0056b3;
+}
+
+/* Fullscreen button */
+.fullscreen-btn {
+    background: #28a745;
+}
+
+.fullscreen-btn:hover {
+    background: #218838;
+}
+
+/* ✅ Σωστή τοποθέτηση του ημερολογίου κάτω από το logo */
+.calendar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex-grow: 1;
+    overflow: hidden;
+    padding-top: 10px; /* Προσαρμογή για να μην ακουμπάει στο logo */
+}
+/* ✅ Context Menu */
+.context-menu {
+    position: absolute;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    border-radius: 5px;
+    z-index: 1000;
+    min-width: 160px;
+}
+
+.context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: black;
+    background: white;
+}
+
+.context-menu li:hover {
+    background: #0078d7;
+    color: white;
+}
+
+/* ✅ Event Menu */
+.event-menu {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 6px;
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.event-menu h4 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.event-menu p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.calendar-page {
+    display: flex;
+    height: 100vh;
+}
+
+/* ✅ Στυλ για το draggable projects list */
+.draggable-items {
+    width: 250px;
+    background: #f4f4f4;
+    padding: 15px;
+    border-right: 2px solid #ddd;
+    overflow-y: auto;
+}
+
+.draggable-items h3 {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.draggable-project {
+    padding: 8px;
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    cursor: grab;
+    text-align: center;
+}
+
+.draggable-project:active {
+    cursor: grabbing;
+}
+
+/* ✅ Στυλ για το FullCalendar */
+.calendar-container {
+    flex-grow: 1;
+    padding: 10px;
+}

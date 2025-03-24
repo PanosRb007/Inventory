@@ -219,23 +219,23 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             acc[item.employeeid].push(item);
             return acc;
         }, {});
-    
+
         // Sort each group by start time
         Object.keys(grouped).forEach(employeeId => {
             grouped[employeeId].sort((a, b) => a.start.localeCompare(b.start));
         });
-    
+
         // Flatten the sorted groups into an array
         return Object.values(grouped).flat();
     }, [alllaborHours]);
-    
+
     // Pass the sorted and grouped data to the table
     const tableInstance1 = useTable(
         { columns, data: groupedAndSortedData },
         useSortBy
     );
-    
-    
+
+
     const {
         getTableProps: getTableProps1,
         getTableBodyProps: getTableBodyProps1,
@@ -243,7 +243,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         rows: rows1,
         prepareRow: prepareRow1,
     } = tableInstance1;
-    
+
 
     const selectEmployee = empid => {
         const selected = employees.find(e => e.empid === empid);
@@ -310,7 +310,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
 
     const filteredProjects = projects.filter(project => project.status?.data?.[0] === 0);
 
-console.log("Filtered Projects:", filteredProjects);
+    console.log("Filtered Projects:", filteredProjects);
 
 
     if (error) {
@@ -350,24 +350,24 @@ console.log("Filtered Projects:", filteredProjects);
                             <div className="form-group">
                                 <label>Project:</label>
                                 <Select
-    name="projectid"
-    value={
-        (() => {
-            const selectedProject = projects.find(project => project.prid === dayRecords.projectid);
-            return selectedProject ? { value: selectedProject.prid, label: selectedProject.name } : null;
-        })()
-    }
-    options={filteredProjects
-        
-        .map(project => ({
-            value: project.prid,
-            label: project.name,
-        }))
-    }
-    onChange={selectedOption => handleChange('projectid', selectedOption.value)}
-    placeholder="Select a Project"
-    required
-/>
+                                    name="projectid"
+                                    value={
+                                        (() => {
+                                            const selectedProject = projects.find(project => project.prid === dayRecords.projectid);
+                                            return selectedProject ? { value: selectedProject.prid, label: selectedProject.name } : null;
+                                        })()
+                                    }
+                                    options={filteredProjects
+
+                                        .map(project => ({
+                                            value: project.prid,
+                                            label: project.name,
+                                        }))
+                                    }
+                                    onChange={selectedOption => handleChange('projectid', selectedOption.value)}
+                                    placeholder="Select a Project"
+                                    required
+                                />
 
                             </div>
                             <div className='form-group'>
@@ -482,54 +482,54 @@ console.log("Filtered Projects:", filteredProjects);
 
 
             <div className="material-input-form-container">
-    <h2>Labor Hours for {dayRecords.date}</h2>
+                <h2>Labor Hours for {dayRecords.date}</h2>
 
-    <table {...getTableProps1()} className="table">
-    <thead>
-        {headerGroups1.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                    <th 
-                        {...column.getHeaderProps(column.getSortByToggleProps())} 
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {column.render('Header')}
-                        {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
-                    </th>
-                ))}
-            </tr>
-        ))}
-    </thead>
-    <tbody {...getTableBodyProps1()}>
-        {rows1.map(row => {
-            prepareRow1(row);
-            return (
-                <React.Fragment key={row.id}>
-                    <tr {...row.getRowProps()}>
-                        {row.cells.map(cell => (
-                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                <table {...getTableProps1()} className="table">
+                    <thead>
+                        {headerGroups1.map(headerGroup => (
+                            <tr {...headerGroup.getHeaderGroupProps()}>
+                                {headerGroup.headers.map(column => (
+                                    <th
+                                        {...column.getHeaderProps(column.getSortByToggleProps())}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {column.render('Header')}
+                                        {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
+                                    </th>
+                                ))}
+                            </tr>
                         ))}
-                    </tr>
-                    {editedDayRecords && editedDayRecords.labid === row.original.labid && (
-                        <tr>
-                            <td colSpan={columns.length}>
-                                <EditLaborHours
-                                    labhour={editedDayRecords}
-                                    handleUpdate={handleUpdate}
-                                    employees={employees}
-                                    projects={projects}
-                                    handleCancel={handleCancel}
-                                />
-                            </td>
-                        </tr>
-                    )}
-                </React.Fragment>
-            );
-        })}
-    </tbody>
-</table>
+                    </thead>
+                    <tbody {...getTableBodyProps1()}>
+                        {rows1.map(row => {
+                            prepareRow1(row);
+                            return (
+                                <React.Fragment key={row.id}>
+                                    <tr {...row.getRowProps()}>
+                                        {row.cells.map(cell => (
+                                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                        ))}
+                                    </tr>
+                                    {editedDayRecords && editedDayRecords.labid === row.original.labid && (
+                                        <tr>
+                                            <td colSpan={columns.length}>
+                                                <EditLaborHours
+                                                    labhour={editedDayRecords}
+                                                    handleUpdate={handleUpdate}
+                                                    employees={employees}
+                                                    projects={projects}
+                                                    handleCancel={handleCancel}
+                                                />
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </tbody>
+                </table>
 
-</div>
+            </div>
 
 
         </>

@@ -46,6 +46,7 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
         material_id: editedPurchase.materialid,
         vendor: editedPurchase.vendor,
         price: editedPurchase.price,
+        location: editedPurchase.location
       };
       const authToken = sessionStorage.getItem('authToken');
 

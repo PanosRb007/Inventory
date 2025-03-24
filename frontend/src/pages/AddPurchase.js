@@ -50,78 +50,88 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
   useEffect(() => {
     const fetchData = async () => {
-      const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
+        const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
-      const fetchWithAuth = async (url, options = {}) => {
-        return fetch(url, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${authToken}`,
-          },
-        });
-      };
+        const fetchWithAuth = async (url, options = {}) => {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${authToken}`,
+                },
+            });
+        };
 
-      try {
+        try {
+            if (!newPurchase.materialid) {
+                setShowExtras(false);
+                setNewPurchase(prev => ({ 
+                    ...prev, 
+                    price: '', 
+                    vendor: '', 
+                    vendorname: '', 
+                    materialname: '' 
+                }));
+                return;
+            }
 
-        if (newPurchase.materialid) {
-          try {
             const [responseChanges, responseList] = await Promise.all([
-              fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
-              fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
+                fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
+                fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
             ]);
 
             const [dataChanges, dataList] = await Promise.all([
-              responseChanges.json(),
-              responseList.json(),
+                responseChanges.json(),
+                responseList.json(),
             ]);
 
-            if (dataList && dataList.extras === 1) {
-              setShowExtras(true);
-            } else {
-              setShowExtras(false);
+            setShowExtras(dataList?.extras === 1);
+
+            let finalChange = null;
+
+            if (Array.isArray(dataChanges) && dataChanges.length > 0) {
+                console.log("Fetched all dataChanges:", dataChanges);
+
+                // 1. Προσπαθεί να βρει την εγγραφή που ταιριάζει στο `location`
+                const matchedChange = dataChanges.find(change => Number(change.location) === Number(newPurchase.location));
+
+                // 2. Αν δεν βρει, παίρνει την πιο πρόσφατη διαθέσιμη εγγραφή (η πρώτη στο array)
+                finalChange = matchedChange || dataChanges[0];
+
+                console.log("Final Change Used:", finalChange);
             }
 
-            if (dataChanges && dataChanges.price && dataChanges.vendor) {
-              setNewPurchase((prevPurchase) => ({
-                ...prevPurchase,
-                price: dataChanges.price,
-                vendor: dataChanges.vendor,
-                vendorname: vendors.find((vendor) => vendor.vendorid === dataChanges.vendor).name,
-              }));
-            } else {
-              setNewPurchase((prevPurchase) => ({
-                ...prevPurchase,
-                price: '',
-                vendor: '',
-                vendorname: '',
-              }));
-            }
+            // **Προσθέσαμε έλεγχο πριν το `setNewPurchase()` για αποφυγή περιττών updates**
+            setNewPurchase(prevPurchase => {
+                if (
+                    prevPurchase.price === (finalChange?.price || '') &&
+                    prevPurchase.vendor === (finalChange?.vendor || '') &&
+                    prevPurchase.vendorname === (vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '') &&
+                    prevPurchase.materialname === (dataList?.name || '')
+                ) {
+                    return prevPurchase; // **Αποφεύγουμε το update αν τα δεδομένα είναι ίδια**
+                }
+                
+                return {
+                    ...prevPurchase,
+                    price: finalChange?.price || '',
+                    vendor: finalChange?.vendor || '',
+                    vendorname: vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '',
+                    materialname: dataList?.name || '',
+                };
+            });
 
-            setNewPurchase((prevPurchase) => ({
-              ...prevPurchase,
-              materialname: dataList && dataList.name ? dataList.name : '',
-            }));
-          } catch (error) {
-            console.error('Error fetching material data:', error);
-          }
-        } else {
-          setShowExtras(false);
-          setNewPurchase((prevPurchase) => ({
-            ...prevPurchase,
-            price: '',
-            vendor: '',
-            vendorname: '',
-            materialname: '',
-          }));
+            console.log("Final Price:", finalChange?.price || '');
+            console.log("Final Vendor:", finalChange?.vendor || '');
+            console.log("Final Vendor Name:", vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '');
+        } catch (error) {
+            console.error('Error fetching data:', error);
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
     };
 
     fetchData();
-  }, [newPurchase.materialid, vendors, apiBaseUrl]);
+}, [newPurchase.materialid, newPurchase.location, apiBaseUrl, vendors]);
+
 
   const handleMaterialIdChange = (selectedOption) => {
     const material = materials.find(m => m.matid === selectedOption.value);
@@ -168,11 +178,10 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
     try {
 
-      const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`);
+      const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}/${newPurchase.location}`);
       const dataChanges = await responseChanges.json();
-
       const hasChanges =
-        dataChanges &&
+      dataChanges &&
         (dataChanges.price !== newPurchase.price ||
           dataChanges.vendor !== newPurchase.vendor);
 
@@ -186,6 +195,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             material_id: newPurchase.materialid,
             price: newPurchase.price,
             vendor: newPurchase.vendor,
+            location:newPurchase.location,
           }),
         });
 
@@ -323,6 +333,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               onChange={handleMaterialIdChange}
               placeholder="Select a material"
               required
+              isDisabled={!newPurchase.location}
               
             />
           </div>
@@ -339,7 +350,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               onChange={handleMaterialNameChange}
               placeholder="Select a material name"
               required
-             
+              isDisabled={!newPurchase.location}
             />
           </div>
           {showExtras && (
