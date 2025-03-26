@@ -8,18 +8,22 @@ html, body {
 
 /* Fullscreen container */
 .calendar-container {
-    position: absolute; /* Αν το sidebar είναι fixed, τότε το calendar πρέπει να είναι absolute */
+    position: absolute;
     top: 0;
-    left: 450px; /* Αν το sidebar έχει πλάτος 200px */
-    width: calc(100% - 200px); /* Αφαιρούμε το πλάτος του sidebar */
-    height: calc(100vh - 120px); /* 120px = Ύψος του header με το logo */    background: white;
+    left: 200px; /* ή όσο είναι το sidebar */
+    width: calc(100% - 200px);
+    height: 100vh;
+    background: white;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    z-index: 500; /* Να είναι πάνω από το sidebar */
+    z-index: 500;
     flex-grow: 1;
     padding: 10px;
+    overflow: auto;
+    pointer-events: auto !important;
 }
+
 
 /* Fullscreen mode */
 .calendar-container.fullscreen {
@@ -38,6 +42,11 @@ html, body {
     width: 100%;
     height: 100%;
 }
+
+.fc-event {
+    user-select: none;
+}
+
 
 /* Toolbar styling */
 .calendar-toolbar {
@@ -76,13 +85,9 @@ html, body {
 /* ✅ Σωστή τοποθέτηση του ημερολογίου κάτω από το logo */
 .calendar-wrapper {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    flex-grow: 1;
-    overflow: hidden;
-    padding-top: 10px; /* Προσαρμογή για να μην ακουμπάει στο logo */
+    height: 100vh;
 }
+
 /* ✅ Context Menu */
 .context-menu {
     position: absolute;
@@ -152,21 +157,28 @@ html, body {
 }
 
 .draggable-project {
-    padding: 8px;
     background: #007bff;
     color: white;
-    border-radius: 5px;
-    margin-bottom: 8px;
+    padding: 8px;
+    margin-bottom: 5px;
     cursor: grab;
+    border-radius: 5px;
     text-align: center;
 }
 
 .draggable-project:active {
     cursor: grabbing;
 }
+.draggable-project:hover {
+    background: #0056b3;
+}
 
-/* ✅ Στυλ για το FullCalendar */
-.calendar-container {
-    flex-grow: 1;
+
+.projects-sidebar {
+    width: 200px;
     padding: 10px;
+    background: #f9f9f9;
+    border-right: 1px solid #ddd;
+    height: 100%;
+    overflow-y: auto;
 }
