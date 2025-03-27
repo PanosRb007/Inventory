@@ -139,20 +139,21 @@ html, body {
 }
 
 .draggable-project {
-    background: #007bff;
+    background: #6e2139;
     color: white;
     padding: 8px;
     margin-bottom: 5px;
     cursor: grab;
     border-radius: 5px;
     text-align: center;
+    font-size: 0.75rem;
 }
 
 .draggable-project:active {
     cursor: grabbing;
 }
 .draggable-project:hover {
-    background: #0056b3;
+    background: #3b0808;
 }
 
 

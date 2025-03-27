@@ -1,6 +1,6 @@
 .material-input-form-container {
     max-height: 80vh; /* Set a maximum height, adjust as needed */
-    overflow-y: auto; /* Enable vertical scrolling when content overflows */
+     /* Enable vertical scrolling when content overflows */
     padding: 20px;
 }
 

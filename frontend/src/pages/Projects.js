@@ -251,15 +251,42 @@ const ProjectFunc = ({ apiBaseUrl, userRole }) => {
         sortType: 'basic',
       },
       {
-        Header: 'Deal Url',
+        Header: 'Deal Link',
         accessor: 'deallink',
-        Cell: ({ value }) => <a href={value} target="_blank" rel="noopener noreferrer">{value}</a>
+        Cell: ({ value }) =>
+          value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={value}
+              className="table-link-icon"
+            >
+              🔗
+            </a>
+          ) : (
+            '-'
+          ),
       },
       {
-        Header: 'ZOHO Drive Url',
+        Header: 'Drive',
         accessor: 'driveurl',
-        Cell: ({ value }) => <a href={value} target="_blank" rel="noopener noreferrer">{value}</a>
+        Cell: ({ value }) =>
+          value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={value}
+              className="table-link-icon"
+            >
+              📁
+            </a>
+          ) : (
+            '-'
+          ),
       },
+      
       {
         Header: 'Quoted Items',
         id: 'quotedItems',
