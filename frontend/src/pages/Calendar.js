@@ -3,6 +3,10 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
+import listPlugin from '@fullcalendar/list';
+import elLocale from '@fullcalendar/core/locales/el';
+
+
 
 import "./CalendarComponent.css";
 
@@ -258,16 +262,25 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
       <div className="calendar-container">
         <FullCalendar
+          locale={elLocale}
           ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView="dayGridWeek"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay, listWeek'
           }}
           editable={true}
           droppable={true}
+          navLinks={true}
+          nowIndicator={true}
+          navLinkDayClick={(date) => {
+            const calendarApi = calendarRef.current?.getApi();
+            if (calendarApi) {
+              calendarApi.changeView('timeGridDay', date);
+            }
+          }}
           events={events}
           eventReceive={handleEventReceive}
           eventDrop={handleEventDrop}
