@@ -85,7 +85,7 @@ function App() {
                     <span>Labor Hours</span>
                   </NavLink>
                 </li>
-                
+
                 <li className="nav-item">
                   <NavLink to="/OrderList" className="nav-link">
                     <FaClipboardList size={18} />
@@ -93,14 +93,14 @@ function App() {
                   </NavLink>
                 </li>
 
-            
-                  <li className="nav-item">
-                    <NavLink to="/Calendar" className="nav-link">
-                      <FaCalendarAlt size={18} />
-                      <span>Calendar</span>
-                    </NavLink>
-                  </li>
-           
+
+                <li className="nav-item">
+                  <NavLink to="/Calendar" className="nav-link">
+                    <FaCalendarAlt size={18} />
+                    <span>Calendar</span>
+                  </NavLink>
+                </li>
+
                 <li className="nav-item">
                   <NavLink to="/MaterialList" className="nav-link">
                     <FaBoxes size={18} />

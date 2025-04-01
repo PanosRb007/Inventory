@@ -4,7 +4,7 @@ import './PurchaseFunc.css';
 import AddMaterial from './AddMaterial.js';
 import AddVendor from './AddVendor.js';
 
-const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, setVendors, apiBaseUrl, order }) => {
+const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, setVendors, apiBaseUrl, order, userRole }) => {
   const [showAddMaterialForm, setShowAddMaterialForm] = useState(false);
   const [showAddVendorForm, setShowAddVendorForm] = useState(false);
 
@@ -30,7 +30,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     invdate: order.invdate || '',
     verification: order.verification || '',
   } : {
-    location: '',
+    location: userRole === 'graphics' ? 1 : '',
     materialid: '',
     materialname: '',
     quantity: '',
@@ -43,94 +43,94 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     invdate: '',
     verification: '',
   };
-  
+
 
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
   const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-        const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
+      const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
-        const fetchWithAuth = async (url, options = {}) => {
-            return fetch(url, {
-                ...options,
-                headers: {
-                    ...options.headers,
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            });
-        };
+      const fetchWithAuth = async (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+      };
 
-        try {
-            if (!newPurchase.materialid) {
-                setShowExtras(false);
-                setNewPurchase(prev => ({ 
-                    ...prev, 
-                    price: '', 
-                    vendor: '', 
-                    vendorname: '', 
-                    materialname: '' 
-                }));
-                return;
-            }
-
-            const [responseChanges, responseList] = await Promise.all([
-                fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
-                fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
-            ]);
-
-            const [dataChanges, dataList] = await Promise.all([
-                responseChanges.json(),
-                responseList.json(),
-            ]);
-
-            setShowExtras(dataList?.extras === 1);
-
-            let finalChange = null;
-
-            if (Array.isArray(dataChanges) && dataChanges.length > 0) {
-                console.log("Fetched all dataChanges:", dataChanges);
-
-                // 1. Προσπαθεί να βρει την εγγραφή που ταιριάζει στο `location`
-                const matchedChange = dataChanges.find(change => Number(change.location) === Number(newPurchase.location));
-
-                // 2. Αν δεν βρει, παίρνει την πιο πρόσφατη διαθέσιμη εγγραφή (η πρώτη στο array)
-                finalChange = matchedChange || dataChanges[0];
-
-                console.log("Final Change Used:", finalChange);
-            }
-
-            // **Προσθέσαμε έλεγχο πριν το `setNewPurchase()` για αποφυγή περιττών updates**
-            setNewPurchase(prevPurchase => {
-                if (
-                    prevPurchase.price === (finalChange?.price || '') &&
-                    prevPurchase.vendor === (finalChange?.vendor || '') &&
-                    prevPurchase.vendorname === (vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '') &&
-                    prevPurchase.materialname === (dataList?.name || '')
-                ) {
-                    return prevPurchase; // **Αποφεύγουμε το update αν τα δεδομένα είναι ίδια**
-                }
-                
-                return {
-                    ...prevPurchase,
-                    price: finalChange?.price || '',
-                    vendor: finalChange?.vendor || '',
-                    vendorname: vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '',
-                    materialname: dataList?.name || '',
-                };
-            });
-
-            console.log("Final Price:", finalChange?.price || '');
-            console.log("Final Vendor:", finalChange?.vendor || '');
-            console.log("Final Vendor Name:", vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '');
-        } catch (error) {
-            console.error('Error fetching data:', error);
+      try {
+        if (!newPurchase.materialid) {
+          setShowExtras(false);
+          setNewPurchase(prev => ({
+            ...prev,
+            price: '',
+            vendor: '',
+            vendorname: '',
+            materialname: ''
+          }));
+          return;
         }
+
+        const [responseChanges, responseList] = await Promise.all([
+          fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}`),
+          fetchWithAuth(`${apiBaseUrl}/materiallist/${newPurchase.materialid}`),
+        ]);
+
+        const [dataChanges, dataList] = await Promise.all([
+          responseChanges.json(),
+          responseList.json(),
+        ]);
+
+        setShowExtras(dataList?.extras === 1);
+
+        let finalChange = null;
+
+        if (Array.isArray(dataChanges) && dataChanges.length > 0) {
+          console.log("Fetched all dataChanges:", dataChanges);
+
+          // 1. Προσπαθεί να βρει την εγγραφή που ταιριάζει στο `location`
+          const matchedChange = dataChanges.find(change => Number(change.location) === Number(newPurchase.location));
+
+          // 2. Αν δεν βρει, παίρνει την πιο πρόσφατη διαθέσιμη εγγραφή (η πρώτη στο array)
+          finalChange = matchedChange || dataChanges[0];
+
+          console.log("Final Change Used:", finalChange);
+        }
+
+        // **Προσθέσαμε έλεγχο πριν το `setNewPurchase()` για αποφυγή περιττών updates**
+        setNewPurchase(prevPurchase => {
+          if (
+            prevPurchase.price === (finalChange?.price || '') &&
+            prevPurchase.vendor === (finalChange?.vendor || '') &&
+            prevPurchase.vendorname === (vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '') &&
+            prevPurchase.materialname === (dataList?.name || '')
+          ) {
+            return prevPurchase; // **Αποφεύγουμε το update αν τα δεδομένα είναι ίδια**
+          }
+
+          return {
+            ...prevPurchase,
+            price: finalChange?.price || '',
+            vendor: finalChange?.vendor || '',
+            vendorname: vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '',
+            materialname: dataList?.name || '',
+          };
+        });
+
+        console.log("Final Price:", finalChange?.price || '');
+        console.log("Final Vendor:", finalChange?.vendor || '');
+        console.log("Final Vendor Name:", vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '');
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
 
     fetchData();
-}, [newPurchase.materialid, newPurchase.location, apiBaseUrl, vendors]);
+  }, [newPurchase.materialid, newPurchase.location, apiBaseUrl, vendors]);
 
 
   const handleMaterialIdChange = (selectedOption) => {
@@ -181,7 +181,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}/${newPurchase.location}`);
       const dataChanges = await responseChanges.json();
       const hasChanges =
-      dataChanges &&
+        dataChanges &&
         (dataChanges.price !== newPurchase.price ||
           dataChanges.vendor !== newPurchase.vendor);
 
@@ -195,7 +195,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             material_id: newPurchase.materialid,
             price: newPurchase.price,
             vendor: newPurchase.vendor,
-            location:newPurchase.location,
+            location: newPurchase.location,
           }),
         });
 
@@ -307,17 +307,21 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       </div>
       <form onSubmit={handleSubmit} className="form">
         <div className="form-row">
-          <div className="form-group">
-            <label>Location:</label>
-            <select name="location" value={newPurchase.location} onChange={handleChange} required>
-              <option value="">Select a location</option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.locationname}
-                </option>
-              ))}
-            </select>
-          </div>
+          {userRole !== 'graphics' ? (
+            <div className="form-group">
+              <label>Location:</label>
+              <select name="location" value={newPurchase.location} onChange={handleChange} required>
+                <option value="">Select a location</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.locationname}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <input type="hidden" name="location" value={1} />
+          )}
           <div className="form-group">
             <label>Material ID:<span className="add-icon" onClick={openAddMaterialForm}>
               +
@@ -334,7 +338,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               placeholder="Select a material"
               required
               isDisabled={!newPurchase.location}
-              
+
             />
           </div>
           <div className="form-group">
@@ -419,11 +423,11 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             </label>
           </div>
           <div className='form-group'>
-          <label>
-            Invoice Date:
-            <input type="date" name="verification" value={newPurchase.verification} onChange={handleChange} />
-          </label>
-        </div>
+            <label>
+              Invoice Date:
+              <input type="date" name="verification" value={newPurchase.verification} onChange={handleChange} />
+            </label>
+          </div>
           <button type="submit" className="add_btn">
             Add Purchase
           </button>

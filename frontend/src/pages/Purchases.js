@@ -9,7 +9,7 @@ import VendPurc from './VendPurc.js';
 import MatPurch from './MatPurch.js';
 
 
-const PurchaseFunc = ({ apiBaseUrl }) => {
+const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
   const [purchases, setPurchases] = useState([]);
   const [editingPurchase, setEditingPurchase] = useState(null);
   const [verPurchase, setVerPurchase] = useState(null);
@@ -585,7 +585,16 @@ const PurchaseFunc = ({ apiBaseUrl }) => {
 
   return (
     <div className='container'>
-      <AddPurchase handleAdd={handleAdd} locations={locations} vendors={vendors} setVendors={setVendors} materials={materials} setMaterials={setMaterials} apiBaseUrl={apiBaseUrl} />
+      <AddPurchase
+        handleAdd={handleAdd}
+        locations={locations}
+        vendors={vendors}
+        setVendors={setVendors}
+        materials={materials}
+        setMaterials={setMaterials}
+        apiBaseUrl={apiBaseUrl}
+        userRole={userRole}
+      />
 
       <div className="search">
         <input
