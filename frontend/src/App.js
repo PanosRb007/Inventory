@@ -57,76 +57,89 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-      
+
         <nav className="sidebar">
           <ul className="navbar-nav">
-            <li className="nav-item">
-              <NavLink to="/Purchases" className="nav-link">
-                <FaTruck size={18} />
-                <span>Inflow</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/Outflow" className="nav-link">
-                <FaPeopleCarry size={18} />
-                <span>Outflow</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/AddLaborHours" className="nav-link">
-                <FaClock size={18} />
-                <span>Labor Hours</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/OrderList" className="nav-link">
-                <FaClipboardList size={18} />
-                <span>Order List</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/Calendar" className="nav-link">
-                <FaCalendarAlt  size={18} />
-                <span>Calendar</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/MaterialList" className="nav-link">
-                <FaBoxes size={18} />
-                <span>Material List</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/Vendors" className="nav-link">
-                <FaIndustry size={18} />
-                <span>Vendor List</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/Projects" className="nav-link">
-                <FaProjectDiagram size={18} />
-                <span>Project List</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/Stock" className="nav-link">
-                <FaWarehouse size={18} />
-                <span>Stock</span>
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink to="/combine-materials" className="nav-link">
-                <FaLayerGroup size={18} />
-                <span>Combine Materials</span>
-              </NavLink>
-            </li>
-            {userRole !== 'Senior' && (
-              <li className="nav-item">
-                <NavLink to="/Employees" className="nav-link">
-                  <FaUsers size={18} />
-                  <span>Employees</span>
-                </NavLink>
-              </li>
+            {(userRole === 'graphics' || true) && (
+              <>
+                <li className="nav-item">
+                  <NavLink to="/Purchases" className="nav-link">
+                    <FaTruck size={18} />
+                    <span>Inflow</span>
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/Outflow" className="nav-link">
+                    <FaPeopleCarry size={18} />
+                    <span>Outflow</span>
+                  </NavLink>
+                </li>
+
+              </>
+            )}
+            {userRole !== 'graphics' && (
+              <>
+                <li className="nav-item">
+                  <NavLink to="/AddLaborHours" className="nav-link">
+                    <FaClock size={18} />
+                    <span>Labor Hours</span>
+                  </NavLink>
+                </li>
+                
+                <li className="nav-item">
+                  <NavLink to="/OrderList" className="nav-link">
+                    <FaClipboardList size={18} />
+                    <span>Order List</span>
+                  </NavLink>
+                </li>
+
+            
+                  <li className="nav-item">
+                    <NavLink to="/Calendar" className="nav-link">
+                      <FaCalendarAlt size={18} />
+                      <span>Calendar</span>
+                    </NavLink>
+                  </li>
+           
+                <li className="nav-item">
+                  <NavLink to="/MaterialList" className="nav-link">
+                    <FaBoxes size={18} />
+                    <span>Material List</span>
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/Vendors" className="nav-link">
+                    <FaIndustry size={18} />
+                    <span>Vendor List</span>
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/Projects" className="nav-link">
+                    <FaProjectDiagram size={18} />
+                    <span>Project List</span>
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/Stock" className="nav-link">
+                    <FaWarehouse size={18} />
+                    <span>Stock</span>
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/combine-materials" className="nav-link">
+                    <FaLayerGroup size={18} />
+                    <span>Combine Materials</span>
+                  </NavLink>
+                </li>
+                {userRole !== 'Senior' && (
+                  <li className="nav-item">
+                    <NavLink to="/Employees" className="nav-link">
+                      <FaUsers size={18} />
+                      <span>Employees</span>
+                    </NavLink>
+                  </li>
+                )}
+              </>
             )}
           </ul>
           <button onClick={handleLogout} className="logout-btn">
@@ -137,27 +150,33 @@ function App() {
 
         {/* Main content */}
         <main className="content">
-        <header className="app-header">
-          <img src={logo} alt="ROBBIE Logo" className="logo" />
-        </header>
+          <header className="app-header">
+            <img src={logo} alt="ROBBIE Logo" className="logo" />
+          </header>
           <Routes>
             <Route path="/" element={<Navigate to="/Purchases" />} />
             <Route path="/Purchases" element={<Purchases apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
             <Route path="/Outflow" element={<Outflow apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/Vendors" element={<Vendors apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/MaterialList" element={<MaterialList apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/Projects" element={<Projects apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
             <Route path="/Calendar" element={<Calendar apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
-            {userRole !== 'Senior' && (
-              <Route path="/Employees" element={<Employees apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+
+            {userRole !== 'graphics' && (
+              <>
+                <Route path="/Vendors" element={<Vendors apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/MaterialList" element={<MaterialList apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/Projects" element={<Projects apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/ProjectOutflows" element={<ProjectOutflows apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/Stock" element={<Stock apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/combine-materials" element={<MaterialCombiner apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/OrderList" element={<OrderList apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/OutMatQuery" element={<OutMatQuery apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                <Route path="/AddLaborHours" element={<AddLaborHours apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                {userRole !== 'Senior' && (
+                  <Route path="/Employees" element={<Employees apiBaseUrl={API_BASE_URL} userRole={userRole} />} />
+                )}
+              </>
             )}
           </Routes>
+
         </main>
       </BrowserRouter>
     </div>

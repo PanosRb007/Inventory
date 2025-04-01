@@ -117,17 +117,22 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const filteredData = useMemo(() => {
     const lowerCaseFilterOne = globalFilterOne.toLowerCase();
     const lowerCaseFilterTwo = globalFilterTwo.toLowerCase();
-
-    return outflows.filter(row => {
-      const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
-      const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
-      const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
-      const projectName = projects.find(project => project.prid === row.project)?.name.toLowerCase() || '';
-
-      const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
-      return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
-    });
-  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials, projects]);
+  
+    return outflows
+      .filter(row => {
+        // ✅ Εφαρμόζουμε το φίλτρο για graphics
+        if (userRole === 'graphics' && row.employee !== 6) return false;
+  
+        const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
+        const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
+        const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
+        const projectName = projects.find(project => project.prid === row.project)?.name.toLowerCase() || '';
+  
+        const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
+        return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
+      });
+  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials, projects, userRole]);
+  
 
   console.log('outflowspurch', purchases);
 
@@ -483,6 +488,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         apiBaseUrl={apiBaseUrl}
         setProjects={setProjects}
         useEffect={useEffect}
+        userRole={userRole}
       />
 
       <div className="search">

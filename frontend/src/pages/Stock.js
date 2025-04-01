@@ -6,13 +6,13 @@ import './PurchaseFunc.css';
 const Stocks = ({ apiBaseUrl }) => {
 
   const [materials, setMaterials] = useState([]);
-  const [purchases, setPurchases] = useState([]);
   const [locations, setLocations] = useState([]);
   const [outflows, setOutflows] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [stock, setStock] = useState([]);
   const [globalFilterOne, setGlobalFilterOne] = useState('');
   const [globalFilterTwo, setGlobalFilterTwo] = useState('');
+  const [testremaining, setTestRem] = useState([]);
+  const [materialchanges, setMaterialchanges] = useState([]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -29,50 +29,67 @@ const Stocks = ({ apiBaseUrl }) => {
     }
     return response.json();
   }, []);
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const locationResponse = await fetchAPI(`${apiBaseUrl}/LocationsAPI`);
+        setLocations(locationResponse);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+  
+    fetchLocations();
+  }, [apiBaseUrl, fetchAPI]);
+  
 
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!selectedLocation) return; // ⛔ Μην συνεχίσεις αν δεν έχει επιλεγεί τοποθεσία
+  
       try {
-        const [materialResponse, purchaseResponse, locationResponse, outflowsResponse] = await Promise.all([
+        const [
+          materialResponse,
+          outflowsResponse,
+          testrem,
+          materialchangesData
+        ] = await Promise.all([
           fetchAPI(`${apiBaseUrl}/materiallist`),
-          fetchAPI(`${apiBaseUrl}/PurchasesAPI`),
-          fetchAPI(`${apiBaseUrl}/LocationsAPI`),
           fetchAPI(`${apiBaseUrl}/outflowsAPI`),
+          fetchAPI(`${apiBaseUrl}/remaining_quantityAPI/${selectedLocation}`), // ✅ εδώ το dynamic call
+          fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
         ]);
-
-        // Filter and process stock based on extras and location
-        const processedStock = purchaseResponse.reduce((acc, purchase) => {
-          if (purchase.location === parseInt(selectedLocation)) {
-            const material = materialResponse.find(mat => mat.matid === purchase.materialid);
-            if (material) {
-              if (material.extras === 0) {
-                // For extras === 0, include only if it's not already included
-                if (!acc.some(item => item.materialid === purchase.materialid)) {
-                  acc.push(purchase);
-                }
-              } else {
-                // For extras === 1, include all
-                acc.push(purchase);
-              }
-            }
-          }
-          return acc;
-        }, []);
-
+  
         setMaterials(materialResponse);
-        setPurchases(purchaseResponse);
-        setLocations(locationResponse);
+       
         setOutflows(outflowsResponse);
-        setStock(processedStock);
+       
+        setTestRem(testrem.filter(entry => parseFloat(entry.remaining_quantity) > 0));
+ // 🔄 πιο μικρό dataset τώρα!
+        setMaterialchanges(materialchangesData);
+  
       } catch (error) {
         console.log('Error fetching data:', error);
       }
     };
+  
     fetchData();
   }, [apiBaseUrl, fetchAPI, selectedLocation]);
-
+  
   const filteredData = useMemo(() => {
+    return testremaining.filter(entry => {
+      const material = materials.find(m => m.matid === entry.materialid);
+      const materialName = material ? material.name.toLowerCase() : '';
+      const entryString = `${entry.materialid} ${entry.lotnumber} ${entry.location} ${entry.width} ${materialName}`;
+      return (
+        entryString.includes(globalFilterOne.toLowerCase()) &&
+        entryString.includes(globalFilterTwo.toLowerCase())
+      );
+    });
+  }, [testremaining, globalFilterOne, globalFilterTwo, materials]);
+  
+  /*const filteredData = useMemo(() => {
     const calculatedData = stock.map((row) => {
       const materialId = row.materialid;
       const lotNumber = row.lotnumber;
@@ -120,10 +137,10 @@ const Stocks = ({ apiBaseUrl }) => {
       );
     });
   }, [stock, purchases, outflows, selectedLocation, globalFilterOne, globalFilterTwo, materials]);
-  
+  */
 
 
-  const calculateTotalCost = useCallback((materialId, location, lotNumber, width) => {
+  /*const calculateTotalCost = useCallback((materialId, location, lotNumber, width) => {
     let totalCost = 0;
   
     // 1. Φιλτράρισμα Αγορών
@@ -156,7 +173,7 @@ const Stocks = ({ apiBaseUrl }) => {
     }
   
     return totalCost; // Επιστροφή του τελικού κόστους
-  }, [purchases, outflows]);
+  }, [purchases, outflows]);*/
   
 
   const handleChange = (e) => {
@@ -183,9 +200,72 @@ const Stocks = ({ apiBaseUrl }) => {
           return material ? material.field : 'Field not available';
         },
       },
-      { Header: 'Width', accessor: 'width' },
-      { Header: 'Lot No', accessor: 'lotnumber' },
       {
+        Header: 'Width',
+        accessor: 'width',
+        Cell: ({ value }) => (parseFloat(value) === -1 ? '' : value),
+      },
+      
+      {
+        Header: 'Lot No',
+        accessor: 'lotnumber',
+        Cell: ({ value }) => (value === 'EMPTY' ? '' : value),
+      },
+      
+      {
+        Header: 'Quantity',
+        accessor: (row) => {
+          const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? -1 : parseFloat(w);
+          const rowWidth = parseWidth(row.width);
+      
+          const entry = testremaining.find((entry) =>
+            entry.materialid === row.materialid &&
+            entry.location === row.location &&
+            (
+              entry.lotnumber === row.lotnumber ||
+              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
+              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
+            ) &&
+            parseFloat(entry.width || -1) === rowWidth
+          );
+      
+          return entry && !isNaN(parseFloat(entry.remaining_quantity))
+            ? parseFloat(entry.remaining_quantity)
+            : 0;
+        },
+        Cell: ({ value }) => {
+          return (
+            <span style={{ color: value === 0 ? 'gray' : 'black' }}>
+              {value.toFixed(2)}
+            </span>
+          );
+        },
+        sortType: 'basic'
+      },
+
+      {
+        Header: 'Latest Price',
+        accessor: (row) => {
+          const matchingPrices = materialchanges
+            .filter(mc =>
+              mc.material_id === row.materialid &&
+              (mc.location === row.location || mc.location === null)
+            )
+            .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
+      
+          const latestPrice = matchingPrices[0]?.price ?? 0;
+          return parseFloat(latestPrice);
+        },
+        Cell: ({ value }) => (
+          <span style={{ color: 'blue' }}>
+            {value.toFixed(2)} €
+          </span>
+        ),
+        sortType: 'basic'
+      },
+      
+      
+      /*{
         Header: 'Quantity',
         accessor: (row) => {
           const materialId = row.materialid;
@@ -222,18 +302,127 @@ const Stocks = ({ apiBaseUrl }) => {
           const formattedCost = row.width ? (totalCost * parseFloat(row.width)).toFixed(2) : totalCost.toFixed(2);
           return `${formattedCost} €`;
         },
-      },
+      },*/
+      {
+        Header: 'Latest Price Cost',
+        accessor: (row) => {
+          // Υπολογισμός αριθμητικής τιμής (χωρίς JSX εδώ)
+          const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? 1 : parseFloat(w);
+          const rowWidth = parseWidth(row.width);
+      
+          const entry = testremaining.find((entry) =>
+            entry.materialid === row.materialid &&
+            entry.location === row.location &&
+            (
+              entry.lotnumber === row.lotnumber ||
+              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
+              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
+            ) &&
+            parseFloat(entry.width || -1) === parseFloat(row.width || -1)
+          );
+      
+          if (!entry || isNaN(parseFloat(entry.remaining_quantity))) return 0;
+      
+          const remainingQty = parseFloat(entry.remaining_quantity);
+      
+          const matchingPrices = materialchanges
+            .filter(mc =>
+              mc.material_id === row.materialid &&
+              (mc.location === row.location || mc.location === null)
+            )
+            .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
+      
+          const latestPrice = matchingPrices[0]?.price ?? 0;
+      
+          return remainingQty * rowWidth * parseFloat(latestPrice); // αριθμητική τιμή
+        },
+        Cell: ({ value, row }) => {
+          const rowData = row.original;
+          const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? 1 : parseFloat(w);
+          const rowWidth = parseWidth(rowData.width);
+      
+          const entry = testremaining.find((entry) =>
+            entry.materialid === rowData.materialid &&
+            entry.location === rowData.location &&
+            (
+              entry.lotnumber === rowData.lotnumber ||
+              (!entry.lotnumber && (!rowData.lotnumber || rowData.lotnumber === "EMPTY")) ||
+              (entry.lotnumber === "EMPTY" && (!rowData.lotnumber || rowData.lotnumber === "EMPTY"))
+            ) &&
+            parseFloat(entry.width || -1) === parseFloat(rowData.width || -1)
+          );
+      
+          const remainingQty = entry?.remaining_quantity ?? 0;
+      
+          const matchingPrices = materialchanges
+            .filter(mc =>
+              mc.material_id === rowData.materialid &&
+              (mc.location === rowData.location || mc.location === null)
+            )
+            .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
+      
+          const latestPrice = matchingPrices[0]?.price ?? 0;
+      
+          const tooltipText = `${remainingQty} × ${rowWidth} × ${latestPrice} = ${value.toFixed(2)} €`;
+      
+          return (
+            <span style={{ color: 'red', cursor: 'help' }} title={tooltipText}>
+              {value.toFixed(2)} €
+            </span>
+          );
+        },
+        sortType: 'basic'
+      }
+      
+      
+      
+      
+      
+      
 
     ],
-    [materials, calculateTotalCost, outflows, purchases, selectedLocation]
+    [materials, testremaining, materialchanges]
   );
 
   const totalStockCost = useMemo(() => {
+    const parseWidth = (w) => {
+      const parsed = parseFloat(w);
+      return isNaN(parsed) || parsed === -1 ? 1 : parsed;
+    };
+  
     return filteredData.reduce((sum, row) => {
-      const totalCost = calculateTotalCost(row.materialid, parseInt(selectedLocation), row.lotnumber);
-      return sum + totalCost;
+      const rowWidth = parseWidth(row.width);
+  
+      const entry = testremaining.find((entry) =>
+        entry.materialid === row.materialid &&
+        entry.location === row.location &&
+        (
+          entry.lotnumber === row.lotnumber ||
+          (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
+          (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
+        ) &&
+        parseFloat(entry.width || -1) === parseFloat(row.width || -1)
+      );
+  
+      if (!entry || isNaN(parseFloat(entry.remaining_quantity))) return sum;
+  
+      const remainingQty = parseFloat(entry.remaining_quantity);
+  
+      const matchingPrices = materialchanges
+        .filter(mc =>
+          mc.material_id === row.materialid &&
+          (mc.location === row.location || mc.location === null)
+        )
+        .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
+  
+      const latestPrice = parseFloat(matchingPrices[0]?.price ?? 0);
+      const total = remainingQty * rowWidth * latestPrice;
+  
+      return sum + total;
     }, 0);
-  }, [filteredData, calculateTotalCost, selectedLocation]);
+  }, [filteredData, testremaining, materialchanges]);
+  
+  
   
   
   

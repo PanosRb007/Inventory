@@ -3,21 +3,22 @@ import Select from 'react-select';
 import './PurchaseFunc.css';
 import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects }) => {
+const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects, userRole }) => {
 
   const initialOutflowState = {
-    location: '',
+    location: userRole === 'graphics' ? 1 : '',
     locationname: '',
     materialid: '',
     materialname: '',
     quantity: '',
     width: null,
     lotnumber: '',
-    employee: '',
+    employee: userRole === 'graphics' ? 6 : '',
     project: '',
     quotedItemid: '',
     comments: '',
   };
+
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -266,27 +267,30 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
       </div>
       <form onSubmit={handleSubmit} className="form">
         <div className='form-row'>
-          <div className='form-group'>
-            <label>Location:</label>
-            <Select
-              name="location"
-              value={newOutflow.location ? { value: newOutflow.location, label: locations.find(loc => loc.id === newOutflow.location)?.locationname } : null}
-              options={locations.map((location) => ({
-                value: location.id,
-                label: location.locationname
-              }))}
-              onChange={(selectedOption) =>
-                handleChange({
-                  target: {
-                    name: 'location',
-                    value: selectedOption.value,
-                  },
-                })
-              }
-              placeholder="Select a location"
-              required
-            />
-          </div>
+          {userRole !== 'graphics' && (
+            <div className='form-group'>
+              <label>Location:</label>
+              <Select
+                name="location"
+                value={newOutflow.location ? { value: newOutflow.location, label: locations.find(loc => loc.id === newOutflow.location)?.locationname } : null}
+                options={locations.map((location) => ({
+                  value: location.id,
+                  label: location.locationname
+                }))}
+                onChange={(selectedOption) =>
+                  handleChange({
+                    target: {
+                      name: 'location',
+                      value: selectedOption.value,
+                    },
+                  })
+                }
+                placeholder="Select a location"
+                required
+              />
+            </div>
+          )}
+
 
           {newOutflow.location && (
             <div>
@@ -445,44 +449,39 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
               />
             </div>
           )}
-          {!showExtras && newOutflow.quantity && (
-            <div className='form-group'>
-              <label>Employee:</label>
-              <Select
-                name="employee"
-                value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
-                options={employees
-                  .filter(employee => employee.active) // ✅ Only active employees
-                  .map((employee) => ({
-                    value: employee.empid,
-                    label: employee.name,
-                  }))}
-                onChange={(selectedOption) =>
-                  handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
-                }
-                placeholder="Select an Employee"
-                required
-              />
-            </div>
+          {userRole !== 'graphics' && (
+            ((!showExtras && newOutflow.quantity) || (showExtras && newOutflow.lotnumber)) && (
+              <div className='form-group'>
+                <label>Employee:</label>
+                <Select
+                  name="employee"
+                  value={newOutflow.employee ? {
+                    value: newOutflow.employee,
+                    label: employees.find(emp => emp.empid === newOutflow.employee)?.name
+                  } : null}
+                  options={employees
+                    .filter(employee => employee.active) // μόνο ενεργοί
+                    .map((employee) => ({
+                      value: employee.empid,
+                      label: employee.name,
+                    }))
+                  }
+                  onChange={(selectedOption) =>
+                    handleChange({
+                      target: {
+                        name: 'employee',
+                        value: selectedOption.value,
+                        employeeName: selectedOption.label
+                      }
+                    })
+                  }
+                  placeholder="Select an Employee"
+                  required
+                />
+              </div>
+            )
           )}
-          {showExtras && newOutflow.lotnumber && (
-            <div className='form-group'>
-              <label>Employee:</label>
-              <Select
-                name="employee"
-                value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
-                options={employees.map((employee) => ({
-                  value: employee.empid,
-                  label: employee.name,
-                }))}
-                onChange={(selectedOption) =>
-                  handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
-                }
-                placeholder="Select an Employee"
-                required
-              />
-            </div>
-          )}
+
           {newOutflow.employee && (
             <div className='form-group'>
               <label>Project:<span className="add-icon" onClick={openAddProjectForm}>
