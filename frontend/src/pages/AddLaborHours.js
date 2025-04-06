@@ -338,7 +338,8 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 </div>
                 {selectedEmployee && (
                     <div className="material-input-form">
-                        <h3>Day Record for {dayRecords.name}</h3>
+                        <h3 className="day-record-title">🕒 Day Record for {dayRecords.name}</h3>
+
                         <div>
                             <label>Date:</label>
                             <input type="date" value={dayRecords.date} onChange={e => handleChange('date', e.target.value)} />

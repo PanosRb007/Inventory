@@ -5,6 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
 import listPlugin from '@fullcalendar/list';
 import elLocale from '@fullcalendar/core/locales/el';
+import ReactDOM from "react-dom";
 
 
 
@@ -18,6 +19,8 @@ const CalendarComponent = ({ apiBaseUrl }) => {
   const contextMenuRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const draggableInitialized = useRef(false);
+  const [copiedEvent, setCopiedEvent] = useState(null);
+
 
   const categories = [
     { name: "Αυτοψία", color: "#FF6B6B" },           // κόκκινο
@@ -94,6 +97,28 @@ const CalendarComponent = ({ apiBaseUrl }) => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target)
+      ) {
+        setContextMenu(prev => ({ ...prev, visible: false }));
+      }
+    };
+  
+    if (contextMenu.visible) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+  
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [contextMenu.visible]);
+  
+
   const handleEventReceive = async (info) => {
     const eventDataStr = info.draggedEl?.getAttribute("data-event");
     if (!eventDataStr) return info.revert();
@@ -160,23 +185,38 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
   const handleEventRightClick = (event, e) => {
     e.preventDefault();
-    const offset = 200;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const menuWidth = 180;
-    const menuHeight = 200;
-
-    let newX = e.clientX - offset;
-    let newY = e.clientY - offset;
-
-    if (newX < 0) newX = 10;
-    if (newY < 0) newY = 10;
-    if (newX + menuWidth > screenWidth) newX = screenWidth - menuWidth - 10;
-    if (newY + menuHeight > screenHeight) newY = screenHeight - menuHeight - 10;
-
-    setContextMenu({ visible: true, x: newX, y: newY, eventId: event.id });
+  
+    const menuWidth = 200;
+    const menuHeight = 220;
+  
+    // ✅ Απόλυτες συντεταγμένες ακόμα και με scroll
+    let newX = e.clientX + window.scrollX;
+    let newY = e.clientY + window.scrollY;
+  
+    if (newX + menuWidth > window.innerWidth + window.scrollX) {
+      newX = window.innerWidth + window.scrollX - menuWidth - 10;
+    }
+    if (newY + menuHeight > window.innerHeight + window.scrollY) {
+      newY = window.innerHeight + window.scrollY - menuHeight - 10;
+    }
+    console.log("Pointer:", {
+      clientX: e.clientX,
+      pageX: e.pageX,
+      scrollX: window.scrollX,
+      finalX: e.clientX + window.scrollX
+    });
+    
+  
+    setContextMenu({
+      visible: true,
+      x: newX,
+      y: newY,
+      eventId: event.id,
+      dateStr: event.startStr,
+    });
   };
 
+  
   const handleCategorySelection = async (category) => {
     const eventIndex = events.findIndex((e) => String(e.id) === String(contextMenu.eventId));
     if (eventIndex === -1) return;
@@ -341,40 +381,87 @@ const CalendarComponent = ({ apiBaseUrl }) => {
             );
           }}
         />
-        {contextMenu.visible && (
-          <ul
-            className="context-menu"
-            ref={contextMenuRef}
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-          >
-            {categories.map((category) => (
-              <li
-                key={category.name}
-                onClick={() => handleCategorySelection(category)}
-                style={{
-                  background: category.color,
-                  color: "#fff",
-                  padding: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                {category.name}
-              </li>
-            ))}
+        {contextMenu.visible &&
+  ReactDOM.createPortal(
+    <ul
+      className="context-menu"
+      ref={contextMenuRef}
+      style={{
+        top: `${contextMenu.y}px`,
+        left: `${contextMenu.x}px`,
+        position: "absolute", // Πολύ σημαντικό!
+      }}
+    >
+      <li
+        onClick={() => {
+          const event = events.find(e => String(e.id) === String(contextMenu.eventId));
+          setCopiedEvent(event);
+          setContextMenu({ ...contextMenu, visible: false });
+        }}
+      >
+        📋 Copy
+      </li>
+
+      <li
+        onClick={handleDeleteEvent}
+        style={{ color: "#dc3545" }}
+      >
+        🗑 Delete
+      </li>
+
+      <li className="submenu">
+        🏷 Categories ▶
+        <ul className="submenu-list">
+          {categories.map((category) => (
             <li
-              onClick={handleDeleteEvent}
-              style={{
-                background: "#dc3545",
-                color: "#fff",
-                padding: "5px",
-                cursor: "pointer",
-                borderTop: "1px solid #eee",
-              }}
-            >
-              🗑 Delete
-            </li>
-          </ul>
-        )}
+            key={category.name}
+            onClick={() => handleCategorySelection(category)}
+            style={{ backgroundColor: category.color }}
+            data-color={category.color}
+            className="category-item"
+          >
+            {category.name}
+          </li>
+          
+          
+          ))}
+        </ul>
+      </li>
+
+      {copiedEvent && (
+        <li
+          onClick={async () => {
+            const dateStr = contextMenu.dateStr;
+            if (!dateStr) return;
+
+            const newEvent = {
+              prid: copiedEvent.prid,
+              title: copiedEvent.title,
+              start: dateStr,
+              color: copiedEvent.color || "#ccc",
+              categories: copiedEvent.categories || [],
+            };
+
+            try {
+              await fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`, {
+                method: "POST",
+                body: JSON.stringify(newEvent),
+              });
+              await fetchData();
+            } catch (err) {
+              console.error("❌ Error pasting:", err.message);
+            }
+
+            setContextMenu({ ...contextMenu, visible: false });
+          }}
+        >
+          📌 Paste here
+        </li>
+      )}
+    </ul>,
+    document.body // 👈 Εδώ γίνεται το portal
+  )}
+
 
       </div>
     </div>

@@ -91,7 +91,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   }, [fetchData]);
 
   // useMemo: Υπολογίζει τις ποσότητες μόνο όταν αλλάζουν purchases ή outflows
-  const remainingQuantities = useMemo(() => {
+  /*const remainingQuantities = useMemo(() => {
     const quantitiesMap = new Map();
 
     purchases.forEach((purchase) => {
@@ -109,7 +109,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
     });
 
     return quantitiesMap;
-  }, [purchases, outflows]); // Υπολογίζει μόνο όταν αλλάζουν purchases ή outflows
+  }, [purchases, outflows]); // Υπολογίζει μόνο όταν αλλάζουν purchases ή outflows*/
 
 
   console.log('remsssss', testremaining);
@@ -316,7 +316,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         Cell: ({ value }) => parseFloat(value).toFixed(2), // Format to 2 decimal places
       },
 
-      {
+      /*{
         Header: 'Remaining Quantity',
         accessor: (row) => {
           const key = `${row.materialid}-${row.lotnumber || 'null'}-${row.location}`;
@@ -324,9 +324,9 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
           const remaining = data ? (data.purchases - data.outflows).toFixed(2) : 'N/A';
           return <span style={{ color: 'red' }}>{remaining}</span>;
         },
-      },
+      },*/
       {
-        Header: 'Test Remaining Quantity',
+        Header: 'Remaining Quantity',
         accessor: (row) => {
           // Εύρεση αντιστοιχίας στο testremaining
           const data = testremaining.find((entry) =>
@@ -431,7 +431,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         ),
       },
     ],
-    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, formatDateTime, openProjectOutflowTable, remainingQuantities, testremaining]
+    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, formatDateTime, openProjectOutflowTable/*, remainingQuantities*/, testremaining]
   );
 
   const {
