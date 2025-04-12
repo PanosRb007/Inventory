@@ -3,44 +3,26 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
-import listPlugin from '@fullcalendar/list';
-import elLocale from '@fullcalendar/core/locales/el';
+import listPlugin from "@fullcalendar/list";
+import elLocale from "@fullcalendar/core/locales/el";
 import ReactDOM from "react-dom";
-
-
 
 import "./CalendarComponent.css";
 
 const CalendarComponent = ({ apiBaseUrl }) => {
   const [projects, setProjects] = useState([]);
   const [events, setEvents] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [jobLocations, setJobLocations] = useState([]);
+  const [jobCategories, setJobCategories] = useState([]);
+  const [hoveredEvent, setHoveredEvent] = useState(null);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, eventId: null });
   const calendarRef = useRef(null);
   const contextMenuRef = useRef(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const draggableInitialized = useRef(false);
   const [copiedEvent, setCopiedEvent] = useState(null);
-
-
-  const categories = [
-    { name: "Αυτοψία", color: "#FF6B6B" },           // κόκκινο
-    { name: "Άφιξη", color: "#FF4B6C" },           // κόκκινο
-    { name: "Προμήθεια", color: "#FFD93D" },         // κίτρινο
-    { name: "Μακέτα", color: "#6BCB77" },            // πράσινο
-    { name: "Δημιουργικό", color: "#4D96FF" },       // μπλε
-    { name: "Φανοποιία-Βαφή", color: "#C34A36" },    // σκούρο κόκκινο
-    { name: "Βαφή", color: "#3A86FF" },              // έντονο μπλε
-    { name: "Εφαρμογή", color: "#8338EC" },          // μοβ
-    { name: "Κατασκευή", color: "#FF9F1C" },         // πορτοκαλί
-    { name: "Μουσαμάς", color: "#00BBF9" },          // γαλάζιο
-    { name: "RV", color: "#B5179E" },                // φούξια
-    { name: "Ενδοδιακίνηση", color: "#06D6A0" },     // τιρκουάζ
-    { name: "Ολοκλήρωση/Τοποθέτηση", color: "#2EC4B6" }, // πράσινο-μπλε
-    { name: "Εξωτερικός Συνεργάτης", color: "#8D99AE" }, // γκρι μπλε
-    { name: "Αγίας Άννης", color: "#EF476F" },       // ροζ κόκκινο
-    { name: "Θεσ/κη", color: "#FFD166" }            // χρυσαφί
-  ];
-
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem("authToken");
@@ -57,10 +39,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
     const contentType = response.headers.get("content-type");
     if (!response.ok) {
-      const errorText = contentType?.includes("application/json")
-        ? await response.json()
-        : await response.text();
-
+      const errorText = contentType?.includes("application/json") ? await response.json() : await response.text();
       throw new Error(errorText?.message || errorText || `Error fetching ${url}`);
     }
 
@@ -69,10 +48,19 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const projectResponse = await fetchAPI(`${apiBaseUrl}/projectsAPI`);
-      const eventsResponse = await fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`);
+      const [projectResponse, eventsResponse, employeesResponse, locationsResponse, categoriesResponse] = await Promise.all([
+        fetchAPI(`${apiBaseUrl}/projectsAPI`),
+        fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`),
+        fetchAPI(`${apiBaseUrl}/employeesAPI`),
+        fetchAPI(`${apiBaseUrl}/job_locationsAPI`),
+        fetchAPI(`${apiBaseUrl}/job_categoriesAPI`),
+      ]);
+
       setProjects(projectResponse);
       setEvents(eventsResponse);
+      setEmployees(employeesResponse);
+      setJobLocations(locationsResponse);
+      setJobCategories(categoriesResponse);
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
@@ -99,25 +87,21 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        contextMenuRef.current &&
-        !contextMenuRef.current.contains(e.target)
-      ) {
-        setContextMenu(prev => ({ ...prev, visible: false }));
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu((prev) => ({ ...prev, visible: false }));
       }
     };
-  
+
     if (contextMenu.visible) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-  
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [contextMenu.visible]);
-  
 
   const handleEventReceive = async (info) => {
     const eventDataStr = info.draggedEl?.getAttribute("data-event");
@@ -180,43 +164,9 @@ const CalendarComponent = ({ apiBaseUrl }) => {
   };
 
   const openProjectOutflowTable = useCallback((projectId) => {
-    window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
+    window.open(`/ProjectOutflows?projectId=${projectId}`, "_blank");
   }, []);
 
-  const handleEventRightClick = (event, e) => {
-    e.preventDefault();
-  
-    const menuWidth = 200;
-    const menuHeight = 220;
-  
-    // ✅ Απόλυτες συντεταγμένες ακόμα και με scroll
-    let newX = e.clientX + window.scrollX;
-    let newY = e.clientY + window.scrollY;
-  
-    if (newX + menuWidth > window.innerWidth + window.scrollX) {
-      newX = window.innerWidth + window.scrollX - menuWidth - 10;
-    }
-    if (newY + menuHeight > window.innerHeight + window.scrollY) {
-      newY = window.innerHeight + window.scrollY - menuHeight - 10;
-    }
-    console.log("Pointer:", {
-      clientX: e.clientX,
-      pageX: e.pageX,
-      scrollX: window.scrollX,
-      finalX: e.clientX + window.scrollX
-    });
-    
-  
-    setContextMenu({
-      visible: true,
-      x: newX,
-      y: newY,
-      eventId: event.id,
-      dateStr: event.startStr,
-    });
-  };
-
-  
   const handleCategorySelection = async (category) => {
     const eventIndex = events.findIndex((e) => String(e.id) === String(contextMenu.eventId));
     if (eventIndex === -1) return;
@@ -247,6 +197,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
       console.error("❌ Error updating event categories:", error.message);
     }
   };
+
   const handleDeleteEvent = async () => {
     const eventId = contextMenu.eventId;
     setContextMenu({ ...contextMenu, visible: false });
@@ -261,6 +212,62 @@ const CalendarComponent = ({ apiBaseUrl }) => {
       console.error("❌ Error deleting event:", error.message);
     }
   };
+
+  const handleEventRightClick = (event, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const menuWidth = 200;
+    const menuHeight = 220;
+
+    let newX = e.clientX + window.scrollX;
+    let newY = e.clientY + window.scrollY;
+
+    if (newX + menuWidth > window.innerWidth + window.scrollX) {
+      newX = window.innerWidth + window.scrollX - menuWidth - 10;
+    }
+    if (newY + menuHeight > window.innerHeight + window.scrollY) {
+      newY = window.innerHeight + window.scrollY - menuHeight - 10;
+    }
+
+    setContextMenu({
+      visible: true,
+      x: newX,
+      y: newY,
+      eventId: event.id,
+      dateStr: event.startStr,
+    });
+  };
+
+  const handleCalendarRightClick = (e) => {
+    e.preventDefault();
+  
+    const menuWidth = 200;
+    const menuHeight = 180;
+  
+    let newX = e.clientX + window.scrollX;
+    let newY = e.clientY + window.scrollY;
+  
+    if (newX + menuWidth > window.innerWidth + window.scrollX) {
+      newX = window.innerWidth + window.scrollX - menuWidth - 10;
+    }
+    if (newY + menuHeight > window.innerHeight + window.scrollY) {
+      newY = window.innerHeight + window.scrollY - menuHeight - 10;
+    }
+  
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    const dateAttr = element?.closest('[data-date]')?.getAttribute('data-date');
+  
+    setContextMenu({
+      visible: true,
+      x: newX,
+      y: newY,
+      eventId: null,
+      dateStr: dateAttr || calendarRef.current?.getApi().getDate()?.toISOString().split("T")[0],
+    });
+  };
+  
+
 
   return (
     <div className="calendar-wrapper">
@@ -289,7 +296,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                 data-event={JSON.stringify(eventData)}
               >
                 <span
-                  style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{ textDecoration: "underline", cursor: "pointer" }}
                   onClick={() => openProjectOutflowTable(project.prid)}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
@@ -300,25 +307,25 @@ const CalendarComponent = ({ apiBaseUrl }) => {
           })}
       </div>
 
-      <div className="calendar-container">
+      <div className="calendar-container" onContextMenu={handleCalendarRightClick}>
         <FullCalendar
           locale={elLocale}
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           initialView="dayGridWeek"
           headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay, listWeek'
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
           }}
-          editable={true}
-          droppable={true}
-          navLinks={true}
-          nowIndicator={true}
+          editable
+          droppable
+          navLinks
+          nowIndicator
           navLinkDayClick={(date) => {
             const calendarApi = calendarRef.current?.getApi();
             if (calendarApi) {
-              calendarApi.changeView('timeGridDay', date);
+              calendarApi.changeView("timeGridDay", date);
             }
           }}
           events={events}
@@ -327,142 +334,281 @@ const CalendarComponent = ({ apiBaseUrl }) => {
           eventResize={handleEventResize}
           eventContent={(eventInfo) => {
             const prid = eventInfo.event.extendedProps.prid;
+            const categories = eventInfo.event.extendedProps.categories || [];
+            const locations = eventInfo.event.extendedProps.locations || [];
+            const employees = eventInfo.event.extendedProps.employees || [];
 
             return (
               <div
-                className="fc-daygrid-event"
-                title={eventInfo.event.title}
-                style={{
-                  backgroundColor: eventInfo.event.backgroundColor || "#ccc",
-                  padding: "5px",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
+                className="custom-event"
+                style={{ backgroundColor: eventInfo.event.backgroundColor || "#ccc" }}
+                onContextMenu={(e) => handleEventRightClick(eventInfo.event, e)}
+                onMouseEnter={(e) => {
+                  setHoveredEvent(eventInfo.event);
+                  setHoverPosition({ x: e.clientX + window.scrollX + 10, y: e.clientY + window.scrollY + 10 });
                 }}
-                onContextMenu={(e) => handleEventRightClick(eventInfo.event, e)} // ✅ Δεξί κλικ
+
+                onMouseLeave={() => setHoveredEvent(null)}
               >
                 <span
-                  style={{ cursor: "pointer", textDecoration: "underline" }}
-                  onClick={() => openProjectOutflowTable(prid)} // ✅ Κλικ για άνοιγμα Project
-                  onMouseDown={(e) => e.stopPropagation()} // για drag
+                  className="event-title"
+                  onClick={() => openProjectOutflowTable(prid)}
+                  onMouseDown={(e) => e.stopPropagation()}
                 >
                   {eventInfo.event.title}
                 </span>
                 <br />
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
-                  {eventInfo.event.extendedProps.categories?.length > 0 ? (
-                    eventInfo.event.extendedProps.categories.map((cat, idx) => {
-                      const category = categories.find(c => c.name === cat);
-                      return (
-                        <span
-                          key={idx}
-                          style={{
-                            backgroundColor: category?.color || "#999",
-                            color: "#fff",
-                            padding: "2px 6px",
-                            borderRadius: "12px",
-                            fontSize: "10px",
-                            lineHeight: "1",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {cat}
-                        </span>
-                      );
-                    })
-                  ) : (
-                    <span style={{ fontSize: "10px", color: "#666" }}>No Category</span>
-                  )}
-                </div>
+                <div className="event-details">
+                  {/* Categories */}
+                  <div className="event-badges">
+                    {categories.length > 0 ? (
+                      categories.map((cat, idx) => {
+                        const category = jobCategories.find((c) => c.name === cat);
+                        return (
+                          <span
+                            key={`cat-badge-${cat}-${idx}`}
+                            className="badge"
+                            style={{ backgroundColor: category?.color || "#999" }}
+                          >
+                            {cat}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="event-empty">No Category</span>
+                    )}
+                  </div>
 
+                  {/* Locations */}
+                  <div className="event-info">
+                    📍 {locations.length > 0 ? locations.join(", ") : "No Location"}
+                  </div>
+
+                  {/* Employees */}
+                  <div className="event-info">
+                    👷{" "}
+                    {employees.length > 0
+                      ? employees.map((e) =>
+                        typeof e === "object" && e.name ? e.name : `ID: ${e}`
+                      ).join(", ")
+                      : "No Employee"}
+                  </div>
+                </div>
               </div>
             );
           }}
+
         />
-        {contextMenu.visible &&
-  ReactDOM.createPortal(
-    <ul
-      className="context-menu"
-      ref={contextMenuRef}
-      style={{
-        top: `${contextMenu.y}px`,
-        left: `${contextMenu.x}px`,
-        position: "absolute", // Πολύ σημαντικό!
-      }}
-    >
-      <li
-        onClick={() => {
-          const event = events.find(e => String(e.id) === String(contextMenu.eventId));
-          setCopiedEvent(event);
-          setContextMenu({ ...contextMenu, visible: false });
-        }}
-      >
-        📋 Copy
-      </li>
-
-      <li
-        onClick={handleDeleteEvent}
-        style={{ color: "#dc3545" }}
-      >
-        🗑 Delete
-      </li>
-
-      <li className="submenu">
-        🏷 Categories ▶
-        <ul className="submenu-list">
-          {categories.map((category) => (
-            <li
-            key={category.name}
-            onClick={() => handleCategorySelection(category)}
-            style={{ backgroundColor: category.color }}
-            data-color={category.color}
-            className="category-item"
+        {hoveredEvent && (
+          <div
+            className="hover-tooltip"
+            style={{
+              top: `${hoverPosition.y}px`,
+              left: `${hoverPosition.x}px`,
+              position: "absolute",
+              zIndex: 100000,
+            }}
           >
-            {category.name}
-          </li>
-          
-          
-          ))}
-        </ul>
-      </li>
+            <h4>{hoveredEvent.title}</h4>
+            <p><strong>Κατηγορίες:</strong> {hoveredEvent.extendedProps.categories?.join(", ") || "Καμία"}</p>
+            <p><strong>Τοποθεσίες:</strong> {hoveredEvent.extendedProps.locations?.join(", ") || "Καμία"}</p>
+            <p><strong>Εργαζόμενοι:</strong> {hoveredEvent.extendedProps.employees?.map(e =>
+              typeof e === "object" && e.name ? e.name : `ID: ${e}`
+            ).join(", ") || "Κανένας"}</p>
+          </div>
+        )}
 
-      {copiedEvent && (
-        <li
-          onClick={async () => {
-            const dateStr = contextMenu.dateStr;
-            if (!dateStr) return;
+        {contextMenu.visible && ReactDOM.createPortal(
+          <ul
+            className="context-menu"
+            ref={contextMenuRef}
+            style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px`, position: "absolute", zIndex: 99999 }}
+          >
+            {contextMenu.eventId && (
+              <>
+                <li className="submenu">
+                  🏭 Job Locations ▶
+                  <ul className="submenu-list">
+                    {jobLocations.map((loc, index) => {
+                      const event = events.find(e => String(e.id) === String(contextMenu.eventId));
+                      if (!event) return null;
+                      const locationName = loc.name;
+                      const eventLocations = event.locations || [];
+                      const assigned = eventLocations.includes(locationName);
 
-            const newEvent = {
-              prid: copiedEvent.prid,
-              title: copiedEvent.title,
-              start: dateStr,
-              color: copiedEvent.color || "#ccc",
-              categories: copiedEvent.categories || [],
-            };
+                      return (
+                        <li
+                          key={`loc-${index}`}
+                          onClick={async () => {
+                            const updated = assigned
+                              ? eventLocations.filter((l) => l !== locationName)
+                              : [...eventLocations, locationName];
 
-            try {
-              await fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`, {
-                method: "POST",
-                body: JSON.stringify(newEvent),
-              });
-              await fetchData();
-            } catch (err) {
-              console.error("❌ Error pasting:", err.message);
-            }
+                            try {
+                              await fetchAPI(`${apiBaseUrl}/calendar_eventsAPI/${event.id}/locations`, {
+                                method: "PUT",
+                                body: JSON.stringify({ locations: updated }),
+                              });
+                              await fetchData();
+                              setContextMenu((prev) => ({ ...prev, visible: false }));
+                            } catch (err) {
+                              console.error("❌ Error updating locations:", err.message);
+                            }
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            background: assigned ? "#e0e0e0" : "transparent",
+                          }}
+                        >
+                          {assigned ? "✅ " : ""}
+                          {locationName}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </li>
 
-            setContextMenu({ ...contextMenu, visible: false });
-          }}
-        >
-          📌 Paste here
-        </li>
-      )}
-    </ul>,
-    document.body // 👈 Εδώ γίνεται το portal
-  )}
+                <li className="submenu">
+                  👥 Assign Employees ▶
+                  <ul className="submenu-list">
+                    {employees
+                      .filter((emp) => emp && emp.empid && emp.name)
+                      .map((emp) => {
+                        console.log("[Assign Employees] Mapping employee:", emp);
 
+                        const event = events.find((e) => String(e.id) === String(contextMenu.eventId));
+                        console.log("[Assign Employees] Found event:", event);
 
+                        if (!event) {
+                          console.error("[Assign Employees] No event found for ID:", contextMenu.eventId);
+                          return null;
+                        }
+
+                        // 🔧 Normalize employees to IDs
+                        const eventEmployees = (event.employees || []).map((e) =>
+                          typeof e === "object" ? e.id : e
+                        );
+
+                        const assigned = eventEmployees.includes(emp.empid);
+
+                        return (
+                          <li
+                            key={`emp-${emp.empid}`}
+                            onClick={async () => {
+                              const updated = assigned
+                                ? eventEmployees.filter((id) => id !== emp.empid)
+                                : [...eventEmployees, emp.empid];
+
+                              const sanitized = updated.map((e) =>
+                                typeof e === "object" ? e.id : e
+                              );
+
+                              console.log("[AssignEmployees] Submitting payload to API:", {
+                                employees: sanitized,
+                              });
+
+                              try {
+                                await fetchAPI(
+                                  `${apiBaseUrl}/calendar_eventsAPI/${event.id}/employees`,
+                                  {
+                                    method: "PUT",
+                                    body: JSON.stringify({ employees: sanitized }),
+                                  }
+                                );
+                                await fetchData();
+                                setContextMenu((prev) => ({ ...prev, visible: false }));
+                              } catch (err) {
+                                console.error("❌ Error updating employees:", err.message);
+                              }
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              cursor: "pointer",
+                              background: assigned ? "#e0e0e0" : "transparent",
+                            }}
+                          >
+                            {assigned ? "✅ " : ""}
+                            {emp.name}
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </li>
+
+                <li className="submenu">
+                  🏷 Categories ▶
+                  <ul className="submenu-list">
+                    {jobCategories.map((category, index) => (
+                      <li
+                        key={`cat-${index}-${category.name}`}
+                        onClick={() => handleCategorySelection(category)}
+                        style={{ backgroundColor: category.color, padding: "8px 12px", cursor: "pointer", color: "#fff" }}
+                        className="category-item"
+                      >
+                        {category.name}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+
+                <li
+                  onClick={() => {
+                    const event = events.find((e) => String(e.id) === String(contextMenu.eventId));
+                    setCopiedEvent(event);
+                    setContextMenu({ ...contextMenu, visible: false });
+                  }}
+                >
+                  📋 Copy
+                </li>
+
+                <li
+                  onClick={handleDeleteEvent}
+                  style={{ color: "#dc3545" }}
+                >
+                  🗑 Delete
+                </li>
+              </>
+            )}
+
+            {copiedEvent && !contextMenu.eventId && (
+              <li
+                onClick={async () => {
+                  const dateStr = contextMenu.dateStr;
+                  if (!dateStr) return;
+
+                  const newEvent = {
+                    prid: copiedEvent.extendedProps?.prid || copiedEvent.prid,
+                    title: copiedEvent.title,
+                    start: dateStr,
+                    color: copiedEvent.color || "#ccc",
+                    categories: copiedEvent.extendedProps?.categories || copiedEvent.categories || [],
+                  };
+
+                  try {
+                    console.log("📌 Creating new event from copiedEvent", newEvent);
+
+                    await fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`, {
+                      method: "POST",
+                      body: JSON.stringify(newEvent),
+                    });
+                    await fetchData();
+                    console.log("✅ Event created successfully");
+
+                  } catch (err) {
+                    console.error("❌ Error pasting:", err.message);
+                  }
+
+                  setContextMenu({ ...contextMenu, visible: false });
+                }}
+              >
+                📌 Paste here
+              </li>
+            )}
+
+          </ul>,
+          document.body
+        )}
       </div>
     </div>
   );
