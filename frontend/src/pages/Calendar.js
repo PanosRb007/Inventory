@@ -241,23 +241,23 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
   const handleCalendarRightClick = (e) => {
     e.preventDefault();
-  
+
     const menuWidth = 200;
     const menuHeight = 180;
-  
+
     let newX = e.clientX + window.scrollX;
     let newY = e.clientY + window.scrollY;
-  
+
     if (newX + menuWidth > window.innerWidth + window.scrollX) {
       newX = window.innerWidth + window.scrollX - menuWidth - 10;
     }
     if (newY + menuHeight > window.innerHeight + window.scrollY) {
       newY = window.innerHeight + window.scrollY - menuHeight - 10;
     }
-  
+
     const element = document.elementFromPoint(e.clientX, e.clientY);
     const dateAttr = element?.closest('[data-date]')?.getAttribute('data-date');
-  
+
     setContextMenu({
       visible: true,
       x: newX,
@@ -266,7 +266,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
       dateStr: dateAttr || calendarRef.current?.getApi().getDate()?.toISOString().split("T")[0],
     });
   };
-  
+
 
 
   return (
@@ -455,14 +455,16 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                               console.error("❌ Error updating locations:", err.message);
                             }
                           }}
+                          className="location-item"
                           style={{
                             padding: "8px 12px",
                             cursor: "pointer",
-                            background: assigned ? "#e0e0e0" : "transparent",
+                            background: assigned ? "#e0e0e0" : "white",
                           }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = assigned ? "#e0e0e0" : "white")}
                         >
-                          {assigned ? "✅ " : ""}
-                          {locationName}
+                          {assigned ? "✅ " : ""}{locationName}
                         </li>
                       );
                     })}
@@ -473,15 +475,10 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                   👥 Assign Employees ▶
                   <ul className="submenu-list">
                     {employees
-                      .filter((emp) => emp && emp.empid && emp.name)
+                      .filter((emp) => emp && emp.empid && emp.name && emp.active)
                       .map((emp) => {
-                        console.log("[Assign Employees] Mapping employee:", emp);
-
                         const event = events.find((e) => String(e.id) === String(contextMenu.eventId));
-                        console.log("[Assign Employees] Found event:", event);
-
                         if (!event) {
-                          console.error("[Assign Employees] No event found for ID:", contextMenu.eventId);
                           return null;
                         }
 
@@ -522,14 +519,16 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                                 console.error("❌ Error updating employees:", err.message);
                               }
                             }}
+                            className="employee-item"
                             style={{
                               padding: "8px 12px",
                               cursor: "pointer",
-                              background: assigned ? "#e0e0e0" : "transparent",
+                              background: assigned ? "#e0e0e0" : "white",
                             }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = assigned ? "#e0e0e0" : "white")}
                           >
-                            {assigned ? "✅ " : ""}
-                            {emp.name}
+                            {assigned ? "✅ " : ""}{emp.name}
                           </li>
                         );
                       })}
