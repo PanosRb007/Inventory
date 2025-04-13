@@ -252,6 +252,7 @@ html, body {
   font-size: 10px;
   line-height: 1;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .custom-event {
@@ -261,6 +262,8 @@ html, body {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  pointer-events: auto;
+
 }
 
 

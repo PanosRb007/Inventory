@@ -48,7 +48,13 @@ const CalendarComponent = ({ apiBaseUrl }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [projectResponse, eventsResponse, employeesResponse, locationsResponse, categoriesResponse] = await Promise.all([
+      const [
+        projectResponse,
+        eventsResponse,
+        employeesResponse,
+        locationsResponse,
+        categoriesResponse,
+      ] = await Promise.all([
         fetchAPI(`${apiBaseUrl}/projectsAPI`),
         fetchAPI(`${apiBaseUrl}/calendar_eventsAPI`),
         fetchAPI(`${apiBaseUrl}/employeesAPI`),
@@ -57,7 +63,19 @@ const CalendarComponent = ({ apiBaseUrl }) => {
       ]);
 
       setProjects(projectResponse);
-      setEvents(eventsResponse);
+
+      // 👇 Εδώ γίνεται η προσθήκη
+      const normalizedEvents = eventsResponse.map(event => {
+        if (!event.end && event.start) {
+          const startDate = new Date(event.start);
+          const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // default 1 hour
+          return { ...event, end: endDate.toISOString() };
+        }
+        return event;
+      });
+
+      setEvents(normalizedEvents);
+
       setEmployees(employeesResponse);
       setJobLocations(locationsResponse);
       setJobCategories(categoriesResponse);
@@ -65,6 +83,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
       console.error("Error fetching data:", error.message);
     }
   }, [apiBaseUrl, fetchAPI]);
+
 
   useEffect(() => {
     fetchData();
@@ -318,8 +337,11 @@ const CalendarComponent = ({ apiBaseUrl }) => {
             center: "title",
             right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
           }}
-          editable
-          droppable
+          editable={true}
+          eventStartEditable={true}
+          eventDurationEditable={true}
+          droppable={true}
+
           navLinks
           nowIndicator
           navLinkDayClick={(date) => {
@@ -329,35 +351,37 @@ const CalendarComponent = ({ apiBaseUrl }) => {
             }
           }}
           events={events}
+          eventAllow={(dropInfo, draggedEvent) => {
+            console.log("eventAllow:", dropInfo, draggedEvent);
+            return true;
+          }}
+
           eventReceive={handleEventReceive}
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}
           eventContent={(eventInfo) => {
-            const prid = eventInfo.event.extendedProps.prid;
-            const categories = eventInfo.event.extendedProps.categories || [];
-            const locations = eventInfo.event.extendedProps.locations || [];
-            const employees = eventInfo.event.extendedProps.employees || [];
-
+            const { title, backgroundColor, extendedProps } = eventInfo.event;
+            const { prid, categories = [], locations = [], employees = [] } = extendedProps;
+          
             return (
               <div
                 className="custom-event"
-                style={{ backgroundColor: eventInfo.event.backgroundColor || "#ccc" }}
+                style={{ backgroundColor: backgroundColor || "#ccc" }}
                 onContextMenu={(e) => handleEventRightClick(eventInfo.event, e)}
-                onMouseEnter={(e) => {
-                  setHoveredEvent(eventInfo.event);
-                  setHoverPosition({ x: e.clientX + window.scrollX + 10, y: e.clientY + window.scrollY + 10 });
-                }}
-
-                onMouseLeave={() => setHoveredEvent(null)}
               >
                 <span
                   className="event-title"
                   onClick={() => openProjectOutflowTable(prid)}
                   onMouseDown={(e) => e.stopPropagation()}
+                  onMouseEnter={(e) => {
+                    setHoveredEvent(eventInfo.event);
+                    setHoverPosition({ x: e.clientX + window.scrollX + 10, y: e.clientY + window.scrollY + 10 });
+                  }}
+                  onMouseLeave={() => setHoveredEvent(null)}
                 >
-                  {eventInfo.event.title}
+                  {title}
                 </span>
-                <br />
+          
                 <div className="event-details">
                   {/* Categories */}
                   <div className="event-badges">
@@ -366,7 +390,7 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                         const category = jobCategories.find((c) => c.name === cat);
                         return (
                           <span
-                            key={`cat-badge-${cat}-${idx}`}
+                            key={`cat-${cat}-${idx}`}
                             className="badge"
                             style={{ backgroundColor: category?.color || "#999" }}
                           >
@@ -378,25 +402,25 @@ const CalendarComponent = ({ apiBaseUrl }) => {
                       <span className="event-empty">No Category</span>
                     )}
                   </div>
-
+          
                   {/* Locations */}
                   <div className="event-info">
                     📍 {locations.length > 0 ? locations.join(", ") : "No Location"}
                   </div>
-
+          
                   {/* Employees */}
                   <div className="event-info">
-                    👷{" "}
-                    {employees.length > 0
-                      ? employees.map((e) =>
-                        typeof e === "object" && e.name ? e.name : `ID: ${e}`
-                      ).join(", ")
+                    👷 {employees.length > 0
+                      ? employees
+                          .map((e) => (typeof e === "object" && e.name ? e.name : `ID: ${e}`))
+                          .join(", ")
                       : "No Employee"}
                   </div>
                 </div>
               </div>
             );
           }}
+          
 
         />
         {hoveredEvent && (
