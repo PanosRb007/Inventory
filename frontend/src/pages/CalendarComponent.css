@@ -1,351 +1,344 @@
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    
+:root {
+  --sidebar-bg: #6a1832;
+  --sidebar-text: #fff;
+  --sidebar-hover: #9f224e;
+  --filter-bg: #fff;
+  --filter-border: #bbb;
+  --calendar-bg: #f8f8f8;
+  --calendar-border: #e0e0e0;
+  --event-bg: #2196f3;
+  --event-text: #fff;
+  --badge-bg: #ffd600;
+  --badge-text: #333;
+  --tooltip-bg: #222;
+  --tooltip-text: #fff;
+  --context-bg: #fff;
+  --context-border: #bbb;
 }
 
-.calendar-container {
-    flex: 1;
-    height: 100%;
-    overflow-y: auto;
-    padding-left: 20px;
-    position: relative;
-  }
-
-
-/* FullCalendar styling */
-.fc {
-    flex: 1;
-    height: 100% !important; /* 👈 Αναγκαστικά 100% ύψος */
-    min-height: 0; /* 👈 Αποφυγή overflow */
-  }
-
-.fc-event {
-    user-select: none;
+body {
+  background: var(--calendar-bg);
 }
 
-.fc-daygrid-event {
-  padding: 5px;
+.calendar-outer {
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--calendar-bg);
+}
+
+.calendar-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+  padding-bottom: 4px;
+  background: var(--calendar-bg);
+}
+
+.calendar-logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+
+.calendar-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #222;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 0;
+  line-height: 1;
+}
+.calendar-url {
+  font-size: 1.1rem;
+  color: #444;
+  font-weight: 400;
+  display: block;
+  margin-top: 2px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 10px 8px 10px 8px;
+  background: var(--calendar-bg);
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1.5px solid var(--calendar-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.filters select {
+  background: var(--filter-bg);
+  border: 1.5px solid var(--filter-border);
   border-radius: 5px;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  padding: 5px 8px;
+  font-size: 15px;
+  color: #444;
+  min-width: 140px;
+  transition: border 0.2s;
 }
-
-.fc-event-title-link {
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-
-/* Toolbar styling */
-.calendar-toolbar {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    padding: 100px 0; /* Μειώνουμε το padding */
-    background: #f4f4f4;
-    margin-bottom: 5px; /* Προσθέτουμε μικρό κενό */
-}
-
-
-.calendar-toolbar button {
-    padding: 8px 12px;
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 14px;
-}
-
-.calendar-toolbar button:hover {
-    background: #0056b3;
-}
-
-/* Fullscreen button */
-.fullscreen-btn {
-    background: #28a745;
-}
-
-.fullscreen-btn:hover {
-    background: #218838;
+.filters select:focus {
+  outline: none;
+  border-color: var(--sidebar-hover);
 }
 
 .calendar-wrapper {
-    display: flex;
-    height: calc(100vh - 120px); /* Προσαρμόζεται αν έχει header - άλλαξε αναλόγως */
-    width: 100%;
-    overflow: hidden;
-    padding: 20px;
-    box-sizing: border-box;
-  }
-
-/* ✅ Context Menu */
-.context-menu {
-    position: absolute;
-    z-index: 99999;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 0;
-    margin: 0;
-    width: 200px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    animation: fadeIn 0.2s ease-out;
-    font-size: 14px;
-  }
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 120px);
+  background: var(--calendar-bg);
   
-  .context-menu li {
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    white-space: nowrap;
-  }
-  
-  .context-menu li:hover {
-    background-color: #f2f2f2;
-  }
-
-  .context-menu li.active {
-    background-color: #e0e0e0;
-  }
-  
-  .submenu {
-    position: relative;
-  }
-  
-  .submenu-list {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 100%;
-    margin-left: 0;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 0;
-    min-width: 180px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 100000;
-  }
-
-  
-  
-  .submenu:hover .submenu-list {
-    display: block;
-  }
-  
-  /* Χρώμα ανά κατηγορία από το inline style (var(--cat-bg)) */
-  .category-item {
-   
-    color: white;
-    padding: 8px 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: filter 0.2s ease;
-  }
-  
-  .category-item:hover {
-    filter: brightness(0.85); /* ✅ σωστό hover */
-  }
-
-  .category-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  
-  .category-badge {
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 10px;
-    line-height: 1;
-    white-space: nowrap;
-  }
-  
-  
-  .context-menu,
-.context-menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
 }
 
-  
-
-  
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-/* ✅ Event Menu */
-.event-menu {
-    position: absolute;
-    background: #ffffff;
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.3);
-    padding: 12px;
-    border-radius: 6px;
-    z-index: 1000;
-    min-width: 200px;
-}
-
-.event-menu h4 {
-    margin: 0 0 10px;
-    font-size: 16px;
-}
-
-.event-menu p {
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-.event-details {
+.projects-sidebar {
+  min-width: 270px;
+  max-width: 320px;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 16px 8px 8px 8px;
+  overflow-y: auto;
+  border-right: 2px solid var(--calendar-border);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 10px;
 }
 
-.event-no-category {
-  font-size: 10px;
-  color: #666;
-}
-
-.event-title {
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.event-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.event-info {
-  font-size: 10px;
-  color: #555;
-}
-
-.event-empty {
-  font-size: 10px;
-  color: #666;
-}
-
-.badge {
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 10px;
-  line-height: 1;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.custom-event {
-  padding: 5px;
+.projects-sidebar .searchbar {
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--filter-border);
   border-radius: 5px;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  pointer-events: auto;
-
-}
-
-
-.calendar-page {
-    display: flex;
-    height: 100vh;
-}
-
-/* ✅ Στυλ για το draggable projects list */
-.draggable-items {
-    width: 250px;
-    background: #f4f4f4;
-    padding: 15px;
-    border-right: 2px solid #ddd;
-    overflow-y: auto;
-}
-
-.draggable-items h3 {
-    margin-bottom: 10px;
-    text-align: center;
+  font-size: 15px;
 }
 
 .draggable-project {
-    background: #6e2139;
-    color: white;
-    padding: 8px;
-    margin-bottom: 5px;
-    cursor: grab;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 0.75rem;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  border-radius: 6px;
+  margin-bottom: 7px;
+  padding: 8px 10px;
+  cursor: grab;
+  font-size: 15px;
+  transition: background 0.2s;
+  border: 1px solid #a95b7e;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 
-.draggable-project:active {
-    cursor: grabbing;
-}
 .draggable-project:hover {
-    background: #3b0808;
+  background: var(--sidebar-hover);
 }
 
-
-.projects-sidebar {
-    width: 200px;
-    min-width: 180px;
-    background-color: #f5f5f5;
-    padding: 10px;
-    overflow-y: auto;
-    border-right: 1px solid #ccc;
-  }
-  .searchbar {
-    width: 165px;
-    padding: 6px 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    border: 1px solid rgb(204, 204, 204);
-    height: 15px;
+.calendar-container {
+  flex: 1;
+  padding: 0;
+  background: var(--calendar-bg);
+  min-width: 0;
+  position: relative;
+  overflow-x: auto;
 }
 
-  html, body, #root {
-    height: 100%;
+/* FullCalendar overrides */
+.fc {
+  background: var(--calendar-bg);
+}
+
+.fc-toolbar {
+  margin-bottom: 10px;
+}
+
+.fc .fc-button {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  margin: 0 2px;
+  transition: background 0.2s;
+}
+.fc .fc-button:hover, .fc .fc-button:focus {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-weight: bold;
+  font-size: 16px;
+  padding: 6px 0;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 15px;
+  color: #444;
+}
+
+.fc .fc-daygrid-event, .fc .fc-timegrid-event {
+  border-radius: 7px;
+  border: none;
+  overflow: visible;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-bottom: 3px;
+}
+
+.custom-event {
+  background: var(--event-bg) !important;
+  color: var(--event-text) !important;
+  border-radius: 7px;
+  padding: 7px 10px 7px 10px;
+  cursor: pointer;
+  font-size: 15px;
+  position: relative;
+  min-width: 110px;
+}
+
+.custom-event .event-title {
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+.custom-event .event-details {
+  margin-top: 3px;
+}
+
+.custom-event .event-badges {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.custom-event .badge {
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border-radius: 5px;
+  font-size: 12px;
+  padding: 2px 7px;
+  margin-right: 2px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.custom-event .event-info {
+  font-size: 12px;
+  color: #e3e3e3;
+  margin-top: 1px;
+}
+
+.custom-event .event-empty {
+  color: #bbb;
+  font-size: 12px;
+}
+
+.hover-tooltip {
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border-radius: 7px;
+  padding: 12px 16px;
+  font-size: 15px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  pointer-events: none;
+  min-width: 220px;
+  max-width: 340px;
+  opacity: 0.97;
+}
+
+.context-menu {
+  background: var(--context-bg);
+  border: 1.5px solid var(--context-border);
+  border-radius: 7px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  min-width: 210px;
+  font-size: 15px;
+  z-index: 99999;
+}
+
+.context-menu li {
+  padding: 10px 18px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.18s;
+  background: transparent;
+}
+
+.context-menu li:last-child {
+  border-bottom: none;
+}
+
+.context-menu li:hover, .context-menu .submenu:hover {
+  background: #f0f0f0;
+}
+
+.context-menu .submenu {
+  position: relative;
+  padding-right: 22px;
+}
+
+.context-menu .submenu-list {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: var(--context-bg);
+  border: 1.5px solid var(--context-border);
+  border-radius: 7px;
+  min-width: 180px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  z-index: 100000;
+}
+
+.context-menu .submenu:hover .submenu-list {
+  display: block;
+}
+
+/* Scrollbars */
+.projects-sidebar, .calendar-container, .filters {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f0f0f0;
+}
+.projects-sidebar::-webkit-scrollbar,
+.calendar-container::-webkit-scrollbar,
+.filters::-webkit-scrollbar {
+  width: 7px;
+  background: #f0f0f0;
+}
+.projects-sidebar::-webkit-scrollbar-thumb,
+.calendar-container::-webkit-scrollbar-thumb,
+.filters::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .calendar-wrapper {
+    flex-direction: column;
+    height: auto;
   }
-  
-  .hover-tooltip {
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 12px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 280px;
-    font-size: 13px;
-    pointer-events: none;
-    position: absolute;
-    z-index: 100000;
-    opacity: 0.95;
-    transition: opacity 0.2s ease-in-out;
+  .projects-sidebar {
+    max-width: 100vw;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 2px solid var(--calendar-border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 4px;
+    gap: 6px;
   }
-  
-  .hover-tooltip h4 {
-    margin-top: 0;
-    margin-bottom: 6px;
-    font-size: 14px;
-    color: #333;
+  .filters {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 4px 0 4px;
   }
-  
-  
+  .calendar-container {
+    padding: 0;
+  }
+}

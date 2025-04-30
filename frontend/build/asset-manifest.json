@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/static/css/main.d23321f6.css",
-    "main.js": "/static/js/main.f175a078.js",
+    "main.css": "/static/css/main.fb05f6a2.css",
+    "main.js": "/static/js/main.bbd18365.js",
     "static/js/787.9e9f4ffd.chunk.js": "/static/js/787.9e9f4ffd.chunk.js",
     "static/media/ROBBIE orizontio - black.png": "/static/media/ROBBIE orizontio - black.d21b804433572afa9e90.png",
     "index.html": "/index.html",
-    "main.d23321f6.css.map": "/static/css/main.d23321f6.css.map",
-    "main.f175a078.js.map": "/static/js/main.f175a078.js.map",
+    "main.fb05f6a2.css.map": "/static/css/main.fb05f6a2.css.map",
+    "main.bbd18365.js.map": "/static/js/main.bbd18365.js.map",
     "787.9e9f4ffd.chunk.js.map": "/static/js/787.9e9f4ffd.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d23321f6.css",
-    "static/js/main.f175a078.js"
+    "static/css/main.fb05f6a2.css",
+    "static/js/main.bbd18365.js"
   ]
 }
