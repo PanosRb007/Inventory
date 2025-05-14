@@ -238,7 +238,7 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
                     <div className='form-group'>
                         <label>Quantity:</label>
                         <input type="number" name="quantity" value={parseFloat(newOutflow.quantity) || ''} onChange={handleChange} required
-                            max={materialAvailableQuantity} />
+                            max={materialAvailableQuantity.toFixed(2)} />
                         <div>
                             Available Quantity: {materialAvailableQuantity.toFixed(2)}
                         </div>
