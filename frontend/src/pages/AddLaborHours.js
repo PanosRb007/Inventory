@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTable, useSortBy } from 'react-table';
+import { useTable, useSortBy, useGlobalFilter } from 'react-table';
 import Select from 'react-select';
 import EditLaborHours from './EditLaborHours';
 import './CreateCombinedMaterial.css';
 
+// Custom Global Filter function for react-table
+function globalTextFilter(rows, ids, filterValue) {
+    if (!filterValue) return rows;
+    const lower = filterValue.toLowerCase();
+    return rows.filter(row => {
+        return ids.some(id => {
+            const value = row.values[id];
+            return value && String(value).toLowerCase().includes(lower);
+        });
+    });
+}
+
 const LaborHoursRecord = ({ apiBaseUrl }) => {
-    const [laborHours, setLaborHours] = useState([]);
+    const [totallaborHours, settotalLaborHours] = useState([]);
     const [employees, setEmployees] = useState([]);
     const [projects, setProjects] = useState([]);
     const [error, setError] = useState(null);
@@ -19,8 +31,10 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         comments: '',
     });
     const [editedDayRecords, setEditedDayRecords] = useState(null);
-    const [availableQuotedItems, setAvailableQuotedItems] = useState([]); // State for quoted items
+    const [availableQuotedItems, setAvailableQuotedItems] = useState([]);
     const [alllaborHours, setallLaborHours] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [negativeSearch, setNegativeSearch] = useState('');
 
     const fetchAPI = useCallback(async (url, options = {}) => {
         const authToken = sessionStorage.getItem('authToken');
@@ -39,29 +53,35 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         return response.json();
     }, []);
 
+    const fetchTotalLaborHours = useCallback(async () => {
+        try {
+            const laborData = await fetchAPI(`${apiBaseUrl}/laborhoursAPI`);
+            settotalLaborHours(laborData);
+        } catch (error) {
+            console.error('Failed to fetch labor hours:', error);
+        }
+    }, [apiBaseUrl, fetchAPI]);
+
     const fetchLaborHours = useCallback(async () => {
         try {
             const laborData = await fetchAPI(`${apiBaseUrl}/laborhoursAPI`);
+            settotalLaborHours(laborData);
             const filteredallData = laborData.filter(hour => {
                 const localDate = formatDateForInput(hour.date);
                 return localDate === dayRecords.date;
             });
-            const filteredData = laborData.filter(hour => {
-                const localDate = formatDateForInput(hour.date);
-                return hour.employeeid === selectedEmployee && localDate === dayRecords.date;
-            });
-            setLaborHours(filteredData);
             setallLaborHours(filteredallData);
         } catch (error) {
             console.error('Failed to fetch labor hours:', error);
         }
-    }, [apiBaseUrl, fetchAPI, selectedEmployee, dayRecords.date]);
+    }, [apiBaseUrl, fetchAPI, dayRecords.date]);
 
     useEffect(() => {
+        fetchTotalLaborHours();
         if (selectedEmployee) {
             fetchLaborHours();
         }
-    }, [fetchLaborHours, selectedEmployee]);
+    }, [fetchLaborHours, fetchTotalLaborHours, selectedEmployee]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -72,15 +92,13 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 ]);
                 setEmployees(empData.map(emp => ({
                     ...emp,
-                    active: Boolean(emp.active) // Ensure active is boolean
+                    active: Boolean(emp.active)
                 })) || []);
                 setProjects(projData || []);
-
             } catch (error) {
                 console.error('Failed to fetch initial data:', error);
             }
         };
-
         fetchInitialData();
     }, [apiBaseUrl, fetchAPI]);
 
@@ -97,7 +115,6 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         }
     }, [dayRecords.projectid, projects]);
 
-
     const handleEdit = useCallback(
         labhours => {
             if (editedDayRecords && editedDayRecords.labid === labhours.labid) {
@@ -106,7 +123,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             }
             setEditedDayRecords({
                 ...labhours,
-                date: formatDateForInput(labhours.date), // Convert to local date format for editing
+                date: formatDateForInput(labhours.date),
             });
         },
         [editedDayRecords]
@@ -119,7 +136,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                     method: 'PUT',
                     body: JSON.stringify({
                         ...updatedlabhour,
-                        date: new Date(updatedlabhour.date).toISOString(), // Convert back to UTC for saving
+                        date: new Date(updatedlabhour.date).toISOString(),
                     }),
                 });
                 await fetchLaborHours();
@@ -133,9 +150,14 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
 
     const handleDelete = useCallback(
         async labid => {
+            if (!window.confirm('Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτή την εγγραφή;')) {
+                return;
+            }
             try {
                 await fetchAPI(`${apiBaseUrl}/laborhoursAPI/${labid}`, { method: 'DELETE' });
-                setLaborHours(currentHours => currentHours.filter(hour => hour.labid !== labid));
+                settotalLaborHours(currentHours => currentHours.filter(hour => hour.labid !== labid));
+                setallLaborHours(currentHours => currentHours.filter(hour => hour.labid !== labid));
+                setEditedDayRecords(null);
             } catch (error) {
                 console.error('Failed to delete labor hour:', error);
                 setError(`Failed to delete labor hour with ID ${labid}`);
@@ -148,19 +170,19 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         window.open(`/ProjectOutflows?projectId=${projectId}`, '_blank');
     }, []);
 
+    // Columns for react-table (string accessors for better search)
     const columns = useMemo(
         () => [
             { Header: 'Labor Hour ID', accessor: 'labid' },
-            { Header: 'Date', accessor: 'date', Cell: ({ value }) => convertUTCToLocal(value) },
-            { Header: 'Employee', accessor: 'employeeid', Cell: ({ value }) => employees.find(emp => emp.empid === value)?.name || 'Employee not found' },
+            { Header: 'Date', accessor: row => convertUTCToLocal(row.date), id: 'date' },
+            { Header: 'Employee', accessor: row => employees.find(emp => emp.empid === row.employeeid)?.name || '', id: 'employee' },
             {
                 Header: 'Project',
-                accessor: 'projectid',
-                Cell: ({ value }) => {
-                    const project = projects.find(proj => proj.prid === value);
-
+                accessor: row => projects.find(proj => proj.prid === row.projectid)?.name || '',
+                id: 'project',
+                Cell: ({ row }) => {
+                    const project = projects.find(proj => proj.prid === row.original.projectid);
                     if (!project) return 'Project not found';
-
                     return (
                         <span
                             style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
@@ -171,24 +193,40 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                     );
                 },
             },
-
             {
                 Header: 'Sub Project',
-                accessor: (row) => {
+                accessor: row => {
                     const project = projects.find(prj => prj.prid === row.projectid);
                     const quotedItem = project?.quotedItems?.find(item => item.id === row.quotedItemid);
-                    return quotedItem ? { name: quotedItem.product_name, description: quotedItem.product_description } : { name: '', description: '' };
+                    return quotedItem ? quotedItem.product_name : '';
                 },
-                Cell: ({ value }) => (
-                    <span style={{ color: 'green' }} title={value.description}>
-                        {value.name}
-                    </span>
-                ),
+                id: 'subproject',
+                Cell: ({ row }) => {
+                    const project = projects.find(prj => prj.prid === row.original.projectid);
+                    const quotedItem = project?.quotedItems?.find(item => item.id === row.original.quotedItemid);
+                    return (
+                        <span style={{ color: 'green' }} title={quotedItem?.product_description || ''}>
+                            {quotedItem?.product_name || ''}
+                        </span>
+                    );
+                },
             },
             { Header: 'Start', accessor: 'start' },
             { Header: 'End', accessor: 'end' },
             { Header: 'Comments', accessor: 'comments' },
-            { Header: 'Hours Worked', accessor: 'hoursWorked' },
+            {
+                Header: 'Hours Worked',
+                accessor: 'hoursWorked',
+                Cell: ({ value }) => (
+                    <span style={{
+                        color: Number(value) < 0 ? 'red' : undefined,
+                        fontWeight: Number(value) < 0 ? 'bold' : undefined
+                    }}>
+                        {value}
+                        {Number(value) < 0 && <span title="Αρνητικές ώρες!"> ⚠️</span>}
+                    </span>
+                )
+            },
             {
                 Header: 'Actions',
                 id: 'actions',
@@ -207,11 +245,8 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         [employees, projects, handleEdit, handleDelete, openProjectOutflowTable]
     );
 
-    const tableInstance = useTable({ columns, data: laborHours });
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
-
+    // Group and sort data for the day's table
     const groupedAndSortedData = useMemo(() => {
-        // Group labor hours by employee ID
         const grouped = alllaborHours.reduce((acc, item) => {
             if (!acc[item.employeeid]) {
                 acc[item.employeeid] = [];
@@ -219,22 +254,22 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             acc[item.employeeid].push(item);
             return acc;
         }, {});
-
-        // Sort each group by start time
         Object.keys(grouped).forEach(employeeId => {
             grouped[employeeId].sort((a, b) => a.start.localeCompare(b.start));
         });
-
-        // Flatten the sorted groups into an array
         return Object.values(grouped).flat();
     }, [alllaborHours]);
 
-    // Pass the sorted and grouped data to the table
+    // Table instance for "Labor Hours for {date}" with global filter
     const tableInstance1 = useTable(
-        { columns, data: groupedAndSortedData },
+        {
+            columns,
+            data: groupedAndSortedData,
+            globalFilter: globalTextFilter,
+        },
+        useGlobalFilter,
         useSortBy
     );
-
 
     const {
         getTableProps: getTableProps1,
@@ -242,8 +277,75 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         headerGroups: headerGroups1,
         rows: rows1,
         prepareRow: prepareRow1,
+        setGlobalFilter: setGlobalFilter1,
     } = tableInstance1;
 
+    useEffect(() => {
+        setGlobalFilter1(searchTerm);
+    }, [searchTerm, setGlobalFilter1]);
+
+    // Negative hours calculation
+    const negativeHours = useMemo(() => {
+        return totallaborHours.filter(lh => Number(lh.hoursWorked) < 0);
+    }, [totallaborHours]);
+
+    // Table instance for negative hours with global filter
+    const negativeColumns = useMemo(() => [
+        { Header: 'ID', accessor: 'labid' },
+        { Header: 'Ημερομηνία', accessor: row => convertUTCToLocal(row.date), id: 'date' },
+        { Header: 'Υπάλληλος', accessor: row => employees.find(emp => emp.empid === row.employeeid)?.name || '', id: 'employee' },
+        { Header: 'Project', accessor: row => projects.find(proj => proj.prid === row.projectid)?.name || '', id: 'project' },
+        { Header: 'Start', accessor: 'start' },
+        { Header: 'End', accessor: 'end' },
+        {
+            Header: 'Hours Worked',
+            accessor: 'hoursWorked',
+            Cell: ({ value }) => (
+                <span style={{ color: 'red', fontWeight: 'bold' }}>
+                    {value}
+                    <span title="Αρνητικές ώρες!"> ⚠️</span>
+                </span>
+            )
+        },
+        { Header: 'Comments', accessor: 'comments' },
+        {
+            Header: 'Actions',
+            id: 'actions',
+            Cell: ({ row }) => (
+                <div>
+                    <button onClick={() => handleEdit(row.original)} className="btn btn-primary" style={{ marginRight: '5px' }}>
+                        Edit
+                    </button>
+                    <button onClick={() => handleDelete(row.original.labid)} className="btn btn-danger">
+                        Delete
+                    </button>
+                </div>
+            ),
+        },
+    ], [employees, projects, handleEdit, handleDelete]);
+
+    const negativeTableInstance = useTable(
+        {
+            columns: negativeColumns,
+            data: negativeHours,
+            globalFilter: globalTextFilter,
+        },
+        useGlobalFilter,
+        useSortBy
+    );
+
+    const {
+        getTableProps: getNegativeTableProps,
+        getTableBodyProps: getNegativeTableBodyProps,
+        headerGroups: negativeHeaderGroups,
+        rows: negativeRows,
+        prepareRow: prepareNegativeRow,
+        setGlobalFilter: setNegativeGlobalFilter,
+    } = negativeTableInstance;
+
+    useEffect(() => {
+        setNegativeGlobalFilter(negativeSearch);
+    }, [negativeSearch, setNegativeGlobalFilter]);
 
     const selectEmployee = empid => {
         const selected = employees.find(e => e.empid === empid);
@@ -270,7 +372,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 method: 'POST',
                 body: JSON.stringify({
                     ...dayRecords,
-                    date: new Date(dayRecords.date).toISOString(), // Convert back to UTC for saving
+                    date: new Date(dayRecords.date).toISOString(),
                 }),
             });
             await fetchLaborHours();
@@ -288,6 +390,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             start: '',
             end: '',
             comments: '',
+            date: getLocalDate(),
         }));
     };
 
@@ -309,9 +412,6 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
     }, [employees]);
 
     const filteredProjects = projects.filter(project => project.status?.data?.[0] === 0);
-
-    console.log("Filtered Projects:", filteredProjects);
-
 
     if (error) {
         return <div className="error">Error: {error}</div>;
@@ -339,7 +439,6 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 {selectedEmployee && (
                     <div className="material-input-form">
                         <h3 className="day-record-title">🕒 Day Record for {dayRecords.name}</h3>
-
                         <div>
                             <label>Date:</label>
                             <input type="date" value={dayRecords.date} onChange={e => handleChange('date', e.target.value)} />
@@ -359,17 +458,14 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                         })()
                                     }
                                     options={filteredProjects
-
                                         .map(project => ({
                                             value: project.prid,
                                             label: project.name,
-                                        }))
-                                    }
+                                        }))}
                                     onChange={selectedOption => handleChange('projectid', selectedOption.value)}
                                     placeholder="Select a Project"
                                     required
                                 />
-
                             </div>
                             <div className='form-group'>
                                 <label>Quoted Items:</label>
@@ -379,18 +475,17 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                         ? { value: dayRecords.quotedItemid, label: availableQuotedItems.find(item => item.id === dayRecords.quotedItemid).product_name }
                                         : null}
                                     options={availableQuotedItems.map((item) => ({
-                                        value: item.id,  // Αποθηκεύει το `item.id`
+                                        value: item.id,
                                         label: item.product_name,
-                                        title: item.product_description // Εμφανίζει το `product_name`
+                                        title: item.product_description
                                     }))}
                                     getOptionLabel={(item) => (
-                                        <span title={item.title}>{item.label}</span> // Το tooltip εμφανίζεται όταν ο χρήστης περνάει το ποντίκι
+                                        <span title={item.title}>{item.label}</span>
                                     )}
                                     onChange={(selectedOption) => {
-                                        console.log('Selected Quoted Item:', selectedOption);
                                         setDayRecords(prevOutflow => ({
                                             ...prevOutflow,
-                                            quotedItemid: selectedOption.value,  // Αποθηκεύει το `item.id`
+                                            quotedItemid: selectedOption.value,
                                         }));
                                     }}
                                     placeholder="Select a Quoted Item"
@@ -439,52 +534,14 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             </div>
 
             <div className="material-input-form-container">
-                <h1>Labor Hours</h1>
-
-                <table {...getTableProps()} className="table">
-                    <thead>
-                        {headerGroups.map(headerGroup => (
-                            <tr {...headerGroup.getHeaderGroupProps()}>
-                                {headerGroup.headers.map(column => (
-                                    <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody {...getTableBodyProps()}>
-                        {rows.map(row => {
-                            prepareRow(row);
-                            return (
-                                <React.Fragment key={row.id}>
-                                    <tr {...row.getRowProps()}>
-                                        {row.cells.map(cell => (
-                                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                        ))}
-                                    </tr>
-                                    {editedDayRecords && editedDayRecords.labid === row.original.labid && (
-                                        <tr>
-                                            <td colSpan={columns.length}>
-                                                <EditLaborHours
-                                                    labhour={editedDayRecords}
-                                                    handleUpdate={handleUpdate}
-                                                    employees={employees}
-                                                    projects={projects}
-                                                    handleCancel={handleCancel}
-                                                />
-                                            </td>
-                                        </tr>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-
-            <div className="material-input-form-container">
                 <h2>Labor Hours for {dayRecords.date}</h2>
-
+                <input
+                    type="text"
+                    placeholder="Αναζήτηση σε όλα τα πεδία..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    style={{ marginBottom: 12, width: 300 }}
+                />
                 <table {...getTableProps1()} className="table">
                     <thead>
                         {headerGroups1.map(headerGroup => (
@@ -505,7 +562,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                         {rows1.map(row => {
                             prepareRow1(row);
                             return (
-                                <React.Fragment key={row.id}>
+                                <React.Fragment key={row.original.labid}>
                                     <tr {...row.getRowProps()}>
                                         {row.cells.map(cell => (
                                             <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
@@ -527,12 +584,76 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                 </React.Fragment>
                             );
                         })}
+                        {rows1.length === 0 && (
+                            <tr>
+                                <td colSpan={columns.length} style={{ textAlign: 'center', color: 'gray' }}>
+                                    Δεν βρέθηκαν εγγραφές.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
-
             </div>
 
-
+            <div className="material-input-form-container">
+                <h2 style={{ color: 'red' }}>Labor Hours με αρνητικές ώρες</h2>
+                <input
+                    type="text"
+                    placeholder="Αναζήτηση σε όλα τα πεδία..."
+                    value={negativeSearch}
+                    onChange={e => setNegativeSearch(e.target.value)}
+                    style={{ marginBottom: 12, width: 300 }}
+                />
+                <table {...getNegativeTableProps()} className="table">
+                    <thead>
+                        {negativeHeaderGroups.map(headerGroup => (
+                            <tr {...headerGroup.getHeaderGroupProps()}>
+                                {headerGroup.headers.map(column => (
+                                    <th
+                                        {...column.getHeaderProps(column.getSortByToggleProps())}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {column.render('Header')}
+                                        {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody {...getNegativeTableBodyProps()}>
+                        {negativeRows.map(row => {
+                            prepareNegativeRow(row);
+                            return (
+                                <React.Fragment key={row.original.labid}>
+                                    <tr {...row.getRowProps()}>
+                                        {row.cells.map(cell => (
+                                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                        ))}
+                                    </tr>
+                                    {editedDayRecords && editedDayRecords.labid === row.original.labid && (
+                                        <tr>
+                                            <td colSpan={negativeColumns.length}>
+                                                <EditLaborHours
+                                                    labhour={editedDayRecords}
+                                                    handleUpdate={handleUpdate}
+                                                    employees={employees}
+                                                    projects={projects}
+                                                    handleCancel={handleCancel}
+                                                />
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                        {negativeRows.length === 0 && (
+                            <tr>
+                                <td colSpan={negativeColumns.length} style={{ textAlign: 'center', color: 'green' }}>Δεν υπάρχουν αρνητικές ώρες</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </>
     );
 };

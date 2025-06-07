@@ -1,12 +1,9 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useGlobalFilter, usePagination } from 'react-table';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-
 import './PurchaseFunc.css';
 
 
-const Stocks = ({ apiBaseUrl, userRole }) => {
+const Stocks = ({ apiBaseUrl }) => {
 
   const [materials, setMaterials] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -41,16 +38,16 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
         console.error('Error fetching locations:', error);
       }
     };
-
+  
     fetchLocations();
   }, [apiBaseUrl, fetchAPI]);
-
+  
 
 
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedLocation) return; // ⛔ Μην συνεχίσεις αν δεν έχει επιλεγεί τοποθεσία
-
+  
       try {
         const [
           materialResponse,
@@ -63,23 +60,23 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
           fetchAPI(`${apiBaseUrl}/remaining_quantityAPI/${selectedLocation}`), // ✅ εδώ το dynamic call
           fetchAPI(`${apiBaseUrl}/materialchangesAPI`),
         ]);
-
+  
         setMaterials(materialResponse);
-
+       
         setOutflows(outflowsResponse);
-
+       
         setTestRem(testrem.filter(entry => parseFloat(entry.remaining_quantity) > 0));
-        // 🔄 πιο μικρό dataset τώρα!
+ // 🔄 πιο μικρό dataset τώρα!
         setMaterialchanges(materialchangesData);
-
+  
       } catch (error) {
         console.log('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, [apiBaseUrl, fetchAPI, selectedLocation]);
-
+  
   const filteredData = useMemo(() => {
     return testremaining.filter(entry => {
       const material = materials.find(m => m.matid === entry.materialid);
@@ -91,58 +88,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
       );
     });
   }, [testremaining, globalFilterOne, globalFilterTwo, materials]);
-
-  const exportToExcel = () => {
-    const parseWidth = (w) => {
-      const parsed = parseFloat(w);
-      return isNaN(parsed) || parsed === -1 ? 1 : parsed;
-    };
-
-    const dataToExport = filteredData.map(row => {
-      const material = materials.find(m => m.matid === row.materialid);
-      const entry = testremaining.find(entry =>
-        entry.materialid === row.materialid &&
-        entry.location === row.location &&
-        (
-          entry.lotnumber === row.lotnumber ||
-          (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
-          (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
-        ) &&
-        parseFloat(entry.width || -1) === parseFloat(row.width || -1)
-      );
-
-      const quantity = entry?.remaining_quantity ?? 0;
-      const width = parseWidth(row.width);
-      const price = materialchanges
-        .filter(mc =>
-          mc.material_id === row.materialid &&
-          (mc.location === row.location || mc.location === null)
-        )
-        .sort((a, b) => new Date(b.change_date) - new Date(a.change_date))[0]?.price ?? 0;
-      const cost = quantity * width * price;
-
-      return {
-        'Material ID': row.materialid,
-        'Material Name': material?.name ?? '',
-        'Field': material?.field ?? '',
-        'Width': row.width,
-        'Lot Number': row.lotnumber,
-        'Quantity': quantity,
-        'Latest Price (€)': parseFloat(price).toFixed(2),
-        'Total Cost (€)': cost.toFixed(2),
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
-
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const file = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(file, `Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
-
-
+  
   /*const filteredData = useMemo(() => {
     const calculatedData = stock.map((row) => {
       const materialId = row.materialid;
@@ -228,7 +174,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
   
     return totalCost; // Επιστροφή του τελικού κόστους
   }, [purchases, outflows]);*/
-
+  
 
   const handleChange = (e) => {
     const { value } = e.target;
@@ -259,19 +205,19 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
         accessor: 'width',
         Cell: ({ value }) => (parseFloat(value) === -1 ? '' : value),
       },
-
+      
       {
         Header: 'Lot No',
         accessor: 'lotnumber',
         Cell: ({ value }) => (value === 'EMPTY' ? '' : value),
       },
-
+      
       {
         Header: 'Quantity',
         accessor: (row) => {
           const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? -1 : parseFloat(w);
           const rowWidth = parseWidth(row.width);
-
+      
           const entry = testremaining.find((entry) =>
             entry.materialid === row.materialid &&
             entry.location === row.location &&
@@ -282,7 +228,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
             ) &&
             parseFloat(entry.width || -1) === rowWidth
           );
-
+      
           return entry && !isNaN(parseFloat(entry.remaining_quantity))
             ? parseFloat(entry.remaining_quantity)
             : 0;
@@ -306,7 +252,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
               (mc.location === row.location || mc.location === null)
             )
             .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
-
+      
           const latestPrice = matchingPrices[0]?.price ?? 0;
           return parseFloat(latestPrice);
         },
@@ -317,8 +263,8 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
         ),
         sortType: 'basic'
       },
-
-
+      
+      
       /*{
         Header: 'Quantity',
         accessor: (row) => {
@@ -363,7 +309,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
           // Υπολογισμός αριθμητικής τιμής (χωρίς JSX εδώ)
           const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? 1 : parseFloat(w);
           const rowWidth = parseWidth(row.width);
-
+      
           const entry = testremaining.find((entry) =>
             entry.materialid === row.materialid &&
             entry.location === row.location &&
@@ -374,27 +320,27 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
             ) &&
             parseFloat(entry.width || -1) === parseFloat(row.width || -1)
           );
-
+      
           if (!entry || isNaN(parseFloat(entry.remaining_quantity))) return 0;
-
+      
           const remainingQty = parseFloat(entry.remaining_quantity);
-
+      
           const matchingPrices = materialchanges
             .filter(mc =>
               mc.material_id === row.materialid &&
               (mc.location === row.location || mc.location === null)
             )
             .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
-
+      
           const latestPrice = matchingPrices[0]?.price ?? 0;
-
+      
           return remainingQty * rowWidth * parseFloat(latestPrice); // αριθμητική τιμή
         },
         Cell: ({ value, row }) => {
           const rowData = row.original;
           const parseWidth = (w) => isNaN(parseFloat(w)) || parseFloat(w) === -1 ? 1 : parseFloat(w);
           const rowWidth = parseWidth(rowData.width);
-
+      
           const entry = testremaining.find((entry) =>
             entry.materialid === rowData.materialid &&
             entry.location === rowData.location &&
@@ -405,20 +351,20 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
             ) &&
             parseFloat(entry.width || -1) === parseFloat(rowData.width || -1)
           );
-
+      
           const remainingQty = entry?.remaining_quantity ?? 0;
-
+      
           const matchingPrices = materialchanges
             .filter(mc =>
               mc.material_id === rowData.materialid &&
               (mc.location === rowData.location || mc.location === null)
             )
             .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
-
+      
           const latestPrice = matchingPrices[0]?.price ?? 0;
-
+      
           const tooltipText = `${remainingQty} × ${rowWidth} × ${latestPrice} = ${value.toFixed(2)} €`;
-
+      
           return (
             <span style={{ color: 'red', cursor: 'help' }} title={tooltipText}>
               {value.toFixed(2)} €
@@ -427,6 +373,13 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
         },
         sortType: 'basic'
       }
+      
+      
+      
+      
+      
+      
+
     ],
     [materials, testremaining, materialchanges]
   );
@@ -436,10 +389,10 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
       const parsed = parseFloat(w);
       return isNaN(parsed) || parsed === -1 ? 1 : parsed;
     };
-
+  
     return filteredData.reduce((sum, row) => {
       const rowWidth = parseWidth(row.width);
-
+  
       const entry = testremaining.find((entry) =>
         entry.materialid === row.materialid &&
         entry.location === row.location &&
@@ -450,25 +403,29 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
         ) &&
         parseFloat(entry.width || -1) === parseFloat(row.width || -1)
       );
-
+  
       if (!entry || isNaN(parseFloat(entry.remaining_quantity))) return sum;
-
+  
       const remainingQty = parseFloat(entry.remaining_quantity);
-
+  
       const matchingPrices = materialchanges
         .filter(mc =>
           mc.material_id === row.materialid &&
           (mc.location === row.location || mc.location === null)
         )
         .sort((a, b) => new Date(b.change_date) - new Date(a.change_date));
-
+  
       const latestPrice = parseFloat(matchingPrices[0]?.price ?? 0);
       const total = remainingQty * rowWidth * latestPrice;
-
+  
       return sum + total;
     }, 0);
   }, [filteredData, testremaining, materialchanges]);
-
+  
+  
+  
+  
+  
   const {
     getTableProps,
     getTableBodyProps,
@@ -504,6 +461,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
     usePagination
   );
 
+
   return (
     <div className='container'>
       <div className='form-group'>
@@ -519,7 +477,7 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
       </div>
 
       <div className="search">
-        <input
+      <input
           value={globalFilterOne}
           onChange={e => setGlobalFilterOne(e.target.value)}
           placeholder="Global Filter 1"
@@ -604,17 +562,9 @@ const Stocks = ({ apiBaseUrl, userRole }) => {
           ))}
         </select>
       </div>
-      {userRole === 'Admin' && (
-        <>
-          <div className="total-cost">
-            <strong>Total Inventory Cost:</strong> {totalStockCost.toFixed(2)} €
-          </div>
-
-          <button onClick={exportToExcel} className="button" style={{ marginTop: '1rem' }}>
-            Export to Excel
-          </button>
-        </>
-      )}
+      <div className="total-cost">
+  <strong>Total Inventory Cost:</strong> {totalStockCost.toFixed(2)} €
+</div>
 
     </div>
   );

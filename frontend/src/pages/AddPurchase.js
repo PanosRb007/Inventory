@@ -16,8 +16,11 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     setShowAddVendorForm(true);
   };
 
+  // 1. Διάβασε το τελευταίο location από το localStorage
+  const lastLocation = localStorage.getItem('lastLocation');
+
   const initialPurchaseState = order ? {
-    location: order.location_id || '',
+    location: order.location_id || lastLocation || (userRole === 'graphics' ? 1 : ''),
     materialid: order.material_id || '',
     materialname: materials.find(m => order.material_id === m.matid)?.name || '',
     quantity: order.quantity || '',
@@ -30,7 +33,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     invdate: order.invdate || '',
     verification: order.verification || '',
   } : {
-    location: userRole === 'graphics' ? 1 : '',
+    location: lastLocation || (userRole === 'graphics' ? 1 : ''),
     materialid: '',
     materialname: '',
     quantity: '',
@@ -48,19 +51,21 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
   const [newPurchase, setNewPurchase] = useState(initialPurchaseState);
   const [showExtras, setShowExtras] = useState(false);
 
+  // Δημιουργία fetchWithAuth ΜΙΑ φορά
+  const fetchWithAuth = useCallback(async (url, options = {}) => {
+    const authToken = sessionStorage.getItem('authToken');
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
-      const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
-
-      const fetchWithAuth = async (url, options = {}) => {
-        return fetch(url, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${authToken}`,
-          },
-        });
-      };
 
       try {
         if (!newPurchase.materialid) {
@@ -130,51 +135,76 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     };
 
     fetchData();
-  }, [newPurchase.materialid, newPurchase.location, apiBaseUrl, vendors]);
+  }, [newPurchase.materialid, newPurchase.location, apiBaseUrl, vendors, fetchWithAuth]);
 
 
   const handleMaterialIdChange = (selectedOption) => {
     const material = materials.find(m => m.matid === selectedOption.value);
-    setNewPurchase(prevPurchase => ({
-      ...prevPurchase,
-      materialid: selectedOption.value,
-      materialname: material ? material.name : '',
-    }));
+    setNewPurchase(prevPurchase => {
+      if (
+        prevPurchase.materialid === selectedOption.value &&
+        prevPurchase.materialname === (material ? material.name : '')
+      ) {
+        return prevPurchase; // Αποφυγή update αν δεν αλλάζει κάτι
+      }
+      return {
+        ...prevPurchase,
+        materialid: selectedOption.value,
+        materialname: material ? material.name : '',
+      };
+    });
   };
 
   const handleMaterialNameChange = (selectedOption) => {
     const material = materials.find(m => m.name === selectedOption.label);
-    setNewPurchase(prevPurchase => ({
-      ...prevPurchase,
-      materialid: material ? material.matid : '',
-      materialname: selectedOption.label,
-    }));
+    setNewPurchase(prevPurchase => {
+      if (
+        prevPurchase.materialname === selectedOption.label &&
+        prevPurchase.materialid === (material ? material.matid : '')
+      ) {
+        return prevPurchase; // Αποφυγή update αν δεν αλλάζει κάτι
+      }
+      return {
+        ...prevPurchase,
+        materialid: material ? material.matid : '',
+        materialname: selectedOption.label,
+      };
+    });
   };
 
 
 
+  // 2. Όταν αλλάζει το location, αποθήκευσέ το στο localStorage
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewPurchase((prevPurchase) => ({
-      ...prevPurchase,
-      [name]: value,
-    }));
+    // Αν η τιμή δεν αλλάζει, μην κάνεις update
+    setNewPurchase((prevPurchase) => {
+      if (prevPurchase[name] === value) return prevPurchase;
+      // Για το location, αποθήκευσε στο localStorage μόνο αν αλλάζει
+      if (name === 'location') {
+        localStorage.setItem('lastLocation', value);
+      }
+      return {
+        ...prevPurchase,
+        [name]: value,
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
 
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-    };
-
+    // Έλεγχος για διπλό LOT#
+    const duplicateLot = materials.some(mat =>
+      mat.lotnumber === newPurchase.lotnumber &&
+      mat.materialid === newPurchase.materialid &&
+      mat.location === newPurchase.location &&
+      (mat.width === newPurchase.width || (!mat.width && !newPurchase.width))
+    );
+    if (duplicateLot) {
+      alert('Υπάρχει ήδη αυτό το LOT# για το ίδιο υλικό, τοποθεσία και πλάτος!');
+      return;
+    }
 
     try {
 
@@ -214,18 +244,6 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
 
   const handleAddMat = useCallback((newMaterial) => {
-    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
-
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-    };
-
     const materialExists = materials.some(
       (material) => material.matid === newMaterial.matid || material.name === newMaterial.name
     );
@@ -255,21 +273,10 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
       .catch((error) => {
         console.log('Error adding material:', error);
       });
-  }, [materials, setMaterials, setShowAddMaterialForm, apiBaseUrl]);
+  }, [materials, setMaterials, setShowAddMaterialForm, apiBaseUrl, fetchWithAuth]);
 
   const handleAddVendor = useCallback(async (newVendor) => {
 
-    const authToken = sessionStorage.getItem('authToken'); // Retrieve the authToken
-
-    const fetchWithAuth = async (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-    };
     try {
       // Send an HTTP request to add the new vendor
       const addResponse = await fetchWithAuth(`${apiBaseUrl}/vendors`, {
@@ -297,7 +304,7 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
     } catch (error) {
       console.error('Error handling the form submission:', error);
     }
-  }, [setVendors, setShowAddVendorForm, apiBaseUrl]);
+  }, [setVendors, setShowAddVendorForm, apiBaseUrl, fetchWithAuth]);
 
 
   return (
@@ -366,6 +373,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
                 value={newPurchase.width || ''}
                 onChange={handleChange}
                 required
+                min="0"
+                step="0.01" // <-- επιτρέπει δύο δεκαδικά
               />
             </div>
           )}
@@ -383,17 +392,26 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
           )}
           <div className="form-group">
             <label>Quantity:</label>
-            <input type="text" name="quantity" value={newPurchase.quantity} onChange={handleChange} required />
+            <input
+              type="number"
+              name="quantity"
+              value={newPurchase.quantity}
+              onChange={handleChange}
+              required
+              step="0.01"
+              min="0"
+            />
           </div>
           <div className="form-group">
             <label>Price:</label>
             <input
-              type="text"
+              type="number"
               name="price"
               value={newPurchase.price || ''}
               onChange={handleChange}
               required
-
+              step="0.01"
+              min="0"
             />
           </div>
           <div className="form-group">

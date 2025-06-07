@@ -20,6 +20,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const [showOutMatQuery, setShowOutMatQuery] = useState(false);
   const [rowdata, setRowdata] = useState([]);
   const [testremaining, setTestRem] = useState([]);
+  const [showOnlyHighlighted, setShowOnlyHighlighted] = useState(false);
 
 
   const openProjectOutflowTable = useCallback((projectId) => {
@@ -66,7 +67,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       setLocations(locationResponse);
       setProjects(projectResponse);
       setEmployees(employeesResponse);
-      setOutflows(outflowsResponse);
+      setOutflows(outflowsResponse.map(o => ({ ...o, highlighted: !!o.highlighted })));
       setMaterialchanges(materialchangesData);
   
       const processedTestRemaining = testrem.map(item => ({
@@ -115,23 +116,28 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   console.log('remsssss', testremaining);
 
   const filteredData = useMemo(() => {
+    let data = outflows.map(o => ({ ...o, highlighted: !!o.highlighted }));
+
+    if (showOnlyHighlighted) {
+      data = data.filter(row => row.highlighted === true);
+    }
+
     const lowerCaseFilterOne = globalFilterOne.toLowerCase();
     const lowerCaseFilterTwo = globalFilterTwo.toLowerCase();
-  
-    return outflows
-      .filter(row => {
-        // ✅ Εφαρμόζουμε το φίλτρο για graphics
-        if (userRole === 'graphics' && row.employee !== 6) return false;
-  
-        const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
-        const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
-        const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
-        const projectName = projects.find(project => project.prid === row.project)?.name.toLowerCase() || '';
-  
-        const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
-        return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
-      });
-  }, [outflows, globalFilterOne, globalFilterTwo, locations, employees, materials, projects, userRole]);
+
+    return data.filter(row => {
+      // ✅ Εφαρμόζουμε το φίλτρο για graphics
+      if (userRole === 'graphics' && row.employee !== 6) return false;
+
+      const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
+      const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
+      const materialName = materials.find(material => material.matid === row.materialid)?.name.toLowerCase() || '';
+      const projectName = projects.find(project => project.prid === row.project)?.name.toLowerCase() || '';
+
+      const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
+      return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
+    });
+  }, [outflows, showOnlyHighlighted, globalFilterOne, globalFilterTwo, locations, employees, materials, projects, userRole]);
   
 
   console.log('outflowspurch', purchases);
@@ -264,6 +270,27 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       alert('Error creating order:', error.message);
     }
   }, [fetchAPI, apiBaseUrl, materialchanges]);
+
+  const handleToggleHighlight = useCallback(async (outflow) => {
+  const newValue = !outflow.highlighted;
+  setOutflows(prev =>
+    prev.map(o =>
+      o.outflowid === outflow.outflowid
+        ? { ...o, highlighted: !!newValue }
+        : { ...o, highlighted: !!o.highlighted }
+    )
+  );
+  try {
+    await fetchAPI(`${apiBaseUrl}/outflowsAPI/${outflow.outflowid}/highlighted`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ highlighted: newValue }),
+    });
+    // Προαιρετικά: await fetchData();
+  } catch (error) {
+    alert('Αποτυχία αποθήκευσης highlight στη βάση!');
+  }
+}, [setOutflows, apiBaseUrl, fetchAPI]);
 
   const formatDateTime = useCallback((dateTimeString) => {
     const options = {
@@ -427,11 +454,22 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
             <button onClick={() => handleEdit(row.original)}>Edit</button>
             <button onClick={() => handleDelete(row.original)}>Delete</button>
             <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
+            <button
+              className='button'
+              style={{
+                background: row.original.highlighted ? '#ffe066' : undefined,
+                border: row.original.highlighted ? '2px solid orange' : undefined,
+              }}
+              onClick={() => handleToggleHighlight(row.original)}
+              title={row.original.highlighted ? 'Unmark' : 'Mark for review'}
+            >
+              {row.original.highlighted ? '★' : '☆'}
+            </button>
           </div>
         ),
       },
     ],
-    [handleEdit, handleOrder, handleDelete, materials, locations, employees, projects, outflows, formatDateTime, openProjectOutflowTable/*, remainingQuantities*/, testremaining]
+    [handleEdit, handleOrder, handleDelete, materials, locations, handleToggleHighlight, employees, projects, outflows, formatDateTime, openProjectOutflowTable, testremaining]
   );
 
   const {
@@ -504,6 +542,13 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         />
       </div>
 
+      <button
+        className="button"
+        onClick={() => setShowOnlyHighlighted(v => !v)}
+      >
+        {showOnlyHighlighted ? 'Show All' : 'Show Only Marked'}
+      </button>
+
       <table {...getTableProps()} className="table">
         <thead>
           {headerGroups.map((headerGroup) => (
@@ -522,7 +567,10 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
             prepareRow(row);
             return (
               <React.Fragment key={row.getRowProps().key}>
-                <tr {...row.getRowProps()}>
+                <tr
+                  {...row.getRowProps()}
+                  style={row.original.highlighted ? { background: '#fffbe6' } : {}}
+                >
                   {row.cells.map((cell) => (
                     <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                   ))}

@@ -413,6 +413,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                 value={newOutflow.quantity || ''}
                 onChange={handleChange}
                 required
+                step="0.01" // επιτρέπει μέχρι 2 δεκαδικά
                 max={
                   remainingQuantities.find(
                     (item) =>
