@@ -355,30 +355,31 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       {
         Header: 'Remaining Quantity',
         accessor: (row) => {
-          // Εύρεση αντιστοιχίας στο testremaining
           const data = testremaining.find((entry) =>
-            entry.materialid === row.materialid && // Ταιριάζει το materialid
-            entry.location === row.location && // Σιγουρεύουμε ότι το location είναι αριθμός
+            entry.materialid === row.materialid &&
+            entry.location === row.location &&
             (
-              entry.lotnumber === row.lotnumber || // Σωστή αντιστοίχιση lotnumber
-              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) || // Αν το entry.lotnumber είναι null/empty και το row.lotnumber είναι επίσης empty
-              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY")) // Αν το entry.lotnumber είναι "EMPTY"
-          )
-           &&
+              entry.lotnumber === row.lotnumber ||
+              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
+              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
+            )
+            &&
             (
-              parseFloat(entry.width) === parseFloat(row.width) || // Σωστή σύγκριση width
-              (entry.width === null && (!row.width || parseFloat(row.width) === -1)) || // Αν entry.width είναι null, τότε row.width πρέπει να είναι -1 ή undefined
-              (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1)) // Αν entry.width είναι -1, το row.width πρέπει να είναι το ίδιο
+              parseFloat(entry.width) === parseFloat(row.width) ||
+              (entry.width === null && (!row.width || parseFloat(row.width) === -1)) ||
+              (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1))
             )
           );
-
-          // Αν υπάρχει σωστό remaining_quantity, εμφανίζεται, αλλιώς 'N/A'
-          const remaining = data && !isNaN(parseFloat(data.remaining_quantity))
-            ? parseFloat(data.remaining_quantity).toFixed(2)
-            : 'N/A';
-
-          return <span style={{ color: 'red' }}>{remaining}</span>;
+          // Επιστρέφει αριθμό ή NaN για σωστό sort
+          return data && !isNaN(parseFloat(data.remaining_quantity))
+            ? parseFloat(data.remaining_quantity)
+            : NaN;
         },
+        Cell: ({ value }) => (
+          <span style={{ color: 'red' }}>
+            {isNaN(value) ? 'N/A' : value.toFixed(2)}
+          </span>
+        ),
       }
       ,
       {

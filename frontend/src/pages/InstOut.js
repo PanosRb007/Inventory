@@ -3,7 +3,7 @@ import './PurchaseFunc.css';
 import Select from 'react-select';
 import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects, instOutflow }) => {
+const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects, instOutflow, remainingQuantities }) => {
     const initialOutflowState = useMemo(() => ({
         location: '',
         locationname: '',
@@ -165,40 +165,31 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
 
 
     const calculateAvailableQuantity = () => {
-        let result = 0; // Default result to 0
+        if (!newOutflow.materialid || !newOutflow.location) return 0;
 
-        if (showExtras) {
-            // Calculate total purchased quantity for a specific material and lot number
-            const totalPurchasedQuantity = purchases
-                .filter(p => p.lotnumber === newOutflow.lotnumber && p.materialid === newOutflow.materialid)
-                .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
+        // Βρες το σωστό entry από το array
+        const entry = remainingQuantities.find((item) =>
+            item.materialid === newOutflow.materialid &&
+            item.location === newOutflow.location &&
+            (
+                !showExtras ||
+                (
+                    (item.lotnumber === newOutflow.lotnumber ||
+                        (!item.lotnumber && (!newOutflow.lotnumber || newOutflow.lotnumber === "EMPTY")) ||
+                        (item.lotnumber === "EMPTY" && (!newOutflow.lotnumber || newOutflow.lotnumber === "EMPTY")))
+                    &&
+                    (parseFloat(item.width) === parseFloat(newOutflow.width) ||
+                        (item.width === null && (!newOutflow.width || parseFloat(newOutflow.width) === -1)) ||
+                        (parseFloat(item.width) === -1 && (!newOutflow.width || parseFloat(newOutflow.width) === -1)))
+                )
+            )
+        );
 
-            // Calculate total outflow quantity for a specific material and lot number
-            const totalOutflowQuantity = outflows
-                .filter(out => out.materialid === newOutflow.materialid && out.lotnumber === newOutflow.lotnumber)
-                .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
-
-            // Calculate the available quantity
-            result = totalPurchasedQuantity - totalOutflowQuantity;
-        } else {
-            const totalPurchasedQuantity = purchases
-                .filter(p => p.materialid === newOutflow.materialid && p.location === newOutflow.location)
-                .reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
-
-            // Calculate total outflow quantity for a specific material and lot number
-            const totalOutflowQuantity = outflows
-                .filter(out => out.materialid === newOutflow.materialid && out.location === newOutflow.location)
-                .reduce((sum, out) => sum + parseFloat(out.quantity || 0), 0);
-
-            // Calculate the available quantity
-            result = totalPurchasedQuantity - totalOutflowQuantity;
-
-
-        }
-
-        return result; // Return the calculated result
+        return entry && !isNaN(parseFloat(entry.remaining_quantity))
+            ? parseFloat(entry.remaining_quantity)
+            : 0;
     };
-    const materialAvailableQuantity = useMemo(calculateAvailableQuantity, [newOutflow, purchases, outflows, showExtras]);
+    const materialAvailableQuantity = useMemo(calculateAvailableQuantity, [newOutflow, showExtras, remainingQuantities]);
 
     return (
         <div className='container'>

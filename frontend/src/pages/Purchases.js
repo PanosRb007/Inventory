@@ -393,11 +393,16 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
               (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1))
             )
           );
-          const remaining = data && !isNaN(parseFloat(data.remaining_quantity))
-            ? parseFloat(data.remaining_quantity).toFixed(2)
-            : 'N/A';
-          return <span style={{ color: 'red' }}>{remaining}</span>;
+          // Επιστρέφει αριθμό ή NaN (για σωστό sort)
+          return data && !isNaN(parseFloat(data.remaining_quantity))
+            ? parseFloat(data.remaining_quantity)
+            : NaN;
         },
+        Cell: ({ value }) => (
+          <span style={{ color: 'red' }}>
+            {isNaN(value) ? 'N/A' : value.toFixed(2)}
+          </span>
+        ),
       },
       {
         Header: 'Price',
@@ -697,6 +702,8 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
               apiBaseUrl={apiBaseUrl}
               setProjects={setProjects}
               instOutflow={selectedOutflowRow}
+              remainingQuantities={remainingQuantities}
+              setRemainingQuantities={setRemainingQuantities}
             />
           </div>
         </div>
