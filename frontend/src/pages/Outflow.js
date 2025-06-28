@@ -126,8 +126,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
     const lowerCaseFilterTwo = globalFilterTwo.toLowerCase();
 
     return data.filter(row => {
-      // ✅ Εφαρμόζουμε το φίλτρο για graphics
-      if (userRole === 'graphics' && row.employee !== 6) return false;
+      // ✅ Δεν χρειάζεται πλέον φίλτρο για userRole === 'graphics'
 
       const locationName = locations.find(loc => loc.id === row.location)?.locationname.toLowerCase() || '';
       const employeeName = employees.find(emp => emp.empid === row.employee)?.name.toLowerCase() || '';
@@ -137,7 +136,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       const rowString = `${Object.values(row).join(' ').toLowerCase()} ${locationName} ${employeeName} ${materialName} ${projectName}`;
       return rowString.includes(lowerCaseFilterOne) && rowString.includes(lowerCaseFilterTwo);
     });
-  }, [outflows, showOnlyHighlighted, globalFilterOne, globalFilterTwo, locations, employees, materials, projects, userRole]);
+  }, [outflows, showOnlyHighlighted, globalFilterOne, globalFilterTwo, locations, employees, materials, projects]);
   
 
   console.log('outflowspurch', purchases);
@@ -309,168 +308,175 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   }, []);
 
   const columns = React.useMemo(
-    () => [
-
-      { Header: 'ID', accessor: 'outflowid' },
-      {
-        Header: 'Location',
-        accessor: (value) => {
-          const locationnm = locations.find((loc) => loc.id === value.location);
-          return locationnm ? locationnm.locationname : 'location not found';
+    () => {
+      const baseColumns = [
+        { Header: 'ID', accessor: 'outflowid' },
+        {
+          Header: 'Location',
+          accessor: (value) => {
+            const locationnm = locations.find((loc) => loc.id === value.location);
+            return locationnm ? locationnm.locationname : 'location not found';
+          },
         },
-      },
-      {
-        Header: 'Material ID',
-        accessor: 'materialid'
-      },
-      {
-        Header: 'Material Name',
-        accessor: (row) => {
-          const material = materials.find((material) => material.matid === row.materialid);
-          return material ? material.name : 'Material not found';
+        {
+          Header: 'Material ID',
+          accessor: 'materialid'
         },
-      },
-      { Header: 'Width', accessor: 'width' },
-      { Header: 'Lot No', accessor: 'lotnumber',
-        Cell: ({ row }) => (
-          <span style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openOutMatQuery(row.original)}>
-            {row.original.lotnumber} {/* Display the actual materialid value */}
-          </span>
-        ) },
-      {
-        Header: 'Quantity',
-        accessor: 'quantity',
-        Cell: ({ value }) => parseFloat(value).toFixed(2), // Format to 2 decimal places
-      },
-
-      /*{
-        Header: 'Remaining Quantity',
-        accessor: (row) => {
-          const key = `${row.materialid}-${row.lotnumber || 'null'}-${row.location}`;
-          const data = remainingQuantities.get(key);
-          const remaining = data ? (data.purchases - data.outflows).toFixed(2) : 'N/A';
-          return <span style={{ color: 'red' }}>{remaining}</span>;
+        {
+          Header: 'Material Name',
+          accessor: (row) => {
+            const material = materials.find((material) => material.matid === row.materialid);
+            return material ? material.name : 'Material not found';
+          },
         },
-      },*/
-      {
-        Header: 'Remaining Quantity',
-        accessor: (row) => {
-          const data = testremaining.find((entry) =>
-            entry.materialid === row.materialid &&
-            entry.location === row.location &&
-            (
-              entry.lotnumber === row.lotnumber ||
-              (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
-              (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
-            )
-            &&
-            (
-              parseFloat(entry.width) === parseFloat(row.width) ||
-              (entry.width === null && (!row.width || parseFloat(row.width) === -1)) ||
-              (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1))
-            )
-          );
-          // Επιστρέφει αριθμό ή NaN για σωστό sort
-          return data && !isNaN(parseFloat(data.remaining_quantity))
-            ? parseFloat(data.remaining_quantity)
-            : NaN;
-        },
-        Cell: ({ value }) => (
-          <span style={{ color: 'red' }}>
-            {isNaN(value) ? 'N/A' : value.toFixed(2)}
-          </span>
-        ),
-      }
-      ,
-      {
-        Header: 'Cost (€)',
-        accessor: 'cost',
-        Cell: ({ value }) => value ? `${parseFloat(value).toFixed(2)} € ` : 'N/A'
-      }
-      ,
-      {
-        Header: 'Employee',
-        accessor: (value) => {
-          const employee = employees.find((emp) => emp.empid === value.employee);
-          return employee ? `${employee.name}` : 'Employee not found';
-        },
-      },
-      // Update the column definition for the "Project" column
-      {
-        Header: 'Project',
-        accessor: (value) => {
-          const project = projects.find((prj) => prj.prid === value.project);
-          return project ? project.name : 'Project not found';
-        },
-        filter: 'text',
-        Cell: ({ row }) => {
-          const project = projects.find((prj) => prj.prid === row.original.project);
-
-          if (!project) {
-            return 'Project not found';
-          }
-
-          const projectOutflows = outflows.filter((outflow) => outflow.project === project.prid);
-
-          // Create an array of strings that include Material ID, Material Name, and Quantity
-          const outflowDetails = projectOutflows.map((outflow) => {
-            const material = materials.find((material) => material.matid === outflow.materialid);
-            const materialName = material ? material.name : 'Material not found';
-            return `Material: ${materialName}, Quantity: ${outflow.quantity}`;
-          });
-
-          return (
-            <span
-              title={projectOutflows.length > 0 ? outflowDetails.join('\n') : 'No outflows for this project'}
-              style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-              onClick={() => openProjectOutflowTable(project.prid)}
-            >
-              {project.name}
+        { Header: 'Width', accessor: 'width' },
+        { Header: 'Lot No', accessor: 'lotnumber',
+          Cell: ({ row }) => (
+            <span style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }} onClick={() => openOutMatQuery(row.original)}>
+              {row.original.lotnumber} {/* Display the actual materialid value */}
             </span>
-          );
+          ) },
+        {
+          Header: 'Quantity',
+          accessor: 'quantity',
+          Cell: ({ value }) => parseFloat(value).toFixed(2), // Format to 2 decimal places
         },
-      },
-      {
-        Header: 'Sub Project',
-        accessor: (row) => {
-          const project = projects.find(prj => prj.prid === row.project);
-          const quotedItem = project?.quotedItems?.find(item => item.id === row.quotedItemid);
-          return quotedItem ? quotedItem.product_name : ''; // Επιστροφή του product_name αν υπάρχει
+
+        /*{
+          Header: 'Remaining Quantity',
+          accessor: (row) => {
+            const key = `${row.materialid}-${row.lotnumber || 'null'}-${row.location}`;
+            const data = remainingQuantities.get(key);
+            const remaining = data ? (data.purchases - data.outflows).toFixed(2) : 'N/A';
+            return <span style={{ color: 'red' }}>{remaining}</span>;
+          },
+        },*/
+        {
+          Header: 'Remaining Quantity',
+          accessor: (row) => {
+            const data = testremaining.find((entry) =>
+              entry.materialid === row.materialid &&
+              entry.location === row.location &&
+              (
+                entry.lotnumber === row.lotnumber ||
+                (!entry.lotnumber && (!row.lotnumber || row.lotnumber === "EMPTY")) ||
+                (entry.lotnumber === "EMPTY" && (!row.lotnumber || row.lotnumber === "EMPTY"))
+              )
+              &&
+              (
+                parseFloat(entry.width) === parseFloat(row.width) ||
+                (entry.width === null && (!row.width || parseFloat(row.width) === -1)) ||
+                (parseFloat(entry.width) === -1 && (!row.width || parseFloat(row.width) === -1))
+              )
+            );
+            // Επιστρέφει αριθμό ή NaN για σωστό sort
+            return data && !isNaN(parseFloat(data.remaining_quantity))
+              ? parseFloat(data.remaining_quantity)
+              : NaN;
+          },
+          Cell: ({ value }) => (
+            <span style={{ color: 'red' }}>
+              {isNaN(value) ? 'N/A' : value.toFixed(2)}
+            </span>
+          ),
+        }
+        ,
+        {
+          Header: 'Cost (€)',
+          accessor: 'cost',
+          Cell: ({ value }) => value ? `${parseFloat(value).toFixed(2)} € ` : 'N/A'
+        }
+        ,
+        {
+          Header: 'Employee',
+          accessor: (value) => {
+            const employee = employees.find((emp) => emp.empid === value.employee);
+            return employee ? `${employee.name}` : 'Employee not found';
+          },
         },
-        Cell: ({ value }) => (
-          <span style={{ color: 'green' }}>{value}</span> // Εμφάνιση του product_name με πράσινο κείμενο
-        ),
-      },
-      
+        // Update the column definition for the "Project" column
+        {
+          Header: 'Project',
+          accessor: (value) => {
+            const project = projects.find((prj) => prj.prid === value.project);
+            return project ? project.name : 'Project not found';
+          },
+          filter: 'text',
+          Cell: ({ row }) => {
+            const project = projects.find((prj) => prj.prid === row.original.project);
+
+            if (!project) {
+              return 'Project not found';
+            }
+
+            const projectOutflows = outflows.filter((outflow) => outflow.project === project.prid);
+
+            // Create an array of strings that include Material ID, Material Name, and Quantity
+            const outflowDetails = projectOutflows.map((outflow) => {
+              const material = materials.find((material) => material.matid === outflow.materialid);
+              const materialName = material ? material.name : 'Material not found';
+              return `Material: ${materialName}, Quantity: ${outflow.quantity}`;
+            });
+
+            return (
+              <span
+                title={projectOutflows.length > 0 ? outflowDetails.join('\n') : 'No outflows for this project'}
+                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                onClick={() => openProjectOutflowTable(project.prid)}
+              >
+                {project.name}
+              </span>
+            );
+          },
+        },
+        {
+          Header: 'Sub Project',
+          accessor: (row) => {
+            const project = projects.find(prj => prj.prid === row.project);
+            const quotedItem = project?.quotedItems?.find(item => item.id === row.quotedItemid);
+            return quotedItem ? quotedItem.product_name : ''; // Επιστροφή του product_name αν υπάρχει
+          },
+          Cell: ({ value }) => (
+            <span style={{ color: 'green' }}>{value}</span> // Εμφάνιση του product_name με πράσινο κείμενο
+          ),
+        },
+        
 
 
-      { Header: 'Comments', accessor: 'comments' },
-      {
-        Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
-      },
-      {
-        Header: 'Actions', accessor: 'actions',
-        Cell: ({ row }) => (
-          <div>
-            <button onClick={() => handleEdit(row.original)}>Edit</button>
-            <button onClick={() => handleDelete(row.original)}>Delete</button>
-            <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
-            <button
-              className='button'
-              style={{
-                background: row.original.highlighted ? '#ffe066' : undefined,
-                border: row.original.highlighted ? '2px solid orange' : undefined,
-              }}
-              onClick={() => handleToggleHighlight(row.original)}
-              title={row.original.highlighted ? 'Unmark' : 'Mark for review'}
-            >
-              {row.original.highlighted ? '★' : '☆'}
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [handleEdit, handleOrder, handleDelete, materials, locations, handleToggleHighlight, employees, projects, outflows, formatDateTime, openProjectOutflowTable, testremaining]
+        { Header: 'Comments', accessor: 'comments' },
+        {
+          Header: 'Date', accessor: 'date', Cell: ({ value }) => formatDateTime(value),
+        },
+        {
+          Header: 'Actions', accessor: 'actions',
+          Cell: ({ row }) => (
+            <div>
+              <button onClick={() => handleEdit(row.original)}>Edit</button>
+              <button onClick={() => handleDelete(row.original)}>Delete</button>
+              <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
+              <button
+                className='button'
+                style={{
+                  background: row.original.highlighted ? '#ffe066' : undefined,
+                  border: row.original.highlighted ? '2px solid orange' : undefined,
+                }}
+                onClick={() => handleToggleHighlight(row.original)}
+                title={row.original.highlighted ? 'Unmark' : 'Mark for review'}
+              >
+                {row.original.highlighted ? '★' : '☆'}
+              </button>
+            </div>
+          ),
+        },
+      ];
+
+      // Αν ο χρήστης είναι graphics, αφαίρεσε τη στήλη cost
+      if (userRole === 'graphics') {
+        return baseColumns.filter(col => col.accessor !== 'cost');
+      }
+      return baseColumns;
+    },
+    [handleEdit, handleOrder, handleDelete, materials, locations, handleToggleHighlight, employees, projects, outflows, formatDateTime, openProjectOutflowTable, testremaining, userRole]
   );
 
   const {
