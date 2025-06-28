@@ -343,8 +343,8 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
     }
   }, [setPurchases, apiBaseUrl, fetchAPI, fetchData]);
 
-  const columns = React.useMemo(
-    () => [
+  const columns = React.useMemo(() => {
+    const baseColumns = [
       { Header: 'ID', accessor: 'id' },
       {
         Header: 'Location',
@@ -487,9 +487,21 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
         accessor: 'verification',
         Cell: ({ value }) => (value ? formatDateTime(value) : ''),
       },
-    ],
-    [handleEdit, handleDelete, handleVerification, handleToggleHighlight, locations, materials, vendors, materialchanges, openAddOutflowForm, handleOrder, remainingQuantities]
-  );
+    ];
+
+    if (userRole === 'graphics') {
+      return baseColumns.filter(
+        col =>
+          col.Header !== 'Price' &&
+          col.Header !== 'Total Cost' &&
+          col.Header !== 'Location' &&
+          col.Header !== 'Verification Date'
+      );
+    }
+    return baseColumns;
+  }, [
+    handleEdit, handleDelete, handleVerification, handleToggleHighlight, locations, materials, vendors, materialchanges, openAddOutflowForm, handleOrder, remainingQuantities, userRole
+  ]);
 
   function formatDateTime(dateTimeString) {
     const options = {

@@ -472,7 +472,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
 
       // Αν ο χρήστης είναι graphics, αφαίρεσε τη στήλη cost
       if (userRole === 'graphics') {
-        return baseColumns.filter(col => col.accessor !== 'cost');
+        return baseColumns.filter(col => col.accessor !== 'cost' && col.Header !== 'Location');
       }
       return baseColumns;
     },
