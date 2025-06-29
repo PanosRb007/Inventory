@@ -9,6 +9,11 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
 
   const [materials, setMaterials] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [relatedMaterials, setRelatedMaterials] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newRelated, setNewRelated] = useState('');
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -42,9 +47,31 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
     fetchData();
   }, [apiBaseUrl, fetchAPI]);
 
+ const openRelatedModal = useCallback((material) => {
+  setSelectedMaterial(material);
+  fetchAPI(`${apiBaseUrl}/related_materialsAPI/${material.matid}`)
+    .then(setRelatedMaterials);
+  setShowModal(true);
+  setNewRelated('');
+}, [apiBaseUrl, fetchAPI]);
 
+  const handleAddRelated = async () => {
+    if (!newRelated) return;
+    await fetchAPI(`${apiBaseUrl}/related_materialsAPI`, {
+      method: 'POST',
+      body: JSON.stringify({ materialid: selectedMaterial.matid, related_materialid: newRelated }),
+    });
+    // Refresh
+    fetchAPI(`${apiBaseUrl}/related_materialsAPI/${selectedMaterial.matid}`)
+      .then(setRelatedMaterials);
+    setNewRelated('');
+  };
 
-  const [editingMaterial, setEditingMaterial] = useState(null);
+  const handleDeleteRelated = async (id) => {
+    await fetchAPI(`${apiBaseUrl}/related_materialsAPI/${id}`, { method: 'DELETE' });
+    setRelatedMaterials(relatedMaterials.filter(r => r.id !== id));
+  };
+  
 
   const handleAdd = useCallback(async (newMaterial) => {
     const materialExists = materials.some(
@@ -169,40 +196,40 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
       {
         Header: 'Times Bought This Year',
         accessor: (row) => {
-            const currentYear = new Date().getFullYear(); // Παίρνει το τρέχον έτος
-    
-            // Φιλτράρει τις αγορές για το συγκεκριμένο υλικό που έγιναν φέτος
-            const purchasesThisYear = purchases.filter(purchase => 
-                purchase.materialid === row.matid && 
-                new Date(purchase.date).getFullYear() === currentYear
-            );
-    
-            return purchasesThisYear.length; // Επιστρέφει τον αριθμό των αγορών
+          const currentYear = new Date().getFullYear(); // Παίρνει το τρέχον έτος
+
+          // Φιλτράρει τις αγορές για το συγκεκριμένο υλικό που έγιναν φέτος
+          const purchasesThisYear = purchases.filter(purchase =>
+            purchase.materialid === row.matid &&
+            new Date(purchase.date).getFullYear() === currentYear
+          );
+
+          return purchasesThisYear.length; // Επιστρέφει τον αριθμό των αγορών
         },
         Cell: ({ value }) => <span>{value}</span>, // Εμφανίζει το αποτέλεσμα στη στήλη
         sortType: 'basic', // Επιτρέπει ταξινόμηση αριθμών
-    },
-    {
-      Header: 'Total Quantity Bought This Year',
-      accessor: (row) => {
+      },
+      {
+        Header: 'Total Quantity Bought This Year',
+        accessor: (row) => {
           const currentYear = new Date().getFullYear(); // Παίρνει το τρέχον έτος
-  
+
           // Φιλτράρει τις αγορές για το συγκεκριμένο υλικό που έγιναν φέτος
-          const purchasesThisYear = purchases.filter(purchase => 
-              purchase.materialid === row.matid && 
-              new Date(purchase.date).getFullYear() === currentYear
+          const purchasesThisYear = purchases.filter(purchase =>
+            purchase.materialid === row.matid &&
+            new Date(purchase.date).getFullYear() === currentYear
           );
-  
+
           // Υπολογίζει το άθροισμα των ποσοτήτων από τις φετινές αγορές
           const totalQuantity = purchasesThisYear.reduce((sum, purchase) => sum + parseFloat(purchase.quantity || 0), 0);
-  
+
           return totalQuantity; // Επιστρέφει τη συνολική ποσότητα αγορών
+        },
+        Cell: ({ value }) => <span>{value.toFixed(2)}</span>, // Εμφανίζει το αποτέλεσμα με 2 δεκαδικά
+        sortType: 'basic', // Επιτρέπει ταξινόμηση αριθμών
       },
-      Cell: ({ value }) => <span>{value.toFixed(2)}</span>, // Εμφανίζει το αποτέλεσμα με 2 δεκαδικά
-      sortType: 'basic', // Επιτρέπει ταξινόμηση αριθμών
-  },
-  
-    
+
+
 
       {
         Header: 'Actions',
@@ -210,11 +237,12 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
           <div>
             <button onClick={() => handleEdit(row.original)}>Edit</button>
             <button onClick={() => handleDelete(row.original)}>Delete</button>
+            <button onClick={() => openRelatedModal(row.original)}>Related Materials</button>
           </div>
         ),
       },
     ],
-    [handleEdit, handleDelete, purchases]
+    [handleEdit, handleDelete, purchases, openRelatedModal]
   );
 
   const {
@@ -329,6 +357,37 @@ const MaterialList = React.memo(({ apiBaseUrl }) => {
           ))}
         </select>
       </div>
+      {showModal && (
+        <div className="overlay">
+          <div className="popup">
+            <h3>Related Materials for: {selectedMaterial?.name}</h3>
+            <ul>
+              {relatedMaterials.map(rm => {
+                const relMat = materials.find(m => m.matid === rm.related_materialid);
+                return (
+                  <li key={rm.id}>
+                    {relMat ? relMat.name : rm.related_materialid}
+                    <button onClick={() => handleDeleteRelated(rm.id)}>Διαγραφή</button>
+                  </li>
+                );
+              })}
+            </ul>
+            <select
+              value={newRelated}
+              onChange={e => setNewRelated(e.target.value)}
+            >
+              <option value="">--Επιλογή related υλικού--</option>
+              {materials
+                .filter(m => m.matid !== selectedMaterial.matid && !relatedMaterials.some(r => r.related_materialid === m.matid))
+                .map(m => (
+                  <option key={m.matid} value={m.matid}>{m.name}</option>
+                ))}
+            </select>
+            <button onClick={handleAddRelated}>Προσθήκη</button>
+            <button onClick={() => setShowModal(false)}>Κλείσιμο</button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

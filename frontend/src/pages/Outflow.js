@@ -4,6 +4,7 @@ import EditOutflow from './EditOutflow.js';
 import './PurchaseFunc.css';
 import AddOutflow from './AddOutflow.js';
 import OutMatQuery from './OutMatQuery.js';
+import InstOut from './InstOut.js';
 
 const OutflowFunc = ({ apiBaseUrl, userRole }) => {
 
@@ -21,6 +22,19 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const [rowdata, setRowdata] = useState([]);
   const [testremaining, setTestRem] = useState([]);
   const [showOnlyHighlighted, setShowOnlyHighlighted] = useState(false);
+  const [selectedOutflowRow, setSelectedOutflowRow] = useState(null);
+  const [showAddInstOutflowForm, setShowAddInstOutflowForm] = useState(false);
+  const [addOutflowInitialValues, setAddOutflowInitialValues] = useState(null);
+
+  const openAddOutflowForm = useCallback((row) => {
+      setSelectedOutflowRow(row);
+      setShowAddInstOutflowForm(true);
+    }, []);
+  
+    const openAddOutrelflowForm = useCallback((initialValues) => {
+  setAddOutflowInitialValues(initialValues);
+}, []);
+
 
 
   const openProjectOutflowTable = useCallback((projectId) => {
@@ -291,6 +305,43 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   }
 }, [setOutflows, apiBaseUrl, fetchAPI]);
 
+const handleAddInstOutflow = useCallback(async (newOutflow) => {
+    try {
+      await fetchAPI(`${apiBaseUrl}/outflowsAPI`, {
+        method: 'POST',
+        body: JSON.stringify(newOutflow),
+      });
+      await fetchData();
+      setShowAddInstOutflowForm(false);
+      alert('✅ Outflow added successfully.');
+    } catch (error) {
+      console.error('❌ Error adding outflow:', error.message);
+      alert('❌ Error adding outflow.');
+    }
+  }, [apiBaseUrl, fetchAPI, fetchData, setShowAddInstOutflowForm]);
+
+  const handleRelatedOutflow = useCallback(async (outflowRow) => {
+  try {
+    const related = await fetchAPI(`${apiBaseUrl}/related_materialsAPI/${outflowRow.materialid}`);
+    if (!Array.isArray(related) || related.length === 0) {
+      alert('Δεν υπάρχουν related υλικά.');
+      return;
+    }
+    if (related.length === 1) {
+      const relatedMaterialId = related[0].related_materialid;
+      openAddOutrelflowForm({
+        ...outflowRow,
+        materialid: relatedMaterialId,
+      });
+    } else {
+      alert('Υπάρχουν παραπάνω από ένα related υλικά. Υλοποίησε modal επιλογής!');
+    }
+  } catch (error) {
+    alert('Σφάλμα κατά την ανάκτηση related materials');
+  }
+}, [apiBaseUrl, fetchAPI, openAddOutrelflowForm]); // ✅ Dependencies
+
+
   const formatDateTime = useCallback((dateTimeString) => {
     const options = {
       day: '2-digit',
@@ -451,6 +502,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
           Header: 'Actions', accessor: 'actions',
           Cell: ({ row }) => (
             <div>
+              <button className='button' onClick={() => openAddOutflowForm(row.original)}>Re-Use</button>
               <button onClick={() => handleEdit(row.original)}>Edit</button>
               <button onClick={() => handleDelete(row.original)}>Delete</button>
               <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
@@ -465,6 +517,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
               >
                 {row.original.highlighted ? '★' : '☆'}
               </button>
+              <button className='button' onClick={() => handleRelatedOutflow(row.original)}>Related Outflow</button>
             </div>
           ),
         },
@@ -476,7 +529,7 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
       }
       return baseColumns;
     },
-    [handleEdit, handleOrder, handleDelete, materials, locations, handleToggleHighlight, employees, projects, outflows, formatDateTime, openProjectOutflowTable, testremaining, userRole]
+    [handleEdit, handleOrder, handleDelete, materials, locations, handleToggleHighlight, employees, projects, outflows, formatDateTime, openProjectOutflowTable, testremaining, userRole,openAddOutflowForm,handleRelatedOutflow]
   );
 
   const {
@@ -534,6 +587,8 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
         setProjects={setProjects}
         useEffect={useEffect}
         userRole={userRole}
+        initialValues={addOutflowInitialValues} // <-- προσθέτεις αυτό!
+        setAddOutflowInitialValues={setAddOutflowInitialValues}
       />
 
       <div className="search">
@@ -647,6 +702,30 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
           ))}
         </select>
       </div>
+
+      {showAddInstOutflowForm && selectedOutflowRow && (
+        <div className="overlay">
+          <div className="popup">
+            <span className="close-popup" onClick={() => setShowAddInstOutflowForm(false)}>
+              &times;
+            </span>
+            <InstOut
+              handleAddInstOutflow={handleAddInstOutflow}
+              locations={locations}
+              materials={materials}
+              employees={employees}
+              projects={projects}
+              outflows={outflows}
+              purchases={purchases}
+              apiBaseUrl={apiBaseUrl}
+              setProjects={setProjects}
+              instOutflow={selectedOutflowRow}
+              remainingQuantities={testremaining}
+              setRemainingQuantities={setTestRem}
+            />
+          </div>
+        </div>
+      )}
 
       {showOutMatQuery && (
         <div className="overlay">

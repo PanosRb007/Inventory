@@ -1,24 +1,36 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
 import './PurchaseFunc.css';
 import AddProject from './AddProject.js';
 
-const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outflows, purchases, apiBaseUrl, setProjects, userRole }) => {
+const AddOutflow = ({
+  handleAdd,
+  locations,
+  materials,
+  employees,
+  projects,
+  outflows,
+  purchases,
+  apiBaseUrl,
+  setProjects,
+  userRole,
+  initialValues,
+  setAddOutflowInitialValues
+}) => {
 
-  const initialOutflowState = {
+  const initialOutflowState = useMemo(() => ({
     location: userRole === 'graphics' ? 1 : '',
     locationname: '',
     materialid: '',
     materialname: '',
     quantity: '',
-    width: null,
+    width: '',
     lotnumber: '',
-    employee: userRole === 'graphics' ? 6 : '',
-    project: '',
+    employee: '',
+    project: userRole === 'graphics' ? 6 : '',
     quotedItemid: '',
     comments: '',
-  };
-
+  }), [userRole]);
 
   const fetchAPI = useCallback(async (url, options = {}) => {
     const authToken = sessionStorage.getItem('authToken');
@@ -44,43 +56,64 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
   const [availableLots, setAvailableLots] = useState([]);
   const [showAddProjectForm, setShowAddProjectForm] = useState(false);
   const [remainingQuantities, setRemainingQuantities] = useState([]);
-  const [availableQuotedItems, setAvailableQuotedItems] = useState([]); // State for quoted items
+  const [availableQuotedItems, setAvailableQuotedItems] = useState([]);
 
   const openAddProjectForm = () => {
     setShowAddProjectForm(true);
   };
-  console.log('availablematerials:', availableMaterials);
 
+  // Ενημέρωση newOutflow όταν αλλάζει το initialValues
+  useEffect(() => {
+    if (initialValues) {
+      const material = materials.find(m => m.matid === initialValues.materialid);
+      setNewOutflow({
+        location: userRole === 'graphics' ? 1 : initialValues?.location || '',
+        locationname: '',
+        materialid: initialValues?.materialid || '',
+        materialname: material?.name || '',
+        quantity: initialValues?.quantity || '',
+        width:'',
+        lotnumber: '',
+        employee: initialValues?.employee || '',
+        project: initialValues?.project || '',
+        quotedItemid: initialValues?.quotedItemid || '',
+        comments: '',
+      });
+      setShowExtras(material?.extras === 1);
+    }
+  }, [initialValues, userRole, materials]);
 
+  // Ενημέρωση materialname και showExtras όταν αλλάζει το materialid
+  useEffect(() => {
+    if (newOutflow.materialid) {
+      const material = materials.find(m => m.matid === newOutflow.materialid);
+      setNewOutflow(prev => ({
+        ...prev,
+        materialname: material?.name || ''
+      }));
+      setShowExtras(material?.extras === 1);
+    } else {
+      setShowExtras(false);
+    }
+  }, [newOutflow.materialid, materials]);
+
+  // Φόρτωση διαθέσιμων υλικών για τη location
   useEffect(() => {
     const fetchMaterials = async () => {
       if (newOutflow.location) {
         try {
           const response = await fetchAPI(`${apiBaseUrl}/remaining_quantityAPI/${newOutflow.location}`);
-          const filteredMaterials = response.filter(material => material.remaining_quantity > 0); // Filter remaining_quantity > 0
+          const filteredMaterials = response.filter(material => material.remaining_quantity > 0);
           setAvailableMaterials(filteredMaterials);
         } catch (error) {
           console.error('Error fetching unique materials:', error);
         }
       }
     };
-
     fetchMaterials();
   }, [newOutflow.location, apiBaseUrl, fetchAPI]);
 
-  useEffect(() => {
-    if (newOutflow.project) {
-      const selectedProject = projects.find(project => project.prid === newOutflow.project);
-      if (selectedProject?.quotedItems) {
-        setAvailableQuotedItems(selectedProject.quotedItems);
-      } else {
-        setAvailableQuotedItems([]);
-      }
-    } else {
-      setAvailableQuotedItems([]);
-    }
-  }, [newOutflow.project, projects]);
-
+  // Φόρτωση διαθέσιμων widths για το υλικό
   useEffect(() => {
     if (newOutflow.materialid) {
       const filteredWidths = availableMaterials
@@ -92,11 +125,20 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           total_outflows: material.total_outflows,
         }));
       setAvailableWidths(filteredWidths);
+
+      // Αν υπάρχει μόνο ένα width, προσυμπλήρωσέ το
+      if (filteredWidths.length === 1) {
+        setNewOutflow(prev => ({
+          ...prev,
+          width: filteredWidths[0].width
+        }));
+      }
     } else {
       setAvailableWidths([]);
     }
   }, [newOutflow.materialid, availableMaterials]);
 
+  // Φόρτωση διαθέσιμων lots
   useEffect(() => {
     if (newOutflow.materialid && newOutflow.width) {
       const filteredLots = availableMaterials
@@ -117,16 +159,27 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     }
   }, [newOutflow.materialid, newOutflow.width, availableMaterials]);
 
+  // Φόρτωση quoted items για το project
+  useEffect(() => {
+    if (newOutflow.project) {
+      const selectedProject = projects.find(project => project.prid === newOutflow.project);
+      if (selectedProject?.quotedItems) {
+        setAvailableQuotedItems(selectedProject.quotedItems);
+      } else {
+        setAvailableQuotedItems([]);
+      }
+    } else {
+      setAvailableQuotedItems([]);
+    }
+  }, [newOutflow.project, projects]);
+
+  // Υπολογισμός remaining quantities
   const calculateRemainingQuantities = (purchases, outflows) => {
     const materialMap = new Map();
-
-    // Helper function to generate a unique key based on width presence
     const generateKey = (item) =>
       item.width !== null
         ? `${item.location}-${item.materialid}-${item.width}-${item.lotnumber}`
         : `${item.location}-${item.materialid}`;
-
-    // Process purchases
     purchases.forEach((purchase) => {
       const key = generateKey(purchase);
       if (!materialMap.has(key)) {
@@ -137,17 +190,15 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           lotnumber: purchase.lotnumber,
           totalPurchases: 0,
           totalOutflows: 0,
-          purchasesCount: 0, // Counter for purchases
-          outflowsCount: 0,  // Counter for outflows
+          purchasesCount: 0,
+          outflowsCount: 0,
         });
       }
       const material = materialMap.get(key);
       material.totalPurchases += parseFloat(purchase.quantity || 0);
-      material.purchasesCount += 1; // Increment purchases count
+      material.purchasesCount += 1;
       materialMap.set(key, material);
     });
-
-    // Process outflows
     outflows.forEach((outflow) => {
       const key = generateKey(outflow);
       if (!materialMap.has(key)) {
@@ -158,17 +209,15 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
           lotnumber: outflow.lotnumber,
           totalPurchases: 0,
           totalOutflows: 0,
-          purchasesCount: 0, // Counter for purchases
-          outflowsCount: 0,  // Counter for outflows
+          purchasesCount: 0,
+          outflowsCount: 0,
         });
       }
       const material = materialMap.get(key);
       material.totalOutflows += parseFloat(outflow.quantity || 0);
-      material.outflowsCount += 1; // Increment outflows count
+      material.outflowsCount += 1;
       materialMap.set(key, material);
     });
-
-    // Generate the final array of materials with remaining quantities and counts
     return Array.from(materialMap.values()).map((material) => ({
       location: material.location,
       materialid: material.materialid,
@@ -187,33 +236,30 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     setRemainingQuantities(updatedQuantities);
   }, [purchases, outflows]);
 
-
+  // Handlers
   const handleMaterialIdChange = (selectedOption) => {
-    const selectedMaterialId = selectedOption.value; // Get the selected material id
-    const material = materials.find((m) => m.matid === selectedMaterialId); // Find the material with the selected id
-    const materialName = material ? material.name : ''; // Get the name of the material
-    setShowExtras(material.extras === 1);
-
+    const selectedMaterialId = selectedOption.value;
+    const material = materials.find((m) => m.matid === selectedMaterialId);
+    setShowExtras(material?.extras === 1);
     setNewOutflow((prevOutflow) => ({
       ...prevOutflow,
-      materialid: selectedMaterialId, // Set materialid to the selected id
-      materialname: materialName, // Set materialname to the material name
+      materialid: selectedMaterialId,
+      materialname: material ? material.name : '',
     }));
   };
 
-
   const handleMaterialNameChange = (selectedOption) => {
     const material = materials.find(m => m.name === selectedOption.label);
-    setShowExtras(material.extras === 1);
+    setShowExtras(material?.extras === 1);
     setNewOutflow(prevOutflow => ({
       ...prevOutflow,
       materialid: material ? material.matid : '',
       materialname: selectedOption.label,
     }));
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'location') {
       setNewOutflow(initialOutflowState);
       setNewOutflow((prevOutflow) => ({
@@ -232,7 +278,8 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
     e.preventDefault();
     try {
       handleAdd(newOutflow);
-      setNewOutflow(initialOutflowState);
+      setAddOutflowInitialValues(null);
+      setNewOutflow(initialOutflowState); // Αυτό θα το αδειάσει πραγματικά
       setShowExtras(false);
     } catch (error) {
       console.error('Error handling the form submission:', error);
@@ -244,21 +291,15 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
       method: 'POST',
       body: JSON.stringify(newProject),
     })
-      .then(() => {
-        // Fetch the updated list of projects after successfully adding a new project
-        return fetchAPI(`${apiBaseUrl}/projectsAPI`);
-      })
+      .then(() => fetchAPI(`${apiBaseUrl}/projectsAPI`))
       .then(data => {
-        // Update the projects state with the fetched data
         setProjects(data);
-        setShowAddProjectForm(false); // Close the form if needed
+        setShowAddProjectForm(false);
       })
       .catch((error) => {
         console.error('Error in operation:', error);
       });
   }, [apiBaseUrl, fetchAPI, setProjects]);
-  console.log('Outflow being submitted:', newOutflow);
-
 
   return (
     <div className='container'>
@@ -291,7 +332,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
             </div>
           )}
 
-
           {newOutflow.location && (
             <div>
               <div className='form-group'>
@@ -301,7 +341,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                   name="materialid"
                   value={newOutflow.materialid ? { value: newOutflow.materialid, label: newOutflow.materialid } : null}
                   options={availableMaterials
-                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
+                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index)
                     .map((material) => ({
                       value: material.materialid,
                       label: material.materialid,
@@ -309,9 +349,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                   onChange={handleMaterialIdChange}
                   placeholder="Select a material"
                   required
-
                 />
-
               </div>
               <div className='form-group'>
                 <label>Material Name:</label>
@@ -320,10 +358,10 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                   name="materialname"
                   value={newOutflow.materialname ? { value: newOutflow.materialname, label: newOutflow.materialname } : null}
                   options={availableMaterials
-                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index) // Filter unique materials
+                    .filter((material, index, self) => self.findIndex(m => m.materialid === material.materialid) === index)
                     .map((material) => ({
-                      value: material.materialid, // Use materialid as value
-                      label: materials.find((m) => m.matid === material.materialid)?.name || '', // Use materials.name as label
+                      value: material.materialid,
+                      label: materials.find((m) => m.matid === material.materialid)?.name || '',
                     }))
                   }
                   onChange={handleMaterialNameChange}
@@ -342,10 +380,10 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                 options={availableWidths.map((width) => ({
                   value: width.width,
                   label: width.width,
-                })).filter((width, index, self) => self.findIndex(w => w.value === width.value) === index)} // Filter unique widths
+                })).filter((width, index, self) => self.findIndex(w => w.value === width.value) === index)}
                 onChange={(selectedOption) => handleChange({ target: { name: 'width', value: selectedOption.value } })}
                 placeholder="Select a width"
-                required // Add the required attribute
+                required
               />
             </div>
           )}
@@ -364,12 +402,10 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                     (item) =>
                       item.location === newOutflow.location &&
                       item.materialid === newOutflow.materialid
-
-                  )?.remainingQuantity || 0 // Fallback to 0 if no match
+                  )?.remainingQuantity || 0
                 }
               />
             </div>
-
           )}
           {showExtras && newOutflow.quantity && (
             <div className='form-group'>
@@ -403,7 +439,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
               />
             </div>
           )}
-
           {!showExtras && newOutflow.materialid && (
             <div className="form-group">
               <label>Quantity:</label>
@@ -413,7 +448,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                 value={newOutflow.quantity || ''}
                 onChange={handleChange}
                 required
-                step="0.01" // επιτρέπει μέχρι 2 δεκαδικά
+                step="0.01"
                 max={
                   remainingQuantities.find(
                     (item) =>
@@ -421,7 +456,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                       item.materialid === newOutflow.materialid &&
                       item.width === newOutflow.width &&
                       item.lotnumber === newOutflow.lotnumber
-                  )?.remainingQuantity || 0 // Fallback to 0 if no match
+                  )?.remainingQuantity || 0
                 }
               />
               <div>
@@ -436,9 +471,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                   )?.remainingQuantity || 0
                 ).toFixed(2)}
               </div>
-
             </div>
-
           )}
           {!showExtras && newOutflow.quantity && (
             <div className='form-group'>
@@ -461,7 +494,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                     label: employees.find(emp => emp.empid === newOutflow.employee)?.name
                   } : null}
                   options={employees
-                    .filter(employee => employee.active) // μόνο ενεργοί
+                    .filter(employee => employee.active)
                     .map((employee) => ({
                       value: employee.empid,
                       label: employee.name,
@@ -492,7 +525,7 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                 name="project"
                 value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
                 options={projects
-                  .filter(project => project.status.data[0] === 0) // Filter projects where status.data[0] is 1
+                  .filter(project => project.status.data[0] === 0)
                   .map((project) => ({
                     value: project.prid,
                     label: project.name,
@@ -513,18 +546,17 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
                   ? { value: newOutflow.quotedItemid, label: availableQuotedItems.find(item => item.id === newOutflow.quotedItemid).product_name }
                   : null}
                 options={availableQuotedItems.map((item) => ({
-                  value: item.id,  // Αποθηκεύει το `item.id`
+                  value: item.id,
                   label: item.product_name,
-                  title: item.product_description, // Χρησιμοποιείται ως tooltip
+                  title: item.product_description,
                 }))}
                 getOptionLabel={(item) => (
-                  <span title={item.title}>{item.label}</span> // Το tooltip εμφανίζεται όταν ο χρήστης περνάει το ποντίκι
+                  <span title={item.title}>{item.label}</span>
                 )}
                 onChange={(selectedOption) => {
-                  console.log('Selected Quoted Item:', selectedOption);
                   setNewOutflow(prevOutflow => ({
                     ...prevOutflow,
-                    quotedItemid: selectedOption.value,  // Αποθηκεύει το `item.id`
+                    quotedItemid: selectedOption.value,
                   }));
                 }}
                 placeholder="Select a Quoted Item"
@@ -536,7 +568,6 @@ const AddOutflow = ({ handleAdd, locations, materials, employees, projects, outf
             Add Outflow
           </button>
         </div>
-
       </form>
       {showAddProjectForm && (
         <div className="overlay">

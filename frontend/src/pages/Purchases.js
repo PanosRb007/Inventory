@@ -457,7 +457,10 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
             <button className='button' onClick={() => openAddOutflowForm(row.original)}>Ins.Out</button>
             <button className='button' onClick={() => handleEdit(row.original)}>Edit</button>
             <button className='button' onClick={() => handleDelete(row.original)}>Delete</button>
-            <button className='button' onClick={() => handleVerification(row.original)}>Verification</button>
+            {/* Εμφάνιση κουμπιού Verification μόνο αν ΔΕΝ είναι graphics */}
+            {userRole !== 'graphics' && (
+              <button className='button' onClick={() => handleVerification(row.original)}>Verification</button>
+            )}
             <button className='button' onClick={() => handleOrder(row.original)}>Order</button>
             <button
               className='button'
