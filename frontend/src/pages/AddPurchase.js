@@ -402,6 +402,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               min="0"
             />
           </div>
+          {userRole !== 'graphics' && (
+  <>
           <div className="form-group">
             <label>Price:</label>
             <input
@@ -413,7 +415,8 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               step="0.01"
               min="0"
             />
-          </div>
+                      </div>
+                      </>)}
           <div className="form-group">
             <label>Vendor:<span className="add-icon" onClick={openAddVendorForm}>
               +
@@ -440,12 +443,15 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
               <textarea type="text" name="comments" value={newPurchase.comments} onChange={handleChange} />
             </label>
           </div>
+          {userRole !== 'graphics' && (
+  <>
           <div className='form-group'>
             <label>
               Invoice Date:
               <input type="date" name="verification" value={newPurchase.verification} onChange={handleChange} />
             </label>
           </div>
+          </>)}
           <button type="submit" className="add_btn">
             Add Purchase
           </button>

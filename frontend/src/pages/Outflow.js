@@ -25,6 +25,9 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const [selectedOutflowRow, setSelectedOutflowRow] = useState(null);
   const [showAddInstOutflowForm, setShowAddInstOutflowForm] = useState(false);
   const [addOutflowInitialValues, setAddOutflowInitialValues] = useState(null);
+  const [showRelatedModal, setShowRelatedModal] = useState(false);
+  const [relatedOptions, setRelatedOptions] = useState([]);
+  const [relatedSourceRow, setRelatedSourceRow] = useState(null);
 
   const openAddOutflowForm = useCallback((row) => {
       setSelectedOutflowRow(row);
@@ -334,7 +337,9 @@ const handleAddInstOutflow = useCallback(async (newOutflow) => {
         materialid: relatedMaterialId,
       });
     } else {
-      alert('Υπάρχουν παραπάνω από ένα related υλικά. Υλοποίησε modal επιλογής!');
+      setRelatedOptions(related);
+      setRelatedSourceRow(outflowRow);
+      setShowRelatedModal(true);
     }
   } catch (error) {
     alert('Σφάλμα κατά την ανάκτηση related materials');
@@ -752,6 +757,36 @@ const handleAddInstOutflow = useCallback(async (newOutflow) => {
         </div>
       )}
 
+      {showRelatedModal && (
+  <div className="overlay">
+    <div className="popup">
+      <h3>Διάλεξε related υλικό</h3>
+      <select
+        onChange={e => {
+          const selectedId = e.target.value;
+          if (!selectedId) return;
+          setShowRelatedModal(false);
+          openAddOutrelflowForm({
+            ...relatedSourceRow,
+            materialid: selectedId,
+          });
+        }}
+        defaultValue=""
+      >
+        <option value="" disabled>--Επιλογή related υλικού--</option>
+        {relatedOptions.map(r => {
+          const mat = materials.find(m => m.matid === r.related_materialid);
+          return (
+            <option key={r.related_materialid} value={r.related_materialid}>
+              {mat ? mat.name : r.related_materialid}
+            </option>
+          );
+        })}
+      </select>
+      <button onClick={() => setShowRelatedModal(false)}>Κλείσιμο</button>
+    </div>
+  </div>
+)}
 
     </div>
   );
