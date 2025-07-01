@@ -26,8 +26,8 @@ const AddOutflow = ({
     quantity: '',
     width: '',
     lotnumber: '',
-    employee: '',
-    project: userRole === 'graphics' ? 6 : '',
+    employee: userRole === 'graphics' ? 37 : '',
+    project: '',
     quotedItemid: '',
     comments: '',
   }), [userRole]);
@@ -72,14 +72,20 @@ const AddOutflow = ({
         materialid: initialValues?.materialid || '',
         materialname: material?.name || '',
         quantity: initialValues?.quantity || '',
-        width:'',
+        width: '',
         lotnumber: '',
-        employee: initialValues?.employee || '',
+        employee: userRole === 'graphics' ? 37 : initialValues?.employee || '',
         project: initialValues?.project || '',
         quotedItemid: initialValues?.quotedItemid || '',
         comments: '',
       });
       setShowExtras(material?.extras === 1);
+    } else if (userRole === 'graphics') {
+      // Αν δεν υπάρχουν initialValues, αλλά είσαι graphics, βάλε employee και project default
+      setNewOutflow(prev => ({
+        ...prev,
+        employee: 37,
+      }));
     }
   }, [initialValues, userRole, materials]);
 

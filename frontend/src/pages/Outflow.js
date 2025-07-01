@@ -30,9 +30,18 @@ const OutflowFunc = ({ apiBaseUrl, userRole }) => {
   const [relatedSourceRow, setRelatedSourceRow] = useState(null);
 
   const openAddOutflowForm = useCallback((row) => {
-      setSelectedOutflowRow(row);
-      setShowAddInstOutflowForm(true);
-    }, []);
+    // Αφαιρεί τα πεδία project, quantity, quotedItemid και τα θέτει κενά
+    const { project, quantity, quotedItemid, comments, ...rest } = row;
+    const cleanedRow = {
+      ...rest,
+      project: '',
+      quantity: '',
+      quotedItemid: '',
+      comments: '',
+    };
+    setSelectedOutflowRow(cleanedRow);
+    setShowAddInstOutflowForm(true);
+  }, []);
   
     const openAddOutrelflowForm = useCallback((initialValues) => {
   setAddOutflowInitialValues(initialValues);
