@@ -23,8 +23,12 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
     const [showExtras, setShowExtras] = useState(false);
     const [showAddProjectForm, setShowAddProjectForm] = useState(false);
     const [availableQuotedItems, setAvailableQuotedItems] = useState([]);
+    const [menuPortalTarget, setMenuPortalTarget] = useState(null);
 
-
+    useEffect(() => {
+        setMenuPortalTarget(document.body);
+    }, []);
+    
     useEffect(() => {
         if (instOutflow) {
             const hasExtras = materials.find((m) => m.matid === newOutflow.materialid)?.extras === 1;
@@ -247,14 +251,29 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
                     <div className='form-group'>
                         <label>Employee:</label>
                         <Select
+                            menuPortalTarget={menuPortalTarget}
+                            menuPosition="fixed"
+                            menuPlacement="auto"
+                            styles={{
+                                menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999
+                                }),
+                                menu: (base) => ({
+                                    ...base,
+                                    maxHeight: '300px'
+                                })
+                            }}
                             name="employee"
                             value={newOutflow.employee ? { value: newOutflow.employee, label: employees.find(emp => emp.empid === newOutflow.employee)?.name } : null}
-                            options={employees
-                                .filter(employee => employee.active) // ✅ Only active employees
-                                .map((employee) => ({
-                                  value: employee.empid,
-                                  label: employee.name,
-                                }))}
+                            options={
+                                employees
+                                    .filter(employee => employee.active) // ✅ Only active employees
+                                    .map((employee) => ({
+                                        value: employee.empid,
+                                        label: employee.name,
+                                    }))
+                            }
                             onChange={(selectedOption) =>
                                 handleChange({ target: { name: 'employee', value: selectedOption.value, employeeName: selectedOption.label } })
                             }
@@ -269,6 +288,19 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
                             +
                         </span></label>
                         <Select
+                            menuPortalTarget={menuPortalTarget}
+                            menuPosition="fixed"
+                            menuPlacement="auto"
+                            styles={{
+                                menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999
+                                }),
+                                menu: (base) => ({
+                                    ...base,
+                                    maxHeight: '300px'
+                                })
+                            }}
                             name="project"
                             value={newOutflow.project ? { value: newOutflow.project, label: projects.find(project => project.prid === newOutflow.project)?.name } : null}
                             options={projects
@@ -286,6 +318,19 @@ const AddOutflow = ({ handleAddInstOutflow, locations, materials, employees, pro
                     <div className='form-group'>
                         <label>Quoted Items:</label>
                         <Select
+                            menuPortalTarget={menuPortalTarget}
+                            menuPosition="fixed"
+                            menuPlacement="auto"
+                            styles={{
+                                menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999
+                                }),
+                                menu: (base) => ({
+                                    ...base,
+                                    maxHeight: '300px'
+                                })
+                            }}
                             name="quotedItemid"
                             value={availableQuotedItems.find(item => item.id === newOutflow.quotedItemid)
                                 ? { value: newOutflow.quotedItemid, label: availableQuotedItems.find(item => item.id === newOutflow.quotedItemid).product_name }
