@@ -603,6 +603,7 @@ const handleAddInstOutflow = useCallback(async (newOutflow) => {
         userRole={userRole}
         initialValues={addOutflowInitialValues} // <-- προσθέτεις αυτό!
         setAddOutflowInitialValues={setAddOutflowInitialValues}
+        remainingQuantities={testremaining}
       />
 
       <div className="search">

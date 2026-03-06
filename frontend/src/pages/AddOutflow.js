@@ -15,7 +15,8 @@ const AddOutflow = ({
   setProjects,
   userRole,
   initialValues,
-  setAddOutflowInitialValues
+  setAddOutflowInitialValues,
+  remainingQuantities
 }) => {
 
   const initialOutflowState = useMemo(() => ({
@@ -55,7 +56,6 @@ const AddOutflow = ({
   const [availableWidths, setAvailableWidths] = useState([]);
   const [availableLots, setAvailableLots] = useState([]);
   const [showAddProjectForm, setShowAddProjectForm] = useState(false);
-  const [remainingQuantities, setRemainingQuantities] = useState([]);
   const [availableQuotedItems, setAvailableQuotedItems] = useState([]);
 
   const openAddProjectForm = () => {
@@ -178,69 +178,6 @@ const AddOutflow = ({
       setAvailableQuotedItems([]);
     }
   }, [newOutflow.project, projects]);
-
-  // Υπολογισμός remaining quantities
-  const calculateRemainingQuantities = (purchases, outflows) => {
-    const materialMap = new Map();
-    const generateKey = (item) =>
-      item.width !== null
-        ? `${item.location}-${item.materialid}-${item.width}-${item.lotnumber}`
-        : `${item.location}-${item.materialid}`;
-    purchases.forEach((purchase) => {
-      const key = generateKey(purchase);
-      if (!materialMap.has(key)) {
-        materialMap.set(key, {
-          location: purchase.location,
-          materialid: purchase.materialid,
-          width: purchase.width,
-          lotnumber: purchase.lotnumber,
-          totalPurchases: 0,
-          totalOutflows: 0,
-          purchasesCount: 0,
-          outflowsCount: 0,
-        });
-      }
-      const material = materialMap.get(key);
-      material.totalPurchases += parseFloat(purchase.quantity || 0);
-      material.purchasesCount += 1;
-      materialMap.set(key, material);
-    });
-    outflows.forEach((outflow) => {
-      const key = generateKey(outflow);
-      if (!materialMap.has(key)) {
-        materialMap.set(key, {
-          location: outflow.location,
-          materialid: outflow.materialid,
-          width: outflow.width,
-          lotnumber: outflow.lotnumber,
-          totalPurchases: 0,
-          totalOutflows: 0,
-          purchasesCount: 0,
-          outflowsCount: 0,
-        });
-      }
-      const material = materialMap.get(key);
-      material.totalOutflows += parseFloat(outflow.quantity || 0);
-      material.outflowsCount += 1;
-      materialMap.set(key, material);
-    });
-    return Array.from(materialMap.values()).map((material) => ({
-      location: material.location,
-      materialid: material.materialid,
-      width: material.width,
-      lotnumber: material.lotnumber,
-      remainingQuantity: material.totalPurchases - material.totalOutflows,
-      totalPurchases: material.totalPurchases,
-      totalOutflows: material.totalOutflows,
-      purchasesCount: material.purchasesCount,
-      outflowsCount: material.outflowsCount,
-    }));
-  };
-
-  useEffect(() => {
-    const updatedQuantities = calculateRemainingQuantities(purchases, outflows);
-    setRemainingQuantities(updatedQuantities);
-  }, [purchases, outflows]);
 
   // Handlers
   const handleMaterialIdChange = (selectedOption) => {
@@ -447,37 +384,34 @@ const AddOutflow = ({
           )}
           {!showExtras && newOutflow.materialid && (
             <div className="form-group">
-              <label>Quantity:</label>
-              <input
-                type="number"
-                name="quantity"
-                value={newOutflow.quantity || ''}
-                onChange={handleChange}
-                required
-                step="0.01"
-                max={
-                  remainingQuantities.find(
-                    (item) =>
-                      item.location === newOutflow.location &&
+                <label>Quantity:</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={newOutflow.quantity || ''}
+                  onChange={handleChange}
+                  required
+                  step="0.01"
+                  max={
+                    remainingQuantities
+                      .filter(item =>
+                        item.materialid === newOutflow.materialid &&
+                        item.location === newOutflow.location
+                      )
+                      .reduce((sum, item) => sum + parseFloat(item.remaining_quantity || 0), 0)
+                  }
+                />
+                <div>
+                  Available Quantity:{" "}
+                  {remainingQuantities
+                    .filter(item =>
                       item.materialid === newOutflow.materialid &&
-                      item.width === newOutflow.width &&
-                      item.lotnumber === newOutflow.lotnumber
-                  )?.remainingQuantity || 0
-                }
-              />
-              <div>
-                Available Quantity:{" "}
-                {(
-                  remainingQuantities.find(
-                    (item) =>
-                      item.location === newOutflow.location &&
-                      item.materialid === newOutflow.materialid &&
-                      item.width === newOutflow.width &&
-                      item.lotnumber === newOutflow.lotnumber
-                  )?.remainingQuantity || 0
-                ).toFixed(2)}
+                      item.location === newOutflow.location
+                    )
+                    .reduce((sum, item) => sum + parseFloat(item.remaining_quantity || 0), 0)
+                    .toFixed(2)}
+                </div>
               </div>
-            </div>
           )}
           {!showExtras && newOutflow.quantity && (
             <div className='form-group'>
