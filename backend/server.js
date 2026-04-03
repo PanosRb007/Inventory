@@ -23,7 +23,7 @@ const jwt = require('jsonwebtoken');
 
 
 
-const secretKey = '123rbb321'
+const secretKey = process.env.JWT_SECRET;
 const app = express();
 const port = process.env.PORT;
 
@@ -38,14 +38,14 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-/*const corsOptions = {
-  origin: 'https://inventory.robbie.gr', // your frontend server
+const corsOptions = {
+  origin: 'https://inventory.robbie.gr',
   optionsSuccessStatus: 200
-};*/
+};
 
 
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(morgan('combined'));
 app.locals.pool = pool;
@@ -96,6 +96,17 @@ app.use('/laborhoursAPI', authenticateToken(), laborhoursAPI(pool));
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
+});
+
+// Prevent unhandled rejections from killing the process
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔴 Unhandled Promise Rejection:', reason);
+  // Log it, but DO NOT exit — keep the server alive
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🔴 Uncaught Exception:', error);
+  // Log it, but DO NOT exit
 });
 
 // Start the server

@@ -17,7 +17,7 @@ const usersrouter = (secretKey, pool) => {
       }
   
       // Assuming you have retrieved a user from your data source
-      console.log('reuslts',res);
+      console.log('results',res);
       const user = results[0];
   
       // Generate a JWT token
