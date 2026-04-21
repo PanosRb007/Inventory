@@ -4,7 +4,15 @@ import './PurchaseFunc.css';
 const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, handleCancel, apiBaseUrl }) => {
 
   const convertToLocalDate = (dateString) => {
+    if (!dateString) {
+      return '';
+    }
+
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - offset * 60 * 1000);
     return localDate.toISOString().split('T')[0];
@@ -22,9 +30,6 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
     });
   }, [purchase]);
 
-  console.log('editedPurchase:', editedPurchase);
-  console.log('myPurchase:', purchase);
-
   const handleChange = (event) => {
     const { name, value } = event.target;
     setEditedPurchase((prevPurchase) => ({
@@ -34,9 +39,16 @@ const EditPurchase = ({ purchase, handleUpdate, locations, materials, vendors, h
   };
 
   const handleSave = () => {
+    const verificationDate = editedPurchase.verification
+      ? new Date(editedPurchase.verification)
+      : null;
+
     const adjustedPurchase = {
       ...editedPurchase,
-      verification: new Date(editedPurchase.verification).toISOString()
+      verification:
+        verificationDate && !Number.isNaN(verificationDate.getTime())
+          ? verificationDate.toISOString()
+          : null
     };
     handleUpdate(adjustedPurchase);
 
