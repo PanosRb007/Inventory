@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.0",
@@ -39,6 +39,9 @@
     "zustand": "^5.0.5"
   },
   "scripts": {
+    "prestart": "node scripts/write-build-meta.js",
+    "prebuild": "node scripts/write-build-meta.js",
+    "pretest": "node scripts/write-build-meta.js",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

@@ -19,6 +19,7 @@ import {
   FaLayerGroup, FaClipboardList, FaClock, FaUsers, FaSignOutAlt, FaCalendarAlt
 } from "react-icons/fa";
 import logo from './ROBBIE orizontio - black.png';
+import buildMeta from './buildMeta';
 import './pages/PurchaseFunc.css'; // Import custom CSS for App component
 
 const API_BASE_URL = 'https://api.robbie.gr';
@@ -26,6 +27,19 @@ const API_BASE_URL = 'https://api.robbie.gr';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const buildTimestamp = buildMeta.buildTime
+    ? `${buildMeta.buildTime.slice(0, 16).replace('T', ' ')} UTC`
+    : 'Unknown build time';
+  const versionTooltip = [
+    `Version ${buildMeta.version}`,
+    `Built ${buildTimestamp}`,
+  ].join('\n');
+  const versionBadge = (
+    <div className="app-version" title={versionTooltip}>
+      <span className="app-version__label">Version {buildMeta.version}</span>
+      <span className="app-version__meta">{buildTimestamp}</span>
+    </div>
+  );
 
   useEffect(() => {
     const authToken = sessionStorage.getItem('authToken');
@@ -51,7 +65,12 @@ function App() {
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} apiBaseUrl={API_BASE_URL} />;
+    return (
+      <>
+        <Login onLogin={handleLogin} apiBaseUrl={API_BASE_URL} />
+        {versionBadge}
+      </>
+    );
   }
 
   return (
@@ -179,6 +198,7 @@ function App() {
 
         </main>
       </BrowserRouter>
+      {versionBadge}
     </div>
   );
 }

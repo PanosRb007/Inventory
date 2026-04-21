@@ -489,3 +489,38 @@ body {
   cursor: pointer;
   font-size: 16px;
 }
+
+.app-version {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid rgba(110, 33, 57, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(59, 8, 8, 0.14);
+  color: #4a1626;
+  font-size: 12px;
+  line-height: 1.3;
+  z-index: 2500;
+}
+
+.app-version__label {
+  font-weight: 700;
+}
+
+.app-version__meta {
+  color: #6c4a55;
+  font-size: 11px;
+}
+
+@media screen and (max-width: 768px) {
+  .app-version {
+    right: 12px;
+    bottom: 12px;
+    max-width: calc(100vw - 24px);
+  }
+}
