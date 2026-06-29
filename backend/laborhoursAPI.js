@@ -34,10 +34,10 @@ const createLaborRouter = (pool) => {
 
   // Add a new LaborHours
   router.post('/', async (req, res) => {
-    const { date, employeeid, projectid , start ,end} = req.body;
+    const { date, employeeid, projectid , start ,end, comments, quotedItemid} = req.body;
     try {
-      const sql = 'INSERT INTO LaborHours (date, employeeid, projectid , start ,end ) VALUES (?, ?, ?, ?, ?)';
-      await pool.query(sql, [date, employeeid, projectid , start ,end ]);
+      const sql = 'INSERT INTO LaborHours (date, employeeid, projectid , start ,end , comments, quotedItemid) VALUES (?, ?, ?, ?, ?, ?, ?)';
+      await pool.query(sql, [date, employeeid, projectid , start ,end, comments, quotedItemid ]);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error adding LaborHours:', error);
@@ -45,19 +45,20 @@ const createLaborRouter = (pool) => {
     }
   });
 
-  // Update an existing LaborHours
-  router.put('/:labid', async (req, res) => {
-    const { labid } = req.params;
-    const {date, employeeid, projectid , start ,end  } = req.body;
-    try {
-      const sql = 'UPDATE LaborHours SET date = ?, employeeid = ?, projectid = ?, start = ?, end = ? WHERE labid = ?';
-      await pool.query(sql, [date, employeeid, projectid , start ,end , labid]);
-      res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Error updating LaborHours:', error);
-      res.status(500).json({ error: 'Failed to update LaborHours' });
-    }
-  });
+	// Update an existing LaborHours
+router.put('/:labid', async (req, res) => {
+  const { labid } = req.params;
+  const { date, employeeid, projectid, start, end, comments, quotedItemid } = req.body;
+  try {
+    const sql = 'UPDATE LaborHours SET date = ?, employeeid = ?, projectid = ?, start = ?, end = ?, comments = ?, quotedItemid = ? WHERE labid = ?';
+    await pool.query(sql, [date, employeeid, projectid, start, end, comments, quotedItemid, labid]);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error updating LaborHours:', error);
+    res.status(500).json({ error: 'Failed to update LaborHours' });
+  }
+});
+
 
   // Delete a LaborHours
   router.delete('/:labid', async (req, res) => {

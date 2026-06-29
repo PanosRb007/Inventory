@@ -42,8 +42,8 @@ const createsubmaterialrouter = (pool) => {
       try {
         await connection.beginTransaction();
 
-        const sql = 'INSERT INTO submaterials (combined_material_id, material_id, multiplier) VALUES ?';
-        const values = submaterials.map(sub => [sub.combined_material_id, sub.material_id, sub.multiplier]);
+        const sql = 'INSERT INTO submaterials (combined_material_id, material_id, multiplier,comments) VALUES ?';
+        const values = submaterials.map(sub => [sub.combined_material_id, sub.material_id, sub.multiplier, sub.comments]);
 
         await connection.query(sql, [values]);
         await connection.commit();
@@ -64,10 +64,10 @@ const createsubmaterialrouter = (pool) => {
   // Update an existing submaterial
   router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { material_id, multiplier } = req.body;
+    const { material_id, multiplier, comments } = req.body;
 
     try {
-      const sql = 'UPDATE submaterials SET material_id = ?, multiplier = ? WHERE id = ?';
+      const sql = 'UPDATE submaterials SET material_id = ?, multiplier = ?, comments = ? WHERE id = ?';
       await pool.query(sql, [material_id, multiplier, id]);
       res.status(200).json({ success: true });
     } catch (error) {

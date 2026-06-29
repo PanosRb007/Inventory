@@ -6,34 +6,92 @@ const usersrouter = (secretKey, pool) => {
 
   router.post('/', async (req, res) => {
     const { username, password } = req.body;
-  
+
+    // Basic request validation
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username and password are required',
+        debug: {
+          usernameReceived: !!username,
+          passwordReceived: !!password,
+        },
+      });
+    }
+
     try {
-      // Fetch user data from your data source (e.g., a database)
+      // Check if JWT secret exists before doing anything else
+      if (!secretKey) {
+        return res.status(500).json({
+          success: false,
+          error: 'JWT secret is missing',
+          debug: {
+            jwtSecretLoaded: false,
+          },
+        });
+      }
+
       const sql = 'SELECT * FROM users WHERE username = ? AND password = ?';
       const [results] = await pool.query(sql, [username, password]);
-  
+
       if (results.length === 0) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials',
+          debug: {
+            rowsFound: 0,
+          },
+        });
       }
-  
-      // Assuming you have retrieved a user from your data source
-      console.log('results',res);
+
       const user = results[0];
-  
-      // Generate a JWT token
-      const token = jwt.sign({ userId: user.id, userRole: user.role }, secretKey, { expiresIn: '11h' });
-      console.log('token', token);
-  
-      res.json({ success: true, token, role: user.role });
+
+      // Validate required user fields before generating token
+      if (user.id === undefined || user.role === undefined) {
+        return res.status(500).json({
+          success: false,
+          error: 'User row is missing required columns',
+          debug: {
+            expectedColumns: ['id', 'role'],
+            actualColumns: Object.keys(user),
+            userPreview: user,
+          },
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          userRole: user.role,
+        },
+        secretKey,
+        { expiresIn: '11h' }
+      );
+
+      return res.json({
+        success: true,
+        token,
+        role: user.role,
+      });
     } catch (error) {
-      console.error('Error retrieving user:', error);
-      res.status(500).json({ error: 'Failed to retrieve user' });
+      return res.status(500).json({
+        success: false,
+        error: 'Login failed',
+        debug: {
+          message: error.message || null,
+          code: error.code || null,
+          errno: error.errno || null,
+          sqlState: error.sqlState || null,
+          sqlMessage: error.sqlMessage || null,
+          jwtSecretLoaded: !!secretKey,
+          usernameReceived: !!username,
+          passwordReceived: !!password,
+        },
+      });
     }
   });
-
 
   return router;
 };
 
 module.exports = usersrouter;
-

@@ -6,85 +6,98 @@ const projectWebhook = (pool) => {
   const router = express.Router();
 
   router.post('/', async (req, res) => {
-    console.log('Received payload:', req.body);
+    const payload = normalizePayload(req.body);
+    console.log('Received project webhook payload:', payload);
 
-    const { name, description, amount, deallink, driveurl, QuotedItems } = req.body;
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'Invalid payload format' });
+    }
+
+    const { name, description, amount, deallink, driveurl, QuotedItems } = payload;
 
     if (!name) {
       return res.status(400).json({ error: 'Missing required fields: name' });
     }
 
-    // Καθαρισμός του description
-    let cleanDescription = sanitizeAndDecode(description);
-    const sale = parseFloat(amount);
+    const cleanName = sanitizeAndDecode(name);
+    const cleanDescription = sanitizeAndDecode(description);
+    const sale = Number.isFinite(Number.parseFloat(amount))
+      ? Number.parseFloat(amount)
+      : 0;
+    const quotedItems = normalizeQuotedItems(QuotedItems);
 
     let conn;
     try {
       conn = await pool.getConnection();
-      await conn.beginTransaction(); // Ξεκινάμε transaction
+      await conn.beginTransaction();
 
-      // Εισαγωγή του project στον πίνακα `projects`
       const projectSql = `
         INSERT INTO projects (name, description, sale, deallink, driveurl)
         VALUES (?, ?, ?, ?, ?)
       `;
       const [projectResult] = await conn.query(projectSql, [
-        name,
+        cleanName,
         cleanDescription,
         sale,
-        deallink,
-        driveurl,
+        coerceNullableString(deallink),
+        coerceNullableString(driveurl),
       ]);
 
-      const projectId = projectResult.insertId; // Παίρνουμε το `prid`
-
-      // Προετοιμασία των δεδομένων για το batch insert στα QuotedItems
-      const quotedItemsData = QuotedItems.map((item) => [
+      const projectId = projectResult.insertId;
+      const quotedItemsData = quotedItems.map((item) => [
         projectId,
-        item.product_id,
+        coerceNullableString(item.product_id),
         sanitizeAndDecode(item.Product_Name),
-        item.Currency,
-        item.Quantity,
-        item.Discount,
-        item.total_after_discount,
-        item.net_total,
-        item.Tax,
-        item.list_price,
-        item.unit_price,
-        item.quantity_in_stock,
-        item.total,
+        coerceNullableString(item.Currency),
+        coerceNullableNumber(item.Quantity),
+        coerceNullableNumber(item.Discount),
+        coerceNullableNumber(item.total_after_discount),
+        coerceNullableNumber(item.net_total),
+        coerceNullableNumber(item.Tax),
+        coerceNullableNumber(item.list_price),
+        coerceNullableNumber(item.unit_price),
+        coerceNullableNumber(item.quantity_in_stock),
+        coerceNullableNumber(item.total),
         sanitizeAndDecode(item.product_description || ''),
       ]);
 
-      const quotedItemSql = `
-        INSERT INTO quoted_items (
-          project_id, product_id, product_name, currency, quantity, discount,
-          total_after_discount, net_total, tax, list_price, unit_price,
-          quantity_in_stock, total, product_description
-        ) VALUES ?
-      `;
-      await conn.query(quotedItemSql, [quotedItemsData]);
+      if (quotedItemsData.length > 0) {
+        const quotedItemSql = `
+          INSERT INTO quoted_items (
+            project_id, product_id, product_name, currency, quantity, discount,
+            total_after_discount, net_total, tax, list_price, unit_price,
+            quantity_in_stock, total, product_description
+          ) VALUES ?
+        `;
+        await conn.query(quotedItemSql, [quotedItemsData]);
+      }
 
-      // Ολοκλήρωση του transaction
       await conn.commit();
       res.status(201).json({
         success: true,
         message: 'Project and quoted items added successfully',
-        projectId: projectId,
+        projectId,
+        quotedItemsInserted: quotedItemsData.length,
       });
     } catch (error) {
       console.error('Error adding project and quoted items:', error);
-      if (conn) await conn.rollback(); // Επαναφορά αν υπάρχει σφάλμα
-      res.status(500).json({ error: 'Failed to add project and quoted items' });
+      if (conn) {
+        await conn.rollback();
+      }
+      res.status(500).json({
+        error: 'Failed to add project and quoted items',
+        details: error.message,
+      });
     } finally {
-      if (conn) conn.release(); // Απελευθέρωση σύνδεσης
+      if (conn) {
+        conn.release();
+      }
     }
   });
 
   return router;
 };
 
-// Helper function για καθαρισμό και αποκωδικοποίηση
 function sanitizeAndDecode(input) {
   return he.decode(
     sanitizeHtml(input || '', {
@@ -92,6 +105,56 @@ function sanitizeAndDecode(input) {
       allowedAttributes: {},
     }).replace(/<br\s*\/?>/g, '\r\n')
   );
+}
+
+function normalizePayload(body) {
+  if (!body) {
+    return null;
+  }
+
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  return body;
+}
+
+function normalizeQuotedItems(quotedItems) {
+  if (Array.isArray(quotedItems)) {
+    return quotedItems;
+  }
+
+  if (typeof quotedItems === 'string' && quotedItems.trim()) {
+    try {
+      const parsed = JSON.parse(quotedItems);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function coerceNullableNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function coerceNullableString(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  return String(value);
 }
 
 module.exports = projectWebhook;

@@ -46,18 +46,61 @@ const createorder_listRouter = (pool) => {
   });
 
   // Update an existing order_list
-  router.put('/:order_list_id', async (req, res) => {
-    const { order_list_id } = req.params;
-    const { location_id, material_id, vendor_id, quantity, comments, status} = req.body;
-    try {
-      const sql = 'UPDATE order_list SET location_id = ?, material_id = ?, vendor_id = ?, quantity = ?, comments = ?, status = ? WHERE order_list_id = ?';
-      await pool.query(sql, [location_id, material_id, vendor_id, quantity, comments, status , order_list_id]);
-      res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Error updating order_list:', error);
-      res.status(500).json({ error: 'Failed to update order_list' });
-    }
-  });
+  // Update an existing order_list
+router.put('/:order_list_id', async (req, res) => {
+  const { order_list_id } = req.params;
+  const { location_id, material_id, vendor_id, quantity, comments, unitprice, status } = req.body;
+
+  // Dynamic query and parameters building
+  let querySetParts = [];
+  let queryParams = [];
+
+  if (location_id !== undefined) {
+    querySetParts.push("location_id = ?");
+    queryParams.push(location_id);
+  }
+  if (material_id !== undefined) {
+    querySetParts.push("material_id = ?");
+    queryParams.push(material_id);
+  }
+  if (vendor_id !== undefined) {
+    querySetParts.push("vendor_id = ?");
+    queryParams.push(vendor_id);
+  }
+  if (quantity !== undefined) {
+    querySetParts.push("quantity = ?");
+    queryParams.push(quantity);
+  }
+  if (comments !== undefined) {
+    querySetParts.push("comments = ?");
+    queryParams.push(comments);
+  }
+  if (unitprice !== undefined) {
+    querySetParts.push("unitprice = ?");
+    queryParams.push(unitprice);
+  }
+  if (status !== undefined) {
+    querySetParts.push("status = ?");
+    queryParams.push(status);
+  }
+
+  // Ensure we have at least one field to update
+  if (querySetParts.length === 0) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const sql = `UPDATE order_list SET ${querySetParts.join(", ")} WHERE order_list_id = ?`;
+  queryParams.push(order_list_id);
+
+  try {
+    await pool.query(sql, queryParams);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error updating order_list:', error);
+    res.status(500).json({ error: 'Failed to update order_list' });
+  }
+});
+
 
   // Delete a order_list
   router.delete('/:order_list_id', async (req, res) => {
