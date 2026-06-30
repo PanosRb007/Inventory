@@ -235,7 +235,11 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                             onClick={async () => {
                                 const now = new Date();
                                 const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
-                                await handleUpdate({ ...row.original, end: timeString });
+                                await handleUpdate({ 
+                                    ...row.original, 
+                                    end: timeString, 
+                                    date: formatDateForInput(row.original.date) 
+                                });
                             }} 
                             className="btn btn-warning" 
                             style={{ marginRight: '10px' }}
@@ -323,6 +327,21 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             id: 'actions',
             Cell: ({ row }) => (
                 <div>
+                    <button 
+                        onClick={async () => {
+                            const now = new Date();
+                            const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
+                            await handleUpdate({ 
+                                ...row.original, 
+                                end: timeString, 
+                                date: formatDateForInput(row.original.date) 
+                            });
+                        }} 
+                        className="btn btn-warning" 
+                        style={{ marginRight: '10px' }}
+                    >
+                        Now
+                    </button>
                     <button onClick={() => handleEdit(row.original)} className="btn btn-primary" style={{ marginRight: '5px' }}>
                         Edit
                     </button>
