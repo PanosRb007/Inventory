@@ -21,9 +21,8 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
     const [employees, setEmployees] = useState([]);
     const [projects, setProjects] = useState([]);
     const [error, setError] = useState(null);
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
     const [dayRecords, setDayRecords] = useState({
-        name: '',
         projectid: '',
         start: '',
         end: '',
@@ -78,10 +77,10 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
 
     useEffect(() => {
         fetchTotalLaborHours();
-        if (selectedEmployee) {
+        if (selectedEmployees.length > 0) {
             fetchLaborHours();
         }
-    }, [fetchLaborHours, fetchTotalLaborHours, selectedEmployee]);
+    }, [fetchLaborHours, fetchTotalLaborHours, selectedEmployees.length]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -232,6 +231,17 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                 id: 'actions',
                 Cell: ({ row }) => (
                     <div>
+                        <button 
+                            onClick={async () => {
+                                const now = new Date();
+                                const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
+                                await handleUpdate({ ...row.original, end: timeString });
+                            }} 
+                            className="btn btn-warning" 
+                            style={{ marginRight: '10px' }}
+                        >
+                            Now
+                        </button>
                         <button onClick={() => handleEdit(row.original)} className="btn btn-primary">
                             Edit
                         </button>
@@ -348,15 +358,13 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
     }, [negativeSearch, setNegativeGlobalFilter]);
 
     const selectEmployee = empid => {
-        const selected = employees.find(e => e.empid === empid);
-        if (selected) {
-            setSelectedEmployee(empid);
-            setDayRecords(prevRecords => ({
-                ...prevRecords,
-                name: selected.name,
-                employeeid: empid,
-            }));
-        }
+        setSelectedEmployees(prev => {
+            if (prev.includes(empid)) {
+                return prev.filter(id => id !== empid);
+            } else {
+                return [...prev, empid];
+            }
+        });
     };
 
     const handleChange = (field, value) => {
@@ -366,15 +374,20 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
         }));
     };
 
-    const saveDayRecord = async () => {
+    const saveDayRecord = async (customRecords = null) => {
         try {
-            await fetchAPI(`${apiBaseUrl}/laborhoursAPI`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...dayRecords,
-                    date: new Date(dayRecords.date).toISOString(),
-                }),
-            });
+            const recordsToSave = customRecords && customRecords.target === undefined ? customRecords : dayRecords;
+            const promises = selectedEmployees.map(empid => 
+                fetchAPI(`${apiBaseUrl}/laborhoursAPI`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ...recordsToSave,
+                        employeeid: empid,
+                        date: new Date(recordsToSave.date).toISOString(),
+                    }),
+                })
+            );
+            await Promise.all(promises);
             await fetchLaborHours();
             resetDayRecords();
         } catch (error) {
@@ -427,7 +440,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                             {deptEmployees.map(employee => (
                                 <button
                                     key={employee.empid}
-                                    className={`employee-button ${selectedEmployee === employee.empid ? 'active' : ''}`}
+                                    className={`employee-button ${selectedEmployees.includes(employee.empid) ? 'active' : ''}`}
                                     onClick={() => selectEmployee(employee.empid)}
                                 >
                                     {employee.name}
@@ -436,14 +449,14 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                         </div>
                     ))}
                 </div>
-                {selectedEmployee && (
+                {selectedEmployees.length > 0 && (
                     <div className="material-input-form">
-                        <h3 className="day-record-title">🕒 Day Record for {dayRecords.name}</h3>
+                        <h3 className="day-record-title">🕒 Day Record for {selectedEmployees.map(id => employees.find(e => e.empid === id)?.name).join(', ')}</h3>
                         <div>
                             <label>Date:</label>
                             <input type="date" value={dayRecords.date} onChange={e => handleChange('date', e.target.value)} />
                         </div>
-                        <button className="close-popup" onClick={() => setSelectedEmployee(null)}>
+                        <button className="close-popup" onClick={() => setSelectedEmployees([])}>
                             ×
                         </button>
                         <div className="form-row">
@@ -492,9 +505,29 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor={`start-${selectedEmployee}`}>Start Time (24h format)</label>
+                                <label htmlFor={`start-time`}>Start Time (24h format)</label>
+                                <button
+                                    type="button"
+                                    className="btn btn-warning"
+                                    style={{ marginBottom: '5px' }}
+                                    onClick={() => {
+                                        if (selectedEmployees.length === 0) return;
+                                        if (!dayRecords.projectid) {
+                                            alert("Please select a project first!");
+                                            return;
+                                        }
+                                        const now = new Date();
+                                        const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
+                                        const dateString = getLocalDate();
+                                        const updatedRecords = { ...dayRecords, start: timeString, date: dateString };
+                                        setDayRecords(updatedRecords);
+                                        saveDayRecord(updatedRecords);
+                                    }}
+                                >
+                                    Now & Save
+                                </button>
                                 <input
-                                    id={`start-${selectedEmployee}`}
+                                    id={`start-time`}
                                     type="time"
                                     name="start"
                                     value={dayRecords.start}
@@ -504,9 +537,9 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor={`end-${selectedEmployee}`}>End Time (24h format)</label>
+                                <label htmlFor={`end-time`}>End Time (24h format)</label>
                                 <input
-                                    id={`end-${selectedEmployee}`}
+                                    id={`end-time`}
                                     type="time"
                                     name="end"
                                     value={dayRecords.end}
