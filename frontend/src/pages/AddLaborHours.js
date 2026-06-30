@@ -424,6 +424,7 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
             comments: '',
             date: getLocalDate(),
         }));
+        setSelectedEmployees([]);
     };
 
     const handleCancel = () => {
@@ -524,27 +525,29 @@ const LaborHoursRecord = ({ apiBaseUrl }) => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor={`start-time`}>Start Time (24h format)</label>
-                                <button
-                                    type="button"
-                                    className="btn btn-warning"
-                                    style={{ marginBottom: '5px' }}
-                                    onClick={() => {
-                                        if (selectedEmployees.length === 0) return;
-                                        if (!dayRecords.projectid) {
-                                            alert("Please select a project first!");
-                                            return;
-                                        }
-                                        const now = new Date();
-                                        const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
-                                        const dateString = getLocalDate();
-                                        const updatedRecords = { ...dayRecords, start: timeString, date: dateString };
-                                        setDayRecords(updatedRecords);
-                                        saveDayRecord(updatedRecords);
-                                    }}
-                                >
-                                    Now & Save
-                                </button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <label htmlFor={`start-time`} style={{ margin: 0 }}>Start Time (24h format)</label>
+                                    <button 
+                                        type="button"
+                                        className="btn btn-danger btn-sm"
+                                        style={{ padding: '2px 8px', fontSize: '12px' }}
+                                        onClick={() => {
+                                            if (selectedEmployees.length === 0) return;
+                                            if (!dayRecords.projectid) {
+                                                alert("Please select a project first!");
+                                                return;
+                                            }
+                                            const now = new Date();
+                                            const timeString = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Athens' });
+                                            const dateString = getLocalDate();
+                                            const updatedRecords = { ...dayRecords, start: timeString, date: dateString };
+                                            setDayRecords(updatedRecords);
+                                            saveDayRecord(updatedRecords);
+                                        }}
+                                    >
+                                        Now & Save
+                                    </button>
+                                </div>
                                 <input
                                     id={`start-time`}
                                     type="time"
