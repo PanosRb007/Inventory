@@ -387,7 +387,6 @@ const AddOutflow = ({
                 <label>Quantity:</label>
                 <input
                   type="number"
-                  step="any"
                   name="quantity"
                   value={newOutflow.quantity || ''}
                   onChange={handleChange}
