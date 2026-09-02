@@ -72,7 +72,7 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
     });
     if (!response.ok) {
       const errorResponse = await response.json();
-      throw new Error(errorResponse.message || `Error fetching ${url}`);
+      throw new Error(errorResponse.message || errorResponse.error || `Error fetching ${url}`);
     }
     return response.json();
   }, []);
@@ -143,7 +143,7 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
           alert(
             'The specified Lot Number already exists for this material with the same width.'
           );
-          return;
+          return false;
         }
       }
       await fetchAPI(`${apiBaseUrl}/PurchasesAPI`, {
@@ -153,10 +153,12 @@ const PurchaseFunc = ({ apiBaseUrl, userRole }) => {
         },
         body: JSON.stringify(newPurchase),
       });
-      fetchData();
+      await fetchData();
+      return true;
     } catch (error) {
       console.error('Error adding purchase:', error.message);
       alert('Failed to add the purchase. Please try again.');
+      return false;
     }
   }, [fetchData, apiBaseUrl, fetchAPI, purchases]);
 

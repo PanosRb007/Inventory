@@ -92,26 +92,26 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
         setShowExtras(dataList?.extras === 1);
 
-        let finalChange = null;
-
-        if (Array.isArray(dataChanges) && dataChanges.length > 0) {
-          console.log("Fetched all dataChanges:", dataChanges);
-
-          // 1. Προσπαθεί να βρει την εγγραφή που ταιριάζει στο `location`
-          const matchedChange = dataChanges.find(change => Number(change.location) === Number(newPurchase.location));
-
-          // 2. Αν δεν βρει, παίρνει την πιο πρόσφατη διαθέσιμη εγγραφή (η πρώτη στο array)
-          finalChange = matchedChange || dataChanges[0];
-
-          console.log("Final Change Used:", finalChange);
+        if (!responseChanges.ok) {
+          throw new Error(dataChanges?.message || dataChanges?.error || 'Failed to fetch material changes');
         }
+        if (!responseList.ok) {
+          throw new Error(dataList?.message || dataList?.error || 'Failed to fetch material');
+        }
+
+        const finalChange = dataChanges && !Array.isArray(dataChanges)
+          ? dataChanges
+          : null;
+        const finalVendorName = vendors.find(
+          (vendor) => String(vendor.vendorid) === String(finalChange?.vendor)
+        )?.name || '';
 
         // **Προσθέσαμε έλεγχο πριν το `setNewPurchase()` για αποφυγή περιττών updates**
         setNewPurchase(prevPurchase => {
           if (
-            prevPurchase.price === (finalChange?.price || '') &&
-            prevPurchase.vendor === (finalChange?.vendor || '') &&
-            prevPurchase.vendorname === (vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '') &&
+            prevPurchase.price === (finalChange?.price ?? '') &&
+            prevPurchase.vendor === (finalChange?.vendor ?? '') &&
+            prevPurchase.vendorname === finalVendorName &&
             prevPurchase.materialname === (dataList?.name || '')
           ) {
             return prevPurchase; // **Αποφεύγουμε το update αν τα δεδομένα είναι ίδια**
@@ -119,16 +119,13 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
           return {
             ...prevPurchase,
-            price: finalChange?.price || '',
-            vendor: finalChange?.vendor || '',
-            vendorname: vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '',
+            price: finalChange?.price ?? '',
+            vendor: finalChange?.vendor ?? '',
+            vendorname: finalVendorName,
             materialname: dataList?.name || '',
           };
         });
 
-        console.log("Final Price:", finalChange?.price || '');
-        console.log("Final Vendor:", finalChange?.vendor || '');
-        console.log("Final Vendor Name:", vendors.find(v => v.vendorid === finalChange?.vendor)?.name || '');
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -208,14 +205,18 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
 
     try {
 
-      const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${newPurchase.materialid}/${newPurchase.location}`);
+      const responseChanges = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/${encodeURIComponent(newPurchase.materialid)}`);
       const dataChanges = await responseChanges.json();
-      const hasChanges =
-        dataChanges &&
-        (dataChanges.price !== newPurchase.price ||
-          dataChanges.vendor !== newPurchase.vendor);
+      if (!responseChanges.ok) {
+        throw new Error(dataChanges?.message || dataChanges?.error || 'Failed to fetch material changes');
+      }
+      const hasExistingChange = dataChanges?.price !== undefined && dataChanges?.price !== null &&
+        dataChanges?.vendor !== undefined && dataChanges?.vendor !== null;
+      const hasChanges = !hasExistingChange ||
+        Number(dataChanges.price) !== Number(newPurchase.price) ||
+        String(dataChanges.vendor) !== String(newPurchase.vendor);
 
-      if (dataChanges && hasChanges) {
+      if (hasChanges) {
         const response = await fetchWithAuth(`${apiBaseUrl}/materialchangesAPI/`, {
           method: 'POST',
           headers: {
@@ -225,7 +226,6 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
             material_id: newPurchase.materialid,
             price: newPurchase.price,
             vendor: newPurchase.vendor,
-            location: newPurchase.location,
           }),
         });
 
@@ -235,8 +235,10 @@ const AddPurchase = ({ handleAdd, locations, materials, setMaterials, vendors, s
         }
       }
 
-      handleAdd(newPurchase);
-      setNewPurchase(initialPurchaseState);
+      const purchaseAdded = await handleAdd(newPurchase);
+      if (purchaseAdded) {
+        setNewPurchase(initialPurchaseState);
+      }
     } catch (error) {
       console.error('Error handling the form submission:', error);
     }

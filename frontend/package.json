@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.1",
-  "private": true,
+  "private": true, "proxy": "https://inventory.robbie.gr",
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",

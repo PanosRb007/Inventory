@@ -42,6 +42,12 @@ module.exports = (pool) => {
   router.post('/', async (req, res) => {
     try {
       const { material_id, price, vendor } = req.body;
+      const missingRequiredField = [material_id, price, vendor].some(
+        (value) => value === undefined || value === null || value === ''
+      );
+      if (missingRequiredField) {
+        return res.status(400).json({ error: 'Material ID, price and vendor are required' });
+      }
       const sql = `
         INSERT INTO material_changes (material_id, price, vendor)
         VALUES (?, ?, ?)
